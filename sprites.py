@@ -273,6 +273,7 @@ class Board:
         neighbors = self.get_neighbor_tiles(loc)
         return [neighbor for neighbor in neighbors if neighbor.is_revealed()]
     
+    
     def get_unrevealed_neighbor_tiles(self,loc):
         neighbor_coords = get_neighbors(loc)
         neighbors = []

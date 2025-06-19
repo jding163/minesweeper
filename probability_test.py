@@ -110,6 +110,7 @@ def calc_prob_of_opening_at_loc(board,loc):
                 relevant_regions[region] = matching_locs
 
         for region, locs in relevant_regions.items():
+            #print(locs)
             sols = region.sols_bit
             total = len(sols)
             if total == 0:
@@ -117,7 +118,7 @@ def calc_prob_of_opening_at_loc(board,loc):
                 return
         
             indices = [region.locs.index(l) for l in locs]
-
+            #print(all(sol[i] == 0 for i in indices) for sol in sols)
             valid_count = sum(all(sol[i] == 0 for i in indices) for sol in sols)
 
             prob_safe_frontier *= valid_count / total

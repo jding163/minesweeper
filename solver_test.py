@@ -9,7 +9,6 @@ import itertools
 import time
 import probability_test as prob
 import pickle
-#print adsjfoiasjfioajdsfoijasdifadsfiajoiijojoijaojdfiajsid
 
 paths_explored = 0
 merge_encounters = 0
@@ -21,6 +20,8 @@ class Region():
 
         self.locs = list(locs)
         self.locs_to_check = locs_to_check
+        self.groups = []
+        self.group_sols = []
         self.sols_bit = []
     def num_locs(self):
         return len(self.locs)
@@ -42,13 +43,14 @@ class Region():
         ]
 
     def is_equal(self,region):
-        return self.locs == region.locs and self.locs_to_check == region.locs_to_check
+        return self.locs == region.locs and self.locs_to_check == region.locs_to_check and region.groups==self.groups
     
     def is_loc_in_region(self,loc):
         return loc in self.locs
     
     def is_subset_of_region(self,region):
         return set(self.locs).issubset(set(region.locs))
+
 
 class Solver(Board):
 
@@ -60,7 +62,29 @@ class Solver(Board):
         self.region_freqs = []
         #self.populate(first_click)
         #self.reveal_tiles(first_click[0],first_click[1])
-    
+
+    def group_equivalent_tiles(self,region):
+        locs = region.locs
+        groups = set()
+        for loc in locs:
+            group = set()
+            number_neighbors = set(tile.loc for tile in self.get_number_neighbor_tiles(loc))
+
+            for other_loc in locs:
+                other_neighbors = set(tile.loc for tile in self.get_number_neighbor_tiles(other_loc))
+
+                if number_neighbors == other_neighbors:
+                    group.add(other_loc)
+            groups.add(frozenset(group))
+        sorted_groups = [sorted(group, key=lambda t: (t[0], t[1])) for group in groups]
+
+        sorted_groups.sort(key=lambda group: (group[0][0], group[0][1]))
+        return sorted_groups
+
+
+
+
+
     def to_dict(self):
         data = super().to_dict()
         data['nonfrontier_tiles'] = self.nonfrontier_tiles
@@ -201,9 +225,80 @@ class Solver(Board):
         valid = False
         if self.verify_region(region):
             valid = True
-        self.undo_bit_solution_inject(region)
+        self.undo_sol_inject(region)
         return valid
-        
+    
+    def verify_group_sol(self,sol,region):
+        self.inject_group_sol(sol,region)
+        valid = False
+        if self.verify_region(region):
+            valid = True
+        self.undo_sol_inject(region)
+        return valid
+
+
+    def find_solutions_group(self,region,groups):
+        if region.num_locs() == 0:
+            return
+        sols = []
+
+        loc = groups[0]
+
+        # count flagged mines from previous play
+        mine_count = 0 # includes flagged mines and unflagged mines deduced from prior calls to find_solution
+        for row in range(GSM.rows):
+            for col in range(GSM.cols):
+                if self.get_type_at_loc((row,col)) is MINE: 
+                    mine_count += 1 
+
+        for total_mines in range(len(loc)+1):
+            for i in range(len(loc)):
+                if i < total_mines:
+                    self.inject_mine(loc[i])
+                else:
+                    self.inject_num(loc[i])
+            if self.verify_region(region):
+                self.find_solutions_group_helper(region,groups,sols,1,mine_count + total_mines)
+            for i in range(len(loc)):
+                self.undo_inject(loc[i])
+
+
+        return sols
+
+
+    def find_solutions_group_helper(self,region,groups,sols,index,mine_count):
+        global paths_explored
+        paths_explored += 1
+        if mine_count > len(self.mines):
+            return
+        if index == len(groups): # valid solution found
+            #if self.verify_solution(region):
+                sol = []
+                for loc in groups:
+                    num_mines = 0
+                    for i in range(len(loc)):
+                        x,y = loc[i]
+                        curr = self.tiles[x][y]
+                        if curr.get_type() is MINE:
+                            num_mines +=1
+                    sol.append(num_mines)
+
+                sols.append(sol)
+        else:
+            loc = groups[index]
+            for total_mines in range(len(loc)+1):
+                for i in range(len(loc)):
+                    if i < total_mines:
+                        self.inject_mine(loc[i])
+                    else:
+                        self.inject_num(loc[i])
+                if self.verify_region(region):
+                    self.find_solutions_group_helper(region,groups,sols,index+1,mine_count + total_mines)
+                for i in range(len(loc)):
+                    self.undo_inject(loc[i])
+            
+
+
     def find_solutions(self,region):
         #print(locs)
         if region.num_locs() == 0:
@@ -330,16 +425,34 @@ class Solver(Board):
         for i in range(len(probs)):
             x,y = locs[i]
             self.tiles[x][y].prob_mine = probs[i]
+    
+    def mark_tile_probs_by_group(self,groups,group_sols):
+        group_probs = calculate_probs_from_grouped_sols(groups,group_sols)
+        
+        for i in range(len(groups)):
+            
+            group = groups[i]
+            length = len(group)
+            for j in range(length):
+                x,y = group[j]
+                self.tiles[x][y].prob_mine = group_probs[i]/length
 
     def update_solutions_with_new_constraints(self,region,updated_region):
         if region.locs != updated_region.locs or region.is_equal(updated_region):
             return
+        # print('here')
+        # print('---------------------')
         region.locs_to_check = updated_region.locs_to_check
         new_sols = []
-        for sol in region.sols_bit:
-            if(self.verify_bit_solution(sol,region)):
+        # for sol in region.sols_bit:
+        #     if(self.verify_bit_solution(sol,region)):
+        #         new_sols.append(sol)
+        # region.sols_bit = new_sols
+
+        for sol in region.group_sols:
+            if(self.verify_group_sol(sol,region)):
                 new_sols.append(sol)
-        region.sols_bit = new_sols
+        region.group_sols = new_sols
 
     def merge_region_with_existing_regions(self,region,existing_subregions):
         sols_to_merge = []
@@ -370,19 +483,29 @@ class Solver(Board):
         global merge_encounters
         ccs = self.get_ccs()
         regions = self.convert_ccs_to_regions(ccs)
+        for region in regions:
+            groups = self.group_equivalent_tiles(region)
+            region.groups = groups
+
         #self.store_ccs_as_regions(ccs)
         # for r in self.regions_set:
         #     print(r.locs)
         #paths_explored = 0
         self.start_time = time.time()
         for region in regions:
-
             region_solved = self.check_for_existing_solutions_in_set(region,self.regions_set)
-            if region_solved is not None:
-                # if solutions to region are not updated with current board state
-                if not region_solved.is_equal(region): 
-                    self.update_solutions_with_new_constraints(region_solved,region)
-                    self.mark_tile_probs(region_solved.locs,region_solved.sols_bit)
+            if region_solved is not None and region_solved.is_equal(region):
+                continue
+                # # if solutions to region are not updated with current board state
+                # if not region_solved.is_equal(region): 
+                #     print(region_solved.groups)
+                #     print(region_solved.group_sols)
+                #     self.update_solutions_with_new_constraints(region_solved,region)
+                #     region_solved.groups=groups
+                #     print(region_solved.groups)
+                #     print(region_solved.group_sols)
+                #     self.mark_tile_probs_by_group(region_solved.groups,region_solved.group_sols)
+                    #self.mark_tile_probs(region_solved.locs,region_solved.sols_bit)
             else:
                 subregions = []
                 remaining = set()
@@ -421,14 +544,41 @@ class Solver(Board):
 
                 else:
                     if region.num_locs() <=100:
-                        sols = self.find_solutions(region)
-                        self.mark_tile_probs(region.locs,sols)
-                        region.sols_bit = sols
+                        # start = time.time()
+                        # sols = self.find_solutions(region)
+                        # print(time.time()-start)
+                        # self.mark_tile_probs(region.locs,sols)
+                        # region.sols_bit = sols
+                        # self.regions_set.add(region)
+
+                        start = time.time()
+
+                        groups = region.groups
+                        group_sols = self.find_solutions_group(region,groups)
+                        if region.locs == [(0, 14), (1, 14), (1, 15), (2, 15), (3, 14), (3, 15)]:
+                            pass
+                        # print(time.time()-start)
+                        # print('---------------')
+                        group_probs = calculate_probs_from_grouped_sols(groups,group_sols)
+                        
+                        for i in range(len(groups)):
+                            
+                            group = groups[i]
+                            length = len(group)
+                            for j in range(length):
+                                x,y = group[j]
+                                self.tiles[x][y].prob_mine = group_probs[i]/length
+                        region.group_sols = group_sols
                         self.regions_set.add(region)
+                        #print(region.groups)
+                        # print(group_sols)
+                        # print(len(group_sols))
+                        # print(len(sols))
+
                         #print(sorted(region.locs_to_check,key=lambda coord: (coord[0], coord[1])))
                         #print(len(region.locs_to_check))
-                        print(region.locs)
-                        print(sols)
+                        # print(region.locs)
+                        # print(sols)
 
                     else:
                         #start=time.time()
@@ -472,16 +622,6 @@ class Solver(Board):
                     nonfrontier_tiles.append((row,col))
 
         self.nonfrontier_tiles = nonfrontier_tiles
-        # if len(nonfrontier_tiles) == 0:
-        #     self.ccs_freqs = []
-        #     for cc, sols in list(self.ccs_dict.items()):
-        #         cc_set = set(cc)
-        #         if cc_set not in ccs:
-        #             del self.ccs_dict[cc]
-        #         else:
-        #             freqs = get_minecount_freqs(sols)
-        #             self.ccs_freqs.append(freqs)
-        #     return 
         remaining_mines = GSM.mine_count-self.flag_count
         if remaining_mines == 0:
             for x,y in nonfrontier_tiles:
@@ -491,6 +631,7 @@ class Solver(Board):
         region_min={}
         region_max={}
         self.region_freqs = []
+
         for region in list(self.regions_set):
             #locs = region.locs
             # in_regions = False
@@ -498,12 +639,19 @@ class Solver(Board):
             #     if region.is_equal(r):
             #         in_regions = True
             #         break
-            in_regions = self.check_for_existing_solutions_in_set(region,regions)
+            #in_regions = self.check_for_existing_solutions_in_set(region,regions)
             
-            if not in_regions:
+            matching = False
+            for r in regions:
+                if set(r.locs) == set(region.locs) and set(r.locs_to_check) == set(region.locs_to_check):
+                    matching=True
+                    break
+            if not matching:
                 self.regions_set.remove(region)
             else:
-                freqs = get_minecount_freqs(region.sols_bit)
+
+                freqs = get_minecount_freqs(region.group_sols)
+                #freqs = get_minecount_freqs(region.sols_bit)
                 self.region_freqs.append(freqs)
                 local_min = min(freqs)
                 local_max = max(freqs)
@@ -555,21 +703,19 @@ class Solver(Board):
                 self.inject_mine(locs[i])
             else:
                 self.inject_num(locs[i])
+    def inject_group_sol(self,sol,region):
+        groups = region.groups
+        for i in range(len(groups)):
+            group = groups[i]
+            mines_in_group = sol[i]
+            for j in range(len(group)):
+                if j < mines_in_group:
+                    self.inject_mine(group[j])
+                else:
+                    self.inject_num(group[j])
 
-    def test_bit_solution(self,sol,region):
-        locs = region.locs
-        for i in range(len(locs)):
-            if sol[i] == 1:
-                self.inject_mine(locs[i])
-                if not self.verify_region(region):
-                    return False
-            else:
-                self.inject_num(locs[i])    
-                if not self.verify_region(region):
-                    return False   
-        return True
 
-    def undo_bit_solution_inject(self,region):
+    def undo_sol_inject(self,region):
         locs = region.locs
         for i in range(len(locs)):
             self.undo_inject(locs[i])
@@ -621,6 +767,7 @@ class Solver(Board):
     def check_for_existing_solutions_in_set(self, region,set_to_check):
         for r in set_to_check:
             if set(r.locs) == set(region.locs):
+            #if r.is_equal(region):
                 return r
         return None
 
@@ -696,8 +843,24 @@ class Solver(Board):
             elif self.get_type_at_loc(loc) is NUMBER:
                 self.reveal_tiles(loc[0],loc[1])
 
+def calculate_probs_from_grouped_sols(groups,sols):
+    num_sols_per_group = []
+    for i in range(len(sols)):
+        sol = sols[i]
+        num_sols_in_group = 1
+        for j in range(len(groups)):
+            num_sols_in_group *= math.comb(len(groups[j]), sol[j])
+        num_sols_per_group.append(num_sols_in_group)
+    num_sols_total = sum(num_sols_per_group)
+    sol_instances = []
+    for i in range(len(sols)):
+        instances = [(num * num_sols_per_group[i]) for num in sols[i]]
+        sol_instances.append(instances)
+    sum_cols = [sum(x) for x in zip(*sol_instances)]
+    probs_per_group = [sum/num_sols_total for sum in sum_cols]
+    return probs_per_group
 
-                
+
 
 def merge_sets(sets):
     merged = []
@@ -743,7 +906,6 @@ def order_tiles_by_connectivity(tile_neighbors):
         stack.extend(reversed(neighbors))
 
     return order
-
 
 def subdivide_locs(locs, split):
     np_locs= np.array(locs)

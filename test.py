@@ -117,5 +117,8 @@ print(len(sols_set))
 sols_a = find_matching_sols(coords,sols,[(7,13)],[1])
 print(len(sols_a))
 
+for i in range(1):
+    print(i)
+
 # print("Coordinates:", coords)
 # print("sols:", sols)
