@@ -9,7 +9,7 @@ import itertools
 import time
 import probability_test as prob
 import pickle
-
+#print adsjfoiasjfioajdsfoijasdifadsfiajoiijojoijaojdfiajsid
 
 paths_explored = 0
 merge_encounters = 0
