@@ -22,7 +22,9 @@ class Region():
         self.locs_to_check = locs_to_check
         self.groups = []
         self.group_sols = []
+        self.group_counts = []
         self.sols_bit = []
+        self.num_sols = 0
     def num_locs(self):
         return len(self.locs)
     def num_solutions(self):
@@ -555,11 +557,7 @@ class Solver(Board):
 
                         groups = region.groups
                         group_sols = self.find_solutions_group(region,groups)
-                        if region.locs == [(0, 14), (1, 14), (1, 15), (2, 15), (3, 14), (3, 15)]:
-                            pass
-                        # print(time.time()-start)
-                        # print('---------------')
-                        group_probs = calculate_probs_from_grouped_sols(groups,group_sols)
+                        group_probs,group_counts = calculate_probs_from_grouped_sols(groups,group_sols)
                         
                         for i in range(len(groups)):
                             
@@ -569,6 +567,8 @@ class Solver(Board):
                                 x,y = group[j]
                                 self.tiles[x][y].prob_mine = group_probs[i]/length
                         region.group_sols = group_sols
+                        region.group_counts = group_counts
+                        region.num_sols = sum(group_counts)
                         self.regions_set.add(region)
                         #print(region.groups)
                         # print(group_sols)
@@ -858,7 +858,7 @@ def calculate_probs_from_grouped_sols(groups,sols):
         sol_instances.append(instances)
     sum_cols = [sum(x) for x in zip(*sol_instances)]
     probs_per_group = [sum/num_sols_total for sum in sum_cols]
-    return probs_per_group
+    return probs_per_group, num_sols_per_group
 
 
 

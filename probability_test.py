@@ -1,9 +1,18 @@
 from game_state_manager import GSM
 from collections import Counter
 import copy
-
-
+import math
 #board = None
+
+def find_matching_indices(locs, targets):
+    target_set = set(map(tuple, targets)) 
+    result = []
+
+    for i, sublist in enumerate(locs):
+        if any(tuple(coord) in target_set for coord in sublist):
+            result.append(i)
+
+    return result
 
 # freqs is a list of dicts
 def convolve_freqs(freqs):
@@ -105,23 +114,49 @@ def calc_prob_of_opening_at_loc(board,loc):
         relevant_regions = {}
 
         for region in regions:
-            matching_locs = [loc for loc in region.locs if loc in frontier_tile_locs]
-            if matching_locs:
-                relevant_regions[region] = matching_locs
+            indices = find_matching_indices(region.groups,frontier_tile_locs)
+            if len(indices) > 0:
+                relevant_regions[region] = indices
+        for region, indices in relevant_regions.items():
+            groups = region.groups
+            sols = region.group_sols
+            total = region.num_sols
+            counts = region.group_counts
+            sols_with_counts = zip(sols,counts)
+            valid_sols = [
+                (sol, count)
+                for sol, count in sols_with_counts
+                if all(sol[i] < len(groups[i]) for i in indices)
+            ]    
+            sliced_valid_sols = [([sol[i] for i in indices], count) for sol, count in valid_sols]
 
-        for region, locs in relevant_regions.items():
-            #print(locs)
-            sols = region.sols_bit
-            total = len(sols)
-            if total == 0:
-                print('ERROR in calc_prob_of_opening()')
-                return
+            # print(groups)
+            # print(valid_sols)        
+            num_valid_sols = 0
+            for sol,count in sliced_valid_sols:
+                for j,num_mines in enumerate(sol):
+                    count *= 1-num_mines/len(groups[j])
+                num_valid_sols += count
+            prob_safe_frontier *= num_valid_sols/total
+            
+
+        #     matching_locs = [loc for loc in region.locs if loc in frontier_tile_locs]
+        #     if matching_locs:
+        #         relevant_regions[region] = matching_locs
+
+        # for region, locs in relevant_regions.items():
+        #     #print(locs)
+        #     sols = region.sols_bit
+        #     total = len(sols)
+        #     if total == 0:
+        #         print('ERROR in calc_prob_of_opening()')
+        #         return
         
-            indices = [region.locs.index(l) for l in locs]
-            #print(all(sol[i] == 0 for i in indices) for sol in sols)
-            valid_count = sum(all(sol[i] == 0 for i in indices) for sol in sols)
+        #     indices = [region.locs.index(l) for l in locs]
+        #     #print(all(sol[i] == 0 for i in indices) for sol in sols)
+        #     valid_count = sum(all(sol[i] == 0 for i in indices) for sol in sols)
 
-            prob_safe_frontier *= valid_count / total
+        #     prob_safe_frontier *= valid_count / total
     curr_tile.prob_opening = prob_safe_frontier * prob_safe_nonfrontier
     return curr_tile.prob_opening
 
