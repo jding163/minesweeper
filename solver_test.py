@@ -650,7 +650,7 @@ class Solver(Board):
                 self.regions_set.remove(region)
             else:
 
-                freqs = get_minecount_freqs(region.group_sols)
+                freqs = get_minecount_freqs(region)
                 #freqs = get_minecount_freqs(region.sols_bit)
                 self.region_freqs.append(freqs)
                 local_min = min(freqs)
@@ -928,9 +928,13 @@ def shift_and_subdivide_locs(locs, split):
 def get_probs(sols):
     return [sum(bits) / len(sols) for bits in zip(*sols)]
 
-def get_minecount_freqs(sols):
+def get_minecount_freqs(region):
+    sols = region.group_sols
+    counts = region.group_counts
     mine_counts = [sum(sol) for sol in sols]
-    freqs = dict(Counter(mine_counts))
+    freqs = defaultdict(int)
+    for num_mines, count in zip(mine_counts,counts):
+        freqs[num_mines] += count
     return freqs
 
 def get_minmax_minecount(sols):
