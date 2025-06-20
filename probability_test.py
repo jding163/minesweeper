@@ -123,10 +123,17 @@ def calc_prob_of_opening_at_loc(board,loc):
             total = region.num_sols
             counts = region.group_counts
             sols_with_counts = zip(sols,counts)
+            locs = [groups[i] for i in indices]
+            max_mines_per_group = []
+
+            for group in locs:
+                num_frontier_tiles_in_group = len(group)-len(set(frontier_tile_locs).intersection(set(group)))
+                max_mines_per_group.append(num_frontier_tiles_in_group)
+
             valid_sols = [
                 (sol, count)
                 for sol, count in sols_with_counts
-                if all(sol[i] < len(groups[i]) for i in indices)
+                if all(sol[i] <= max_mines_per_group[j] for j,i in enumerate(indices))
             ]    
             sliced_valid_sols = [([sol[i] for i in indices], count) for sol, count in valid_sols]
 
@@ -135,8 +142,12 @@ def calc_prob_of_opening_at_loc(board,loc):
             num_valid_sols = 0
             for sol,count in sliced_valid_sols:
                 for j,num_mines in enumerate(sol):
-                    count *= 1-num_mines/len(groups[j])
+                    group = groups[indices[j]]
+                    len_group = len(group)
+                    count *= 1-num_mines/len_group
                 num_valid_sols += count
+            if loc == (29,0):
+                print(num_valid_sols)
             prob_safe_frontier *= num_valid_sols/total
             
 
