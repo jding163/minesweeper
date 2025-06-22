@@ -374,12 +374,8 @@ class Solver(Board):
                 self.mark_tile_probs(tuple(cc),valid_sols)
             self.mark_tile_probs(nonfrontier_tiles,[[0] * len(nonfrontier_tiles)])
         prob.update_nonfrontier_tile_probs(self)
-
     
-            #self.open_known_tiles(cc,valid_sols)
     def solve_endgame_and_open(self):
-        # print(board.mines)
-        # print(board.first_click)
 
         self.solve_endgame()
         info_found = self.open_known_tiles()
@@ -412,15 +408,6 @@ class Solver(Board):
                         info_found = True
                         self.inject_num((x,y))
         return info_found
-
-    # def open_known_tiles(self,locs,sols):
-    #     probs = get_probs(sols)
-    #     for i, prob in enumerate(probs):
-    #         x, y = locs[i]
-    #         if prob == 1:
-    #             self.toggle_flag_at_loc(x,y) 
-    #         elif prob == 0:
-    #             self.reveal_tiles(x,y)
     
     def mark_known_tiles_given_sols(self,locs,sols):
         probs = get_probs(sols)
