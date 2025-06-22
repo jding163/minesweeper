@@ -34,6 +34,7 @@ def set_board(b):
 def set_game(g):
     global game
     game = g
+    player.set_game(g)
 
 
 
@@ -157,18 +158,19 @@ def handle_keypress_e():
     # print(l)
 
 def handle_keypress_t(seed=None):
-    update_mouse_pos(0,0)
     #test -8425763037098422648, -8433645031250545356,-3837008816949211577
     if GSM.get_game_state() is False:
         handle_keypress_n()
+    update_mouse_pos(0,0)
+
     if seed is None:
         handle_board_click()
     else:
         handle_board_click(seed=seed)
     start = time.time()
-    player.set_strategy(prob.SafestTile())
+    #player.set_strategy(prob.SafestTile())
 
-    #player.set_strategy(prob.CombinedSafetyAndOpeningScore())
+    player.set_strategy(prob.CombinedSafetyAndOpeningScore())
     #player.set_strategy(prob.SafestTileAndLikeliestOpening())
     player.autoplay()
     print(game_won())
@@ -178,13 +180,13 @@ def handle_keypress_t(seed=None):
 
 def handle_keypress_a():
     player.set_strategy(prob.SafestTile())
-    player.play_games(500,seed=7775)
+    player.play_games(1000,seed=444)
 def handle_keypress_s():
     player.set_strategy(prob.SafestTileAndLikeliestOpening())
-    player.play_games(500,seed=7775)
+    player.play_games(1000,seed=444)
 def handle_keypress_d():
     player.set_strategy(prob.CombinedSafetyAndOpeningScore())
-    player.play_games(500,seed=7775)
+    player.play_games(1000,seed=444)
     #print(f'merges executed: {solver_test.merge_encounters}')
 
 def handle_keypress_u():
@@ -218,8 +220,9 @@ def handle_keypress_n():
     reset_board()
 def handle_keypress_m():
     player.set_strategy(prob.CombinedSafetyAndOpeningScore())
-    player.play_games(500,seed=123123123)
-    merge_tester.Collector.save_solution_stats()
+    #player.set_strategy(prob.SafestTile())
+
+    player.play_one_step()
 
 def handle_keypress_r():
     board.reveal_board()

@@ -5,6 +5,7 @@ from game_state_manager import GSM
 import sys
 import random
 import probability as prob
+import pygame
 import concurrent.futures
 
 
@@ -19,38 +20,58 @@ class Player():
         self.board = board
     def set_strategy(self,strat):
         self.strategy = strat
+    def set_game(self,game):
+        self.game = game
         
+    def play_one_step(self,risk=True):
+        if C.game_over():
+            return
+        if self.board.solve_trivial_and_open():
+            return
 
+        elif self.board.solve_exhaustive_and_open():
+            return
+        elif self.board.solve_endgame_and_open():
+            return 
+        #probs should be marked already
+        elif risk is True and not C.game_over():
+            x,y = self.strategy.find_move(self.board)
+            #x,y = prob.find_safest_tile(self.board)
+            self.board.reveal_tiles(x,y)
+            #self.board.open_safest_tile(convolve)
 
     def autoplay(self,risk=True):
         while True:
             if C.game_over():
                 break
-            progress = False
-            if self.board.solve_trivial_and_open():
-                progress = True
-                continue 
-            if C.game_over():
-                break
-            if self.board.solve_exhaustive_and_open():
-                progress = True
-                continue  
-            if C.game_over():
-                break
-            if self.board.solve_endgame_and_open():
-                progress = True
-                continue 
-            #probs should be marked already
-            if not progress:
-                if risk is True and not C.game_over():
-                    x,y = self.strategy.find_move(self.board)
-                    #x,y = prob.find_safest_tile(self.board)
-                    self.board.reveal_tiles(x,y)
-                    #self.board.open_safest_tile(convolve)
-                    continue
-                else:
-                    break
-        return True
+            self.play_one_step(risk=risk)
+        #     if C.game_over():
+        #         break
+        #     progress = False
+        #     if self.board.solve_trivial_and_open():
+        #         progress = True
+        #         continue 
+        #     if C.game_over():
+        #         break
+        #     if self.board.solve_exhaustive_and_open():
+        #         progress = True
+        #         continue  
+        #     if C.game_over():
+        #         break
+        #     if self.board.solve_endgame_and_open():
+        #         progress = True
+        #         continue 
+        #     #probs should be marked already
+        #     if not progress:
+        #         if risk is True and not C.game_over():
+        #             x,y = self.strategy.find_move(self.board)
+        #             #x,y = prob.find_safest_tile(self.board)
+        #             self.board.reveal_tiles(x,y)
+        #             #self.board.open_safest_tile(convolve)
+        #             continue
+        #         else:
+        #             break
+        # return True
     
     def play_game(self,starts=[(0,0)],seed=None):
         C.handle_keypress_n()  # full reset

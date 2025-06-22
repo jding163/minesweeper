@@ -153,14 +153,6 @@ class Tile:
             display.blit(loc_text, text_rect)
 
 
-    # def draw_prob_text(self, display):
-    #     # Optional: skip drawing for certain states if desired
-    #     # if self.revealed or self.flagged:
-    #     #     return
-
-
-
-
 
 
 class Board:
@@ -180,80 +172,6 @@ class Board:
         self.first_click= (0,0)
         self.seed = None
         self.death_click = None
-
-    def to_dict(self):
-        tiles = copy.deepcopy(self.tiles)
-        prob_mine_array = [[tiles[row][col].prob_mine for col in range(GSM.cols)] for row in range(GSM.rows)]
-        prob_opening_array = [[tiles[row][col].prob_opening for col in range(GSM.cols)] for row in range(GSM.rows)]
-        for row in range(GSM.rows):
-            for col in range(GSM.cols):
-                tile = tiles[row][col]
-                if not tile.is_flagged() and not tile.is_revealed(): #unclicked
-                    tiles[row][col]=0
-                elif tile.is_revealed():
-                    tiles[row][col]=1
-
-                else: #flagged
-                    tiles[row][col]=2
-        #tiles = [list(row) for row in zip(*tiles)]
-        data= {
-            'settings': (GSM.rows,GSM.cols,GSM.mine_count),
-            'tiles': tiles,
-            'num_revealed': self.num_revealed,
-            'flag_count': self.flag_count,
-            'complete': self.complete,
-            'first_click': self.first_click,
-            'seed': self.seed,
-            'death_click': self.death_click,
-            'prob_mine_array': prob_mine_array,
-            'prob_opening_array': prob_opening_array
-        }
-        with open('test.txt', 'w') as f:
-            pprint.pprint(data, stream=f)
-        return data
-        
-    @classmethod
-    def from_dict(cls,data):
-        GSM.set_board(data['settings'])
-        board = cls()
-        board.display = pygame.Surface((GSM.rows * TILESIZE, GSM.cols * TILESIZE))
-        board.num_revealed = data['num_revealed']
-        board.flag_count = data['flag_count']
-        board.complete = data['complete']
-
-        board.first_click = data['first_click']
-
-        board.seed = data['seed']
-        board.death_click = data['death_click']
-
-        board.populate(first_click=board.first_click,seed=board.seed)
-        tiles = data['tiles']
-        prob_mine_array = data['prob_mine_array']
-        prob_opening_array = data['prob_opening_array']
-
-        for row in range(GSM.rows):
-            for col in range(GSM.cols):
-                tile = tiles[row][col]
-                board.tiles[row][col].prob_mine = prob_mine_array[row][col]
-                board.tiles[row][col].prob_opening = prob_opening_array[row][col]
-                if tile == 2:
-                    board.toggle_flag_at_loc(row,col)
-
-
-        board.reveal_tiles(board.first_click[0],board.first_click[1])
-        if board.death_click is not None:
-            board.reveal_tiles(board.death_click[0],board.death_click[1])
-        for row in range(GSM.rows):
-            for col in range(GSM.cols):
-                tile = tiles[row][col]
-                if tile == 1:
-                    board.reveal_tiles(row,col)
-        if board.death_click is not None:
-            GSM.set_game_state(False)
-        else:
-            GSM.set_game_state(True)
-
-        return board
 
     def reset_probs(self):
         for row in self.tiles:
@@ -436,11 +354,6 @@ class Board:
             for col in range(GSM.cols):
                 if self.tiles[row][col].is_flagged() and (row,col) not in self.mines:
                     self.tiles[row][col].set_type(UNKNOWN)
-
-        #             self.tiles[row][col].set_revealed(True)
-        #         if self.tiles[row][col].get_type() is not MINE and self.tiles[row][col].is_flagged():
-        #             self.tiles[row][col].set_revealed(True)
-        #GSM.set_game_state(False)
 
     def reveal_board(self):
         if not self.mines:

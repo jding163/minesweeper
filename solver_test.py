@@ -5,6 +5,15 @@ import numpy as np
 from collections import Counter
 import math
 import itertools
+import logging
+
+# Set up logging
+logging.basicConfig(
+    filename='debug.log',            # File to write to
+    filemode='w',                    # 'w' to overwrite, 'a' to append
+    level=logging.DEBUG,             # Minimum logging level
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
 
 import time
 import probability_test as prob
@@ -82,27 +91,6 @@ class Solver(Board):
 
         sorted_groups.sort(key=lambda group: (group[0][0], group[0][1]))
         return sorted_groups
-
-
-
-
-
-    def to_dict(self):
-        data = super().to_dict()
-        data['nonfrontier_tiles'] = self.nonfrontier_tiles
-        data['regions_set'] = self.regions_set
-        data['region_freqs'] = self.region_freqs
-        with open('test.txt', 'w') as f:
-            pprint.pprint(data, stream=f)
-        return data
-    
-    @classmethod 
-    def from_dict(cls, data):
-        solver = cls(first_click=data['first_click'])
-        solver.nonfrontier_tiles = data['nonfrontier_tiles']
-        solver.regions_set = data['regions_set']
-        solver.region_freqs = data['region_freqs']
-        return solver
 
 
     # flags neighbors if they are known to be mines
@@ -442,15 +430,8 @@ class Solver(Board):
     def update_solutions_with_new_constraints(self,region,updated_region):
         if region.locs != updated_region.locs or region.is_equal(updated_region):
             return
-        # print('here')
-        # print('---------------------')
         region.locs_to_check = updated_region.locs_to_check
         new_sols = []
-        # for sol in region.sols_bit:
-        #     if(self.verify_bit_solution(sol,region)):
-        #         new_sols.append(sol)
-        # region.sols_bit = new_sols
-
         for sol in region.group_sols:
             if(self.verify_group_sol(sol,region)):
                 new_sols.append(sol)
@@ -481,6 +462,7 @@ class Solver(Board):
         valid_sols_bit = merged_region.get_sols_as_bits(merged_sols)            
         merged_region.set_sols_bit(valid_sols_bit)
         return merged_region
+    
     def solve_exhaustive(self,merge=True):
         global merge_encounters
         ccs = self.get_ccs()
@@ -489,25 +471,11 @@ class Solver(Board):
             groups = self.group_equivalent_tiles(region)
             region.groups = groups
 
-        #self.store_ccs_as_regions(ccs)
-        # for r in self.regions_set:
-        #     print(r.locs)
-        #paths_explored = 0
         self.start_time = time.time()
         for region in regions:
             region_solved = self.check_for_existing_solutions_in_set(region,self.regions_set)
             if region_solved is not None and region_solved.is_equal(region):
                 continue
-                # # if solutions to region are not updated with current board state
-                # if not region_solved.is_equal(region): 
-                #     print(region_solved.groups)
-                #     print(region_solved.group_sols)
-                #     self.update_solutions_with_new_constraints(region_solved,region)
-                #     region_solved.groups=groups
-                #     print(region_solved.groups)
-                #     print(region_solved.group_sols)
-                #     self.mark_tile_probs_by_group(region_solved.groups,region_solved.group_sols)
-                    #self.mark_tile_probs(region_solved.locs,region_solved.sols_bit)
             else:
                 subregions = []
                 remaining = set()
@@ -546,13 +514,6 @@ class Solver(Board):
 
                 else:
                     if region.num_locs() <=100:
-                        # start = time.time()
-                        # sols = self.find_solutions(region)
-                        # print(time.time()-start)
-                        # self.mark_tile_probs(region.locs,sols)
-                        # region.sols_bit = sols
-                        # self.regions_set.add(region)
-
                         start = time.time()
 
                         groups = region.groups
@@ -570,15 +531,6 @@ class Solver(Board):
                         region.group_counts = group_counts
                         region.num_sols = sum(group_counts)
                         self.regions_set.add(region)
-                        #print(region.groups)
-                        # print(group_sols)
-                        # print(len(group_sols))
-                        # print(len(sols))
-
-                        #print(sorted(region.locs_to_check,key=lambda coord: (coord[0], coord[1])))
-                        #print(len(region.locs_to_check))
-                        # print(region.locs)
-                        # print(sols)
 
                     else:
                         #start=time.time()
@@ -590,13 +542,30 @@ class Solver(Board):
 
 
     def solve_exhaustive_and_open(self):
+        #print(self.flag_count)
+
         self.solve_exhaustive()
         info_found = self.open_known_tiles()
+        regions = self.get_regions()
+        updated = set()
+
+        for region in list(self.regions_set):
+            
+            matching = False
+            for r in regions:
+                if set(r.locs) == set(region.locs) and set(r.locs_to_check) == set(region.locs_to_check):
+                    matching=True
+                    break
+            if matching:
+                updated.add(region)
+        self.regions_set = updated
         return info_found
     
     # assume all known mines are flagged
     # assume that solve_board() was called previously and failed
     def solve_endgame(self):
+        regions = self.get_regions()
+        #assert(len(regions) == len(self.regions_set))
         min_flags = 0
         max_flags = 0
 
@@ -620,8 +589,8 @@ class Solver(Board):
             for col in range(GSM.cols):
                 if self.get_type_at_loc((row,col)) == UNKNOWN and (row,col) not in frontier_tiles:
                     nonfrontier_tiles.append((row,col))
-
         self.nonfrontier_tiles = nonfrontier_tiles
+
         remaining_mines = GSM.mine_count-self.flag_count
         if remaining_mines == 0:
             for x,y in nonfrontier_tiles:
@@ -632,34 +601,18 @@ class Solver(Board):
         region_max={}
         self.region_freqs = []
 
-        for region in list(self.regions_set):
-            #locs = region.locs
-            # in_regions = False
-            # for r in regions:
-            #     if region.is_equal(r):
-            #         in_regions = True
-            #         break
-            #in_regions = self.check_for_existing_solutions_in_set(region,regions)
-            
-            matching = False
-            for r in regions:
-                if set(r.locs) == set(region.locs) and set(r.locs_to_check) == set(region.locs_to_check):
-                    matching=True
-                    break
-            if not matching:
-                self.regions_set.remove(region)
-            else:
+        for region in self.regions_set:
 
-                freqs = get_minecount_freqs(region)
-                #freqs = get_minecount_freqs(region.sols_bit)
-                self.region_freqs.append(freqs)
-                local_min = min(freqs)
-                local_max = max(freqs)
-                region_min[region] = local_min
-                region_max[region] = local_max
-                min_flags += local_min
-                max_flags += local_max
-
+            freqs = get_minecount_freqs(region)
+            #freqs = get_minecount_freqs(region.sols_bit)
+            #self.region_freqs.append(freqs)
+            region.freqs = freqs
+            local_min = min(freqs)
+            local_max = max(freqs)
+            region_min[region] = local_min
+            region_max[region] = local_max
+            min_flags += local_min
+            max_flags += local_max
         if max_flags + len(nonfrontier_tiles) == remaining_mines:
             for region in self.regions_set:
                 if region not in regions:
@@ -756,25 +709,16 @@ class Solver(Board):
                     tile_neighbors[a].add(b)
                     tile_neighbors[b].add(a)
         order = sorted(locs,key=lambda coord: (coord[0], coord[1]))
-
-        # if len(locs) == 1:
-        #     order = list(locs)
-        # else:
-        #     order = order_tiles_by_connectivity(tile_neighbors)
         locs_to_check = list(constraint_map.keys())
         return order, locs_to_check
     
     def check_for_existing_solutions_in_set(self, region,set_to_check):
         for r in set_to_check:
             if set(r.locs) == set(region.locs):
-            #if r.is_equal(region):
                 return r
         return None
 
     def solve_endgame_and_open(self):
-        # print(board.mines)
-        # print(board.first_click)
-
         self.solve_endgame()
         info_found = self.open_known_tiles()
         return info_found
