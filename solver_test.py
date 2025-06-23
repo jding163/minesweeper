@@ -792,16 +792,24 @@ def calculate_probs_from_grouped_sols(groups,sols):
     for i in range(len(sols)):
         sol = sols[i]
         num_sols_in_group = 1
+        # compute total combinations for a given solution
         for j in range(len(groups)):
             num_sols_in_group *= math.comb(len(groups[j]), sol[j])
         num_sols_per_group.append(num_sols_in_group)
     num_sols_total = sum(num_sols_per_group)
+
     sol_instances = []
     for i in range(len(sols)):
         instances = [(num * num_sols_per_group[i]) for num in sols[i]]
         sol_instances.append(instances)
     sum_cols = [sum(x) for x in zip(*sol_instances)]
     probs_per_group = [sum/num_sols_total for sum in sum_cols]
+    print(groups)
+    print(sols)
+    print(num_sols_per_group)
+    print(sol_instances)
+    print(sum_cols)
+    print(probs_per_group)
     return probs_per_group, num_sols_per_group
 
 
