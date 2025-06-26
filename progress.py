@@ -2,7 +2,7 @@ from game_state_manager import GSM
 import probability_test as prob
 
 def calc_secondary_safety_at_loc(board,loc):
-    regions = board.regions_set
+    regions = board.regions_list
     region = next(r for r in regions if loc in r.locs)
     groups = region.groups
     sols = region.group_sols

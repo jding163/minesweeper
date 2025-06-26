@@ -66,7 +66,7 @@ class Tile:
         self.flagged = False
         self.num_adj_mines = 0
         self.num_adj_flags = 0
-        self.prob_mine = -1
+        self.prob_mine_local = -1
         self.prob_opening = -1
 
         # 0: non-edge non-corner 1: edge 2: corner
@@ -138,12 +138,12 @@ class Tile:
             else:
                 display.blit(image_dict[tile_not_mine_path],(self.x,self.y))
         if display_probs == 1:
-            if self.prob_mine != -1 and not self.revealed and not self.flagged:
-                prob_text = Tile.font.render(f"{self.prob_mine * 100:.1f}", True, (0, 0, 0))  # Black text
+            if self.prob_mine_local != -1 and not self.revealed and not self.flagged:
+                prob_text = Tile.font.render(f"{self.prob_mine_local * 100:.1f}", True, (0, 0, 0))  # Black text
                 text_rect = prob_text.get_rect(center=(self.x + TILESIZE // 2, self.y + TILESIZE // 2))
                 display.blit(prob_text, text_rect)
         elif display_probs == 2:
-            if self.prob_mine != -1 and not self.revealed and not self.flagged:
+            if self.prob_mine_local != -1 and not self.revealed and not self.flagged:
                 prob_text = Tile.font.render(f"{self.prob_opening * 100:.1f}", True, (0, 0, 0))  # Black text
                 text_rect = prob_text.get_rect(center=(self.x + TILESIZE // 2, self.y + TILESIZE // 2))
                 display.blit(prob_text, text_rect)
@@ -176,7 +176,7 @@ class Board:
     def reset_probs(self):
         for row in self.tiles:
             for tile in row: 
-                tile.prob_mine = -1
+                tile.prob_mine_local = -1
 
     def get_type_at_loc(self,loc):
         return self.tiles[loc[0]][loc[1]].get_type()

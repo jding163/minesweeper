@@ -135,9 +135,8 @@ def handle_board_right_click():
 
 
 def handle_keypress_p():
-    strat = prob.CombinedSafetyAndOpeningScore()
-    x,y = strat.find_move(board)
-    board.reveal_tiles(x,y)
+    player.set_strategy(prob.CombinedSafetyAndOpeningScore())
+    player.play_one_step()
 
 def handle_keypress_q():
     board.solve_trivial_and_open()
@@ -168,9 +167,9 @@ def handle_keypress_t(seed=None):
     else:
         handle_board_click(seed=seed)
     start = time.time()
-    #player.set_strategy(prob.SafestTile())
+    player.set_strategy(prob.SafestTile())
 
-    player.set_strategy(prob.CombinedSafetyAndOpeningScore())
+    #player.set_strategy(prob.CombinedSafetyAndOpeningScore())
     #player.set_strategy(prob.SafestTileAndLikeliestOpening())
     player.autoplay()
     print(game_won())
@@ -180,24 +179,23 @@ def handle_keypress_t(seed=None):
 
 def handle_keypress_a():
     player.set_strategy(prob.SafestTile())
-    player.play_games(1000,seed=444)
+    player.play_games(1000,seed=5)
 def handle_keypress_s():
     player.set_strategy(prob.SafestTileAndLikeliestOpening())
-    player.play_games(1000,seed=444)
+    player.play_games(1000,seed=5)
 def handle_keypress_d():
     player.set_strategy(prob.CombinedSafetyAndOpeningScore())
-    player.play_games(1000,seed=444)
+    player.play_games(1000,seed=5)
     #print(f'merges executed: {solver_test.merge_encounters}')
 
 def handle_keypress_u():
-    strat = prob.SafestTile()
-    x,y = strat.find_move(board)
-    board.reveal_tiles(x,y)
+    player.set_strategy(prob.SafestTile())
+    player.play_one_step()
+
 
 def handle_keypress_y():
-    strat = prob.SafestTileAndLikeliestOpening()
-    x,y = strat.find_move(board)
-    board.reveal_tiles(x,y)
+    player.set_strategy(prob.SafestTileAndLikeliestOpening())
+    player.play_one_step()
 
 def handle_keypress_k():
     board.open_known_tiles()
@@ -219,10 +217,11 @@ def handle_keypress_n():
     game.reset()
     reset_board()
 def handle_keypress_m():
-    player.set_strategy(prob.CombinedSafetyAndOpeningScore())
-    #player.set_strategy(prob.SafestTile())
+   reqs = {(0,0):1,(0,2):2,(29,0):1,(29,15):1,(27,15):2}
+   #reqs = {(0,0):1}
 
-    player.play_one_step()
+   print(player.find_matching_board_state(reqs))
+
 
 def handle_keypress_r():
     board.reveal_board()

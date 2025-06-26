@@ -80,7 +80,7 @@ def calc_prob_of_opening_at_loc(board,loc):
         elif not tile.is_revealed():
             if tile.loc in board.nonfrontier_tiles:
                 num_nonfrontier_tiles += 1 
-                prob_safe_nonfrontier *= (1-tile.prob_mine)
+                prob_safe_nonfrontier *= (1-tile.prob_mine_local)
             else:
                 frontier_tiles.add(tile)
                 frontier_tile_locs.add(tile.loc)
@@ -150,16 +150,16 @@ def update_nonfrontier_tile_probs(board):
         sol_freqs = convolve_freqs(board.ccs_freqs)
         if len(sol_freqs) == 0:
             for x,y in board.nonfrontier_tiles:
-                prob_mine = (GSM.mine_count - board.flag_count)/len(board.nonfrontier_tiles)
-                board.tiles[x][y].prob_mine = prob_mine
-                #board.tiles[x][y].prob_mine = GSM.mine_count/(GSM.rows*GSM.cols)
+                prob_mine_local = (GSM.mine_count - board.flag_count)/len(board.nonfrontier_tiles)
+                board.tiles[x][y].prob_mine_local = prob_mine_local
+                #board.tiles[x][y].prob_mine_local = GSM.mine_count/(GSM.rows*GSM.cols)
         else:
             num_sols_total = sum(sol_freqs.values())
             prob_dist = {mc: num_sols_for_mc / num_sols_total for mc, num_sols_for_mc in sol_freqs.items()}
             mines_left = len(board.mines) - board.flag_count
             prob_for_nonfrontier_tiles = calc_prob_for_nonfrontier_tiles(prob_dist,mines_left,len(board.nonfrontier_tiles))
             for x,y in board.nonfrontier_tiles:
-                board.tiles[x][y].prob_mine = prob_for_nonfrontier_tiles
+                board.tiles[x][y].prob_mine_local = prob_for_nonfrontier_tiles
         return sol_freqs
     return None
 
@@ -189,12 +189,12 @@ class SafestTile(Strategy):
                 tile = board.tiles[x][y]
                 if not tile.is_revealed() and not tile.is_flagged():
                     # print('{},{}'.format(x,y))
-                    if tile.prob_mine < min_prob:
-                        min_prob = tile.prob_mine
+                    if tile.prob_mine_local < min_prob:
+                        min_prob = tile.prob_mine_local
                         min_x = x
                         min_y = y
                         priority = tile.pos_type
-                    elif tile.prob_mine == min_prob:
+                    elif tile.prob_mine_local == min_prob:
                         if tile.pos_type > priority:
                             min_x = x
                             min_y = y
@@ -218,14 +218,14 @@ class SafestTileAndLikeliestOpening(Strategy):
                 tile = board.tiles[x][y]
                 if not tile.is_revealed() and not tile.is_flagged():
                     # print('{},{}'.format(x,y))
-                    if tile.prob_mine < min_prob:
-                        min_prob = tile.prob_mine
+                    if tile.prob_mine_local < min_prob:
+                        min_prob = tile.prob_mine_local
                         min_x = x
                         min_y = y
                         priority = tile.pos_type
                         prob_opening = tile.prob_opening
 
-                    elif tile.prob_mine == min_prob:
+                    elif tile.prob_mine_local == min_prob:
                         if tile.pos_type > priority:
                             min_x = x
                             min_y = y
@@ -239,13 +239,13 @@ class SafestTileAndLikeliestOpening(Strategy):
                                 min_y = y
                                 prob_opening = comp_prob_opening
 
-                    # if tile.prob_mine < min_prob:
-                    #     min_prob = tile.prob_mine
+                    # if tile.prob_mine_local < min_prob:
+                    #     min_prob = tile.prob_mine_local
                     #     min_x = x
                     #     min_y = y
                     #     prob_opening = tile.prob_opening
                     #     #print(prob_opening)
-                    # elif tile.prob_mine == min_prob:
+                    # elif tile.prob_mine_local == min_prob:
                     #     comp_prob_opening = tile.prob_opening
                     #     #print(comp_prob_opening)
                     #     if comp_prob_opening > prob_opening:

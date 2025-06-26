@@ -322,12 +322,12 @@ class Solver(Board):
             return
         #print(ccs)
         # if len(ccs) == 0:
-        #     prob_mine_nonfrontier = remaining_mines/len(nonfrontier_tiles)
+        #     prob_mine_local_nonfrontier = remaining_mines/len(nonfrontier_tiles)
         #     tiles_to_update = [self.tiles[t[0]][t[1]] for t in nonfrontier_tiles]
         #     for t in tiles_to_update:
-        #         #t.prob_mine=0.1
-        #         t.prob_mine = prob_mine_nonfrontier
-        #     #self.mark_tile_probs(nonfrontier_tiles,[[prob_mine_nonfrontier] * len(nonfrontier_tiles)])
+        #         #t.prob_mine_local=0.1
+        #         t.prob_mine_local = prob_mine_local_nonfrontier
+        #     #self.mark_tile_probs(nonfrontier_tiles,[[prob_mine_local_nonfrontier] * len(nonfrontier_tiles)])
         #     return
         ccs_min = {}
         ccs_max = {}
@@ -387,10 +387,10 @@ class Solver(Board):
             for y in range(GSM.cols):
                 tile = self.tiles[x][y]
                 if not tile.is_revealed() and not tile.is_flagged():
-                    if tile.prob_mine == 1:
+                    if tile.prob_mine_local == 1:
                         opened = True
                         self.toggle_flag_at_loc(x,y)
-                    elif tile.prob_mine == 0:
+                    elif tile.prob_mine_local == 0:
                         opened = True
                         self.reveal_tiles(x,y)
         return opened
@@ -401,10 +401,10 @@ class Solver(Board):
             for y in range(GSM.cols):
                 tile = self.tiles[x][y]
                 if not tile.is_revealed() and not tile.is_flagged():
-                    if tile.prob_mine == 1:
+                    if tile.prob_mine_local == 1:
                         info_found = True
                         self.inject_mine((x,y))
-                    elif tile.prob_mine == 0:
+                    elif tile.prob_mine_local == 0:
                         info_found = True
                         self.inject_num((x,y))
         return info_found
@@ -426,7 +426,7 @@ class Solver(Board):
         probs = get_probs(sols)
         for i in range(len(probs)):
             x,y = locs[i]
-            self.tiles[x][y].prob_mine = probs[i]
+            self.tiles[x][y].prob_mine_local = probs[i]
 
     def open_marked_tiles(self,locs):
         for loc in locs:
