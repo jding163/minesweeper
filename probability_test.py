@@ -101,7 +101,7 @@ def find_matching_indices(locs, targets):
 # freqs is a list of dicts
 def convolve_freqs(freqs):
     if len(freqs) == 0:
-        return {}
+        return {},{}
     total_freqs = Counter()
     subdivs = defaultdict(list)
     for tm,tc in freqs[0].items():
@@ -205,6 +205,8 @@ def calc_prob_of_opening_at_loc(board,loc):
     
 
     else:
+        if loc == (0,2):
+            pass
         regions = board.regions_list
         relevant_regions = {}
 
@@ -365,7 +367,7 @@ class CombinedSafetyAndOpeningScore(Strategy):
                     if tile.is_unknown():
                         if tile.prob_mine_local < max_threshold:
                             candidates.append(tile)
-            max_threshold += 0.1
+            max_threshold += 0.05
         best_candidate = candidates[0]
         for candidate in candidates:
             if candidate.prob_opening > best_candidate.prob_opening:
