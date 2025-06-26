@@ -69,7 +69,7 @@ class Solver(Board):
         super().__init__()
         self.first_click = first_click
         self.nonfrontier_tiles = []
-        self.regions_set = set()
+        self.regions_list = []
         self.region_freqs = []
         #self.populate(first_click)
         #self.reveal_tiles(first_click[0],first_click[1])
@@ -139,13 +139,13 @@ class Solver(Board):
         for row in range(GSM.rows):
             for col in range(GSM.cols):
                 if self.tiles[row][col].is_revealed():
-                    self.tiles[row][col].prob_mine = 0
+                    self.tiles[row][col].prob_mine_local = 0
                     if self.tiles[row][col].get_type() is OPENING:
                         self.tiles[row][col].prob_opening = 1
                     else:
                         self.tiles[row][col].prob_opening = 0
                 elif self.tiles[row][col].is_flagged():
-                    self.tiles[row][col].prob_mine = 0
+                    self.tiles[row][col].prob_mine_local = 0
                     self.tiles[row][col].prob_opening = 0
         return not ((init_mines == prev_mines) and (prev_revealed == init_revealed)) # solution found or not
         
@@ -414,10 +414,10 @@ class Solver(Board):
         probs = get_probs(sols)
         for i in range(len(probs)):
             x,y = locs[i]
-            self.tiles[x][y].prob_mine = probs[i]
+            self.tiles[x][y].prob_mine_local = probs[i]
     
     def mark_tile_probs_by_group(self,groups,group_sols):
-        group_probs = calculate_probs_from_grouped_sols(groups,group_sols)
+        group_probs = prob.calculate_probs_from_grouped_sols(groups,group_sols)
         
         for i in range(len(groups)):
             
@@ -425,7 +425,7 @@ class Solver(Board):
             length = len(group)
             for j in range(length):
                 x,y = group[j]
-                self.tiles[x][y].prob_mine = group_probs[i]/length
+                self.tiles[x][y].prob_mine_local = group_probs[i]/length
 
     def update_solutions_with_new_constraints(self,region,updated_region):
         if region.locs != updated_region.locs or region.is_equal(updated_region):
@@ -473,14 +473,14 @@ class Solver(Board):
 
         self.start_time = time.time()
         for region in regions:
-            region_solved = self.check_for_existing_solutions_in_set(region,self.regions_set)
+            region_solved = self.check_for_existing_solutions_in_set(region,self.regions_list)
             if region_solved is not None and region_solved.is_equal(region):
                 continue
             else:
                 subregions = []
                 remaining = set()
 
-                for subregion in self.regions_set:
+                for subregion in self.regions_list:
                     if subregion.is_subset_of_region(region):
                         subregions.append(subregion)
                     else:
@@ -491,21 +491,21 @@ class Solver(Board):
                         merged_region = self.merge_region_with_existing_regions(region,subregions)
                         self.mark_tile_probs(merged_region.locs,merged_region.sols_bit)
 
-                        self.regions_set = remaining
-                        self.regions_set.add(merged_region)
+                        self.regions_list = remaining
+                        self.regions_list.append(merged_region)
                     else:
                         if region.num_locs() <=10:
                             sols = self.find_solutions(region)
                             self.mark_tile_probs(region.locs,sols)
                             region.sols_bit = sols
-                            self.regions_set.add(region)
+                            self.regions_list.append(region)
 
                         else:
                             #start=time.time()
                             sols = self.find_solutions_subdiv(region)
                             self.mark_tile_probs(region.locs,sols)
                             region.sols_bit = sols
-                            self.regions_set.add(region)
+                            self.regions_list.append(region)
                             
                             #print(time.time()-start)
 
@@ -518,7 +518,7 @@ class Solver(Board):
 
                         groups = region.groups
                         group_sols = self.find_solutions_group(region,groups)
-                        group_probs,group_counts = calculate_probs_from_grouped_sols(groups,group_sols)
+                        group_probs,group_counts = prob.calculate_probs_from_grouped_sols(groups,group_sols)
                         
                         for i in range(len(groups)):
                             
@@ -526,18 +526,19 @@ class Solver(Board):
                             length = len(group)
                             for j in range(length):
                                 x,y = group[j]
-                                self.tiles[x][y].prob_mine = group_probs[i]/length
+                                self.tiles[x][y].prob_mine_local = group_probs[i]/length
                         region.group_sols = group_sols
                         region.group_counts = group_counts
                         region.num_sols = sum(group_counts)
-                        self.regions_set.add(region)
+                        region.freqs = get_minecount_freqs(region)
+                        self.regions_list.append(region)
 
                     else:
                         #start=time.time()
                         sols = self.find_solutions_subdiv(region)
                         self.mark_tile_probs(region.locs,sols)
                         region.sols_bit = sols
-                        self.regions_set.add(region)
+                        self.regions_list.append(region)
                         #print(time.time()-start)
 
 
@@ -545,11 +546,21 @@ class Solver(Board):
         #print(self.flag_count)
 
         self.solve_exhaustive()
+
+        # print(f'{(1,0)}: {prob.calc_global_prob_at_loc((1,0),self,sols_per_mines_in_frontier, subdivs)}')
+        # print(f'{(0,1)}: {prob.calc_global_prob_at_loc((0,1),self,sols_per_mines_in_frontier, subdivs)}')
+        # print(f'{(1,1)}: {prob.calc_global_prob_at_loc((1,1),self,sols_per_mines_in_frontier, subdivs)}')
+        # print(f'{(1,2)}: {prob.calc_global_prob_at_loc((1,2),self,sols_per_mines_in_frontier, subdivs)}')
+        # print(f'{(1,3)}: {prob.calc_global_prob_at_loc((1,3),self,sols_per_mines_in_frontier, subdivs)}')
+        # print(f'{(0,3)}: {prob.calc_global_prob_at_loc((0,3),self,sols_per_mines_in_frontier, subdivs)}')
+
+        # prob.calc_global_prob_at_loc((0,1),self,sols_per_mines_in_frontier, subdivs)
+
         info_found = self.open_known_tiles()
         regions = self.get_regions()
-        updated = set()
+        updated = []
 
-        for region in list(self.regions_set):
+        for region in self.regions_list:
             
             matching = False
             for r in regions:
@@ -557,15 +568,16 @@ class Solver(Board):
                     matching=True
                     break
             if matching:
-                updated.add(region)
-        self.regions_set = updated
+                updated.append(region)
+        self.regions_list = updated
+
         return info_found
     
     # assume all known mines are flagged
     # assume that solve_board() was called previously and failed
     def solve_endgame(self):
         regions = self.get_regions()
-        #assert(len(regions) == len(self.regions_set))
+        #assert(len(regions) == len(self.regions_list))
         min_flags = 0
         max_flags = 0
 
@@ -595,18 +607,15 @@ class Solver(Board):
         if remaining_mines == 0:
             for x,y in nonfrontier_tiles:
                 self.reveal_tiles(x,y)
-            return
+            return True
         
         region_min={}
         region_max={}
         self.region_freqs = []
 
-        for region in self.regions_set:
+        for region in self.regions_list:
+            freqs = region.freqs
 
-            freqs = get_minecount_freqs(region)
-            #freqs = get_minecount_freqs(region.sols_bit)
-            #self.region_freqs.append(freqs)
-            region.freqs = freqs
             local_min = min(freqs)
             local_max = max(freqs)
             region_min[region] = local_min
@@ -614,7 +623,7 @@ class Solver(Board):
             min_flags += local_min
             max_flags += local_max
         if max_flags + len(nonfrontier_tiles) == remaining_mines:
-            for region in self.regions_set:
+            for region in self.regions_list:
                 if region not in regions:
                     continue
                 local_max = region_max[region]
@@ -623,7 +632,7 @@ class Solver(Board):
             self.mark_tile_probs(nonfrontier_tiles,[[1] * len(nonfrontier_tiles)])
         # all non-border tiles are safe, solution uses min amount of mines
         elif min_flags == remaining_mines:
-            for region in self.regions_set:
+            for region in self.regions_list:
                 if region not in regions:
                     continue
                 local_min = region_min[region]
@@ -631,6 +640,7 @@ class Solver(Board):
                 self.mark_tile_probs(region.locs,valid_sols)
             self.mark_tile_probs(nonfrontier_tiles,[[0] * len(nonfrontier_tiles)])
         prob.update_nonfrontier_tile_probs(self)
+        return False
 
                             
     def open_remaining(self):
@@ -719,9 +729,23 @@ class Solver(Board):
         return None
 
     def solve_endgame_and_open(self):
-        self.solve_endgame()
-        info_found = self.open_known_tiles()
-        return info_found
+        solved = self.solve_endgame()
+        if not solved and len(self.regions_list) > 0:
+            info_found = self.open_known_tiles()
+            if not info_found:
+                sols_per_mines_in_frontier, subdivs = prob.get_sol_counts(self)
+
+                for x in range(GSM.rows):
+                    for y in range(GSM.cols):
+                        loc = (x,y)
+                        tile = self.tiles[x][y]
+                        if tile.get_type() is UNKNOWN and loc not in self.nonfrontier_tiles:
+                            global_prob_at_loc = prob.calc_global_prob_at_loc(loc,self,sols_per_mines_in_frontier, subdivs)
+                            tile.prob_mine_local = global_prob_at_loc
+            info_found = self.open_known_tiles()
+
+            return info_found
+        return solved
 
     def open_known_tiles(self):
         opened = False
@@ -729,10 +753,10 @@ class Solver(Board):
             for y in range(GSM.cols):
                 tile = self.tiles[x][y]
                 if not tile.is_revealed() and not tile.is_flagged():
-                    if tile.prob_mine == 1:
+                    if tile.prob_mine_local == 1:
                         opened = True
                         self.toggle_flag_at_loc(x,y)
-                    elif tile.prob_mine == 0:
+                    elif tile.prob_mine_local == 0:
                         opened = True
                         self.reveal_tiles(x,y)
         return opened
@@ -744,10 +768,10 @@ class Solver(Board):
             for y in range(GSM.cols):
                 tile = self.tiles[x][y]
                 if not tile.is_revealed() and not tile.is_flagged():
-                    if tile.prob_mine == 1:
+                    if tile.prob_mine_local == 1:
                         info_found = True
                         self.inject_mine((x,y))
-                    elif tile.prob_mine == 0:
+                    elif tile.prob_mine_local == 0:
                         info_found = True
                         self.inject_num((x,y))
         return info_found
@@ -778,7 +802,7 @@ class Solver(Board):
     #     probs = get_probs(sols)
     #     for i in range(len(probs)):
     #         x,y = locs[i]
-    #         self.tiles[x][y].prob_mine = probs[i]
+    #         self.tiles[x][y].prob_mine_local = probs[i]
 
     def open_marked_tiles(self,locs):
         for loc in locs:
@@ -787,30 +811,7 @@ class Solver(Board):
             elif self.get_type_at_loc(loc) is NUMBER:
                 self.reveal_tiles(loc[0],loc[1])
 
-def calculate_probs_from_grouped_sols(groups,sols):
-    num_sols_per_group = []
-    for i in range(len(sols)):
-        sol = sols[i]
-        num_sols_in_group = 1
-        # compute total combinations for a given solution
-        for j in range(len(groups)):
-            num_sols_in_group *= math.comb(len(groups[j]), sol[j])
-        num_sols_per_group.append(num_sols_in_group)
-    num_sols_total = sum(num_sols_per_group)
 
-    sol_instances = []
-    for i in range(len(sols)):
-        instances = [(num * num_sols_per_group[i]) for num in sols[i]]
-        sol_instances.append(instances)
-    sum_cols = [sum(x) for x in zip(*sol_instances)]
-    probs_per_group = [sum/num_sols_total for sum in sum_cols]
-    print(groups)
-    print(sols)
-    print(num_sols_per_group)
-    print(sol_instances)
-    print(sum_cols)
-    print(probs_per_group)
-    return probs_per_group, num_sols_per_group
 
 
 

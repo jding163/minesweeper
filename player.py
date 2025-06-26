@@ -96,6 +96,30 @@ class Player():
             'won': won,
             'time': duration
         }
+    
+    def find_matching_board_state(self,reqs,first_click=(0,0)):
+        if first_click in reqs.keys() and reqs[first_click] == -1:
+            print('impossible requirements')
+            return
+        while True:
+            seed = random.randint(min_size,max_size)
+            C.handle_keypress_n()
+            C.update_mouse_pos(first_click[0], first_click[1])
+            C.handle_board_click(seed=seed)
+            reqs_satisfied = True
+            for req,tiletype in reqs.items():
+                x,y = req
+                if tiletype == -1: #mine
+                    reqs_satisfied = (x,y) in self.board.mines
+                else:
+                    reqs_satisfied = ((not (x,y) in self.board.mines) and (self.board.tiles[x][y].get_adj_mines() == tiletype))
+                if not reqs_satisfied:
+                    break
+            if not reqs_satisfied:
+                continue
+            return seed
+
+
 
     def play_games(self,num_games,seed=None):
         if seed is not None:
