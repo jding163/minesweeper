@@ -6,6 +6,7 @@ from solver import Solver
 #import probability as prob
 import solver_test
 import merge_tester
+import strategy as strat
 
 import probability_test as prob
 import pickle
@@ -135,7 +136,7 @@ def handle_board_right_click():
 
 
 def handle_keypress_p():
-    player.set_strategy(prob.CombinedSafetyAndOpeningScore())
+    player.set_strategy(strat.CombinedSafetyAndOpeningScore())
     player.play_one_step()
 
 def handle_keypress_q():
@@ -167,10 +168,10 @@ def handle_keypress_t(seed=None):
     else:
         handle_board_click(seed=seed)
     start = time.time()
-    player.set_strategy(prob.SafestTile())
+    player.set_strategy(strat.SafestTile())
 
-    #player.set_strategy(prob.CombinedSafetyAndOpeningScore())
-    #player.set_strategy(prob.SafestTileAndLikeliestOpening())
+    #player.set_strategy(strat.CombinedSafetyAndOpeningScore())
+    #player.set_strategy(strat.SafestTileAndLikeliestOpening())
     player.autoplay()
     print(game_won())
     print(time.time()-start)
@@ -178,23 +179,23 @@ def handle_keypress_t(seed=None):
 
 
 def handle_keypress_a():
-    player.set_strategy(prob.SafestTile())
+    player.set_strategy(strat.SafestTile())
     player.play_games(1000,seed=5)
 def handle_keypress_s():
-    player.set_strategy(prob.SafestTileAndLikeliestOpening())
+    player.set_strategy(strat.SafestTileAndLikeliestOpening())
     player.play_games(1000,seed=5)
 def handle_keypress_d():
-    player.set_strategy(prob.CombinedSafetyAndOpeningScore())
+    player.set_strategy(strat.CombinedSafetyAndOpeningScore())
     player.play_games(1000,seed=5)
     #print(f'merges executed: {solver_test.merge_encounters}')
 
 def handle_keypress_u():
-    player.set_strategy(prob.SafestTile())
+    player.set_strategy(strat.SafestTile())
     player.play_one_step()
 
 
 def handle_keypress_y():
-    player.set_strategy(prob.SafestTileAndLikeliestOpening())
+    player.set_strategy(strat.SafestTileAndLikeliestOpening())
     player.play_one_step()
 
 def handle_keypress_k():
