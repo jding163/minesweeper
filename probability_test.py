@@ -6,7 +6,7 @@ from collections import defaultdict
 from settings import *
 #board = None
 
-def calculate_probs_from_grouped_sols(groups,sols):
+def calc_probs_from_grouped_sols(groups,sols):
     num_sols_per_group = []
     for i in range(len(sols)):
         sol = sols[i]
@@ -72,7 +72,7 @@ def calc_global_prob_at_loc(loc,board,sols_per_mines_in_frontier,subdivs):
     #print(sols_with_counts)
     for freq in freqs.keys():
         matching_sols = [(sol,count) for sol,count in sols_with_counts if sum(sol) == freq]
-        group_probs = calculate_probs_from_grouped_sols(groups,[sol[0] for sol in matching_sols])
+        group_probs = calc_probs_from_grouped_sols(groups,[sol[0] for sol in matching_sols])
         # print(freq)
         # print(matching_sols)
         # print(group_probs)

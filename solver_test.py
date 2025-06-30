@@ -417,7 +417,7 @@ class Solver(Board):
             self.tiles[x][y].prob_mine_local = probs[i]
     
     def mark_tile_probs_by_group(self,groups,group_sols):
-        group_probs = prob.calculate_probs_from_grouped_sols(groups,group_sols)
+        group_probs = prob.calc_probs_from_grouped_sols(groups,group_sols)
         
         for i in range(len(groups)):
             
@@ -518,7 +518,7 @@ class Solver(Board):
 
                         groups = region.groups
                         group_sols = self.find_solutions_group(region,groups)
-                        group_probs,group_counts = prob.calculate_probs_from_grouped_sols(groups,group_sols)
+                        group_probs,group_counts = prob.calc_probs_from_grouped_sols(groups,group_sols)
                         
                         for i in range(len(groups)):
                             

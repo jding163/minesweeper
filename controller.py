@@ -8,6 +8,8 @@ import solver_test
 import strategy as strat
 
 import probability_test as prob
+import pickle
+import progress as prog
 #import player as P
 
 test=True
@@ -220,8 +222,8 @@ def handle_keypress_n():
     game.reset()
     reset_board()
 def handle_keypress_m():
-   reqs = {(0,0):1,(0,2):2,(29,0):1,(29,15):1,(27,15):2}
-   #reqs = {(0,0):1}
+   #reqs = {(0,0):1,(0,2):2,(29,0):1,(29,15):1,(27,15):2}
+   reqs = {(0,0):1,(0,2):1}
 
    print(player.find_matching_board_state(reqs))
 
@@ -231,7 +233,13 @@ def handle_keypress_r():
     print(sorted(board.mines,key=lambda coord: (coord[0], coord[1]))
 )
 def handle_keypress_b():
-    player.play_game()
+    for x in range(GSM.rows):
+        for y in range(GSM.cols):
+            tile = board.tiles[x][y]
+            if not tile.is_revealed() and not tile.is_flagged() and not (x,y) in board.nonfrontier_tiles:
+                force = prog.calc_force_at_loc(board,(x,y))
+                tile.force = force
+    Board.display_probs = 3
 def handle_keypress_space():
     if my<0:
         return
