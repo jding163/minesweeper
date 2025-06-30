@@ -185,7 +185,7 @@ def handle_keypress_s():
     player.set_strategy(strat.SafestTileAndLikeliestOpening())
     player.play_games(1000,seed=5)
 def handle_keypress_d():
-    player.set_strategy(strat.CombinedSafetyAndOpeningScore())
+    player.set_strategy(strat.SafetyAndProximityToInfo())
     player.play_games(1000,seed=5)
     #print(f'merges executed: {solver_test.merge_encounters}')
 
@@ -196,6 +196,10 @@ def handle_keypress_u():
 
 def handle_keypress_y():
     player.set_strategy(strat.SafestTileAndLikeliestOpening())
+    player.play_one_step()
+
+def handle_keypress_l():
+    player.set_strategy(strat.SafetyAndProximityToInfo())
     player.play_one_step()
 
 def handle_keypress_k():

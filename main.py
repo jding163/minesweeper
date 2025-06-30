@@ -156,10 +156,10 @@ class Game:
                     if event.button == 1:
                         #C.handle_board_click(mines=custom_mines)
                         #test -8425763037098422648, -8433645031250545356,-3837008816949211577
-                        C.handle_board_click(seed=8261430605045743384)
+                        #C.handle_board_click(seed=8261430605045743384)
                         #C.handle_board_click(seed=8057605574952058526)
 
-                        #C.handle_board_click()
+                        C.handle_board_click()
                     
                     elif event.button == 3:
                         C.handle_board_right_click()
@@ -176,15 +176,6 @@ class Game:
                     C.handle_keypress_m()
                 elif event.key == pygame.K_q:
                     C.handle_keypress_q()
-                    # prev_mines = self.board.flag_count
-                    # prev_revealed = self.board.num_revealed
-                    # self.board.flag_board()
-                    # self.board.chord_board()
-                    # while self.board.flag_count != prev_mines or self.board.num_revealed != prev_revealed:
-                    #     self.board.flag_board()
-                    #     self.board.chord_board()
-                    #     prev_revealed = self.board.num_revealed
-                    #     prev_mines = self.board.flag_count
 
                 elif event.key == pygame.K_w:
                     C.handle_keypress_w()
@@ -218,8 +209,7 @@ class Game:
                 elif event.key == pygame.K_p:
                     C.handle_keypress_p()
                 elif event.key == pygame.K_l:
-                    C.test = not C.test
-                    print(C.test)
+                    C.handle_keypress_l()
                 elif event.key == pygame.K_b:
                     C.handle_keypress_b()
                 elif event.key == pygame.K_k:

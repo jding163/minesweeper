@@ -7,6 +7,7 @@ import random
 import probability as prob
 import pygame
 import concurrent.futures
+import strategy as strat
 
 
 max_size = sys.maxsize
@@ -15,7 +16,7 @@ min_size = -sys.maxsize - 1
 
 class Player():
     def __init__(self):
-        self.strategy = prob.SafestTile()
+        self.strategy = strat.SafestTile()
     def set_board(self,board):
         self.board = board
     def set_strategy(self,strat):
@@ -147,6 +148,7 @@ class Player():
         avg_time_win = (sum(r['time'] for r in results if r['won']) / total_wins) if total_wins > 0 else 0
 
         print("\n--- Statistics Summary ---")
+        print(f'Strategy used: {self.strategy}')
         print(f"Total games: {total_games}")
         print(f"Total time: {time.time()-start_time}")
         print(f"Wins: {total_wins}")
@@ -154,31 +156,3 @@ class Player():
         print(f"Winrate: {total_wins / total_games:.2%}")
         print(f"Average time per game: {avg_time:.2f} seconds")
         print(f"Average time per win: {avg_time_win:.2f} seconds")
-        # for i in range(num_games):
-        #     print(i)
-        #     no_err = True
-        #     for x,y in range(len(starts)):
-        #         C.handle_keypress_n() # reset
-        #         start_time = time.time()
-        #         won = False
-        #         C.update_mouse_pos(x,y)
-        #         C.handle_board_click(seed=seeds[i])
-        #         #print(self.board.mines)
-        #         no_err = self.autoplay()
-        #         if C.game_won():
-        #             won_games +=1
-        #         if no_err is False:
-        #             break
-        #     if no_err is False:
-        #         err_count += 1
-        #         break
-        # print('won_games: {}/{}'.format(won_games,num_games*len(starts)))
-        # print(time.time()-start_time)
-        # print('errors_encountered: {}'.format(err_count))
-        # print('strategy: {}'.format(str(self.strategy)))
-
-
-
-# random.seed(0)
-# seeds = [random.randint(min_size,max_size) for _ in range(5)]
-# print(seeds)
