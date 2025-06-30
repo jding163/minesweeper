@@ -1,4 +1,4 @@
-from solver import Solver
+from solver_test import Solver
 import controller as C
 import time
 from game_state_manager import GSM
@@ -46,55 +46,27 @@ class Player():
             if C.game_over():
                 break
             self.play_one_step(risk=risk)
-        #     if C.game_over():
-        #         break
-        #     progress = False
-        #     if self.board.solve_trivial_and_open():
-        #         progress = True
-        #         continue 
-        #     if C.game_over():
-        #         break
-        #     if self.board.solve_exhaustive_and_open():
-        #         progress = True
-        #         continue  
-        #     if C.game_over():
-        #         break
-        #     if self.board.solve_endgame_and_open():
-        #         progress = True
-        #         continue 
-        #     #probs should be marked already
-        #     if not progress:
-        #         if risk is True and not C.game_over():
-        #             x,y = self.strategy.find_move(self.board)
-        #             #x,y = prob.find_safest_tile(self.board)
-        #             self.board.reveal_tiles(x,y)
-        #             #self.board.open_safest_tile(convolve)
-        #             continue
-        #         else:
-        #             break
-        # return True
     
     def play_game(self,starts=[(0,0)],seed=None):
-        C.handle_keypress_n()  # full reset
+        #C.handle_keypress_n()  # full reset
+        GSM.set_game_state(True)
+        C.reset_board()
+
 
         start_time = time.time()
         won = False
 
-        for x, y in starts:
-            C.update_mouse_pos(x, y)
-            C.handle_board_click(seed=seed)
-            self.autoplay()
+        self.board.populate((0,0),seed=seed)
+        self.board.reveal_tiles(0,0)
+        self.autoplay()
 
-            if C.game_won():
-                won = True
-                #break
 
         end_time = time.time()
         duration = end_time - start_time
 
         return {
             'seed': seed,
-            'won': won,
+            'won': C.game_won(),
             'time': duration
         }
     
@@ -107,6 +79,7 @@ class Player():
             C.handle_keypress_n()
             C.update_mouse_pos(first_click[0], first_click[1])
             C.handle_board_click(seed=seed)
+            
             reqs_satisfied = True
             for req,tiletype in reqs.items():
                 x,y = req
@@ -126,10 +99,8 @@ class Player():
         if seed is not None:
             random.seed(seed)
         seeds = [random.randint(min_size,max_size) for _ in range(num_games)]
-        #seeds = [1952622651856132950 for _ in range(num_games)]
         start_time = time.time()
         results = []
-        #starts = [(0,0),(GSM.rows-1,0),(GSM.rows-1,GSM.cols-1),(0,GSM.cols-1)]
         for i in range(num_games):
             print(i)
 
@@ -137,9 +108,6 @@ class Player():
             results.append(result)
             print(f"Seed {result['seed']}: {'Won' if result['won'] else 'Lost'} in {result['time']:.2f} seconds")
 
-        # for result in results:
-        #     print(f"Seed {result['seed']}: {'Won' if result['won'] else 'Lost'} in {result['time']:.2f} seconds")
-        # Stats summary
         total_games = len(results)
         total_wins = sum(1 for r in results if r['won'])
         total_losses = total_games - total_wins
@@ -156,3 +124,11 @@ class Player():
         print(f"Winrate: {total_wins / total_games:.2%}")
         print(f"Average time per game: {avg_time:.2f} seconds")
         print(f"Average time per win: {avg_time_win:.2f} seconds")
+
+b = Solver()
+#b=Solver()
+p = Player()
+C.set_player(p)
+C.set_board(b)
+p.set_strategy(strat.SafestTileAndLikeliestOpening())
+p.play_games(100,seed=5)

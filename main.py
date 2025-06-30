@@ -10,7 +10,6 @@ from player import Player
 import solver
 from solver import Solver
 import solver_test
-import merge_tester
 
 
 pygame.init()
@@ -218,8 +217,9 @@ class Game:
                 elif event.key == pygame.K_SPACE:
                     C.handle_keypress_space()
 #b = merge_tester.SolverData()
-b = solver_test.Solver()
 Tile.set_font(tile_font)
+
+b = solver_test.Solver()
 #b=Solver()
 p = Player()
 #p = merge_tester.Collector()

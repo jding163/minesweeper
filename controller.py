@@ -5,11 +5,9 @@ from sprites import *
 from solver import Solver
 #import probability as prob
 import solver_test
-import merge_tester
 import strategy as strat
 
 import probability_test as prob
-import pickle
 #import player as P
 
 test=True
