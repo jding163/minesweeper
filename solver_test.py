@@ -65,8 +65,8 @@ class Region():
 
 class Solver(Board):
 
-    def __init__(self,first_click=(0,0)):
-        super().__init__()
+    def __init__(self,first_click=(0,0),run_pygame=True):
+        super().__init__(run_pygame=run_pygame)
         self.first_click = first_click
         self.nonfrontier_tiles = []
         self.regions_list = []

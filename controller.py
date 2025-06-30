@@ -181,7 +181,7 @@ def handle_keypress_a():
     player.play_games(1000,seed=5)
 def handle_keypress_s():
     player.set_strategy(strat.SafestTileAndLikeliestOpening())
-    player.play_games(1000,seed=5)
+    player.play_games(10,seed=5)
 def handle_keypress_d():
     player.set_strategy(strat.SafetyAndProximityToInfo())
     player.play_games(1000,seed=5)

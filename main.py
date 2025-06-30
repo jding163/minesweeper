@@ -10,6 +10,7 @@ from player import Player
 import solver
 from solver import Solver
 import solver_test
+import multiprocessing
 
 
 pygame.init()
@@ -217,16 +218,21 @@ class Game:
                 elif event.key == pygame.K_SPACE:
                     C.handle_keypress_space()
 #b = merge_tester.SolverData()
-Tile.set_font(tile_font)
+def main():
+    Tile.set_font(tile_font)
 
-b = solver_test.Solver()
-#b=Solver()
-p = Player()
-#p = merge_tester.Collector()
-C.set_player(p)
-C.set_board(b)
-g = Game()
-C.set_game(g)
+    b = solver_test.Solver()
+    #b=Solver()
+    p = Player()
+    #p = merge_tester.Collector()
+    C.set_player(p)
+    C.set_board(b)
+    g = Game()
+    C.set_game(g)
 
-g.draw()
-g.run()
+    g.draw()
+    g.run()
+
+if __name__ == "__main__":
+    multiprocessing.set_start_method("spawn")  # Important on macOS/Windows
+    main()

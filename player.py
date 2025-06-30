@@ -60,10 +60,8 @@ class Player():
     
     def play_game(self,starts=[(0,0)],seed=None):
         #C.handle_keypress_n()  # full reset
-        GSM.set_game_state(True)
-        self.board = Solver()
-
-
+        #GSM.set_game_state(True)
+        self.board = Solver(run_pygame=False)
         start_time = time.time()
 
         self.board.populate((0,0),seed=seed)
@@ -111,10 +109,11 @@ class Player():
         seeds = [random.randint(min_size,max_size) for _ in range(num_games)]
         start_time = time.time()
         results = []
+        
         with ProcessPoolExecutor(max_workers=multiprocessing.cpu_count()) as executor:
 
             futures = {executor.submit(run_game, s,self.strategy): s for s in seeds}
-
+            
             for i, future in enumerate(as_completed(futures)):
                 result = future.result()
                 results.append(result)
@@ -146,8 +145,8 @@ class Player():
 
 def main():
 
-    b = Solver()
-    b.display = None
+    # b = Solver()
+    # b.display = None
     #b=Solver()
     p = Player()
     # C.set_player(p)

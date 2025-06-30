@@ -158,8 +158,9 @@ class Tile:
 class Board:
     seed = None
     display_probs = 0 #0,1,2
-    def __init__(self):
-        self.display = pygame.Surface((GSM.rows * TILESIZE, GSM.cols * TILESIZE))
+    def __init__(self,run_pygame=True):
+        if run_pygame:
+            self.display = pygame.Surface((GSM.rows * TILESIZE, GSM.cols * TILESIZE))
         self.tiles = []
         for row in range(GSM.rows):
             self.tiles.append([])
