@@ -39,36 +39,6 @@ class SafestTile(Strategy):
                             priority = tile.pos_type
         return min_x,min_y
 
-
-# looks for tile with lowest prob of being a mine; as tiebreaker, looks for tile that is most likely to be an opening
-class SafestTileAndLikeliestOpening(Strategy):
-    def __str__(self):
-        return 'SafestTileAndLikeliestOpening'
-    def find_move(self,board):
-        min_prob = 1
-        min_x=0
-        min_y=0
-        prob_opening = 0
-        prob.calc_prob_of_opening_for_board(board)
-        for x in range(GSM.rows):
-            for y in range(GSM.cols):
-                tile = board.tiles[x][y]
-                if not tile.is_revealed() and not tile.is_flagged():
-                    # print('{},{}'.format(x,y))
-                    if tile.prob_mine_local < min_prob:
-                        min_prob = tile.prob_mine_local
-                        min_x = x
-                        min_y = y
-                        prob_opening = tile.prob_opening
-
-                    elif tile.prob_mine_local == min_prob:
-                        comp_prob_opening = tile.prob_opening
-                        if comp_prob_opening > prob_opening:
-                            min_x = x
-                            min_y = y
-                            prob_opening = comp_prob_opening
-        return min_x,min_y
-
 # looks for tile with lowest prob of being a mine; as tiebreaker, looks for tile that is most likely to be an opening
 class SafestTileAndLikeliestOpening(Strategy):
     def __str__(self):

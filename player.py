@@ -6,13 +6,19 @@ import sys
 import random
 import probability as prob
 import pygame
-import concurrent.futures
 import strategy as strat
+from concurrent.futures import ProcessPoolExecutor, as_completed
+import multiprocessing
 
 
 max_size = sys.maxsize
 min_size = -sys.maxsize - 1
 
+
+def run_game(seed,strat):
+    player = Player()  
+    player.set_strategy(strat)
+    return player.play_game(seed=seed)
 
 class Player():
     def __init__(self):
@@ -25,7 +31,8 @@ class Player():
         self.game = game
         
     def play_one_step(self,risk=True):
-        if C.game_over():
+        game_over = not GSM.get_game_state() or (self.board.is_complete() and self.board.verify_win())
+        if game_over:
             return
         if self.board.solve_trivial_and_open():
             return
@@ -35,7 +42,9 @@ class Player():
         elif self.board.solve_endgame_and_open():
             return 
         #probs should be marked already
-        elif risk is True and not C.game_over():
+        game_over = not GSM.get_game_state() or (self.board.is_complete() and self.board.verify_win())
+
+        if risk is True and not game_over:
             x,y = self.strategy.find_move(self.board)
             #x,y = prob.find_safest_tile(self.board)
             self.board.reveal_tiles(x,y)
@@ -43,18 +52,19 @@ class Player():
 
     def autoplay(self,risk=True):
         while True:
-            if C.game_over():
+            game_over = not GSM.get_game_state() or (self.board.is_complete() and self.board.verify_win())
+
+            if game_over:
                 break
             self.play_one_step(risk=risk)
     
     def play_game(self,starts=[(0,0)],seed=None):
         #C.handle_keypress_n()  # full reset
         GSM.set_game_state(True)
-        C.reset_board()
+        self.board = Solver()
 
 
         start_time = time.time()
-        won = False
 
         self.board.populate((0,0),seed=seed)
         self.board.reveal_tiles(0,0)
@@ -66,7 +76,7 @@ class Player():
 
         return {
             'seed': seed,
-            'won': C.game_won(),
+            'won': self.board.is_complete() and self.board.verify_win(),
             'time': duration
         }
     
@@ -101,12 +111,21 @@ class Player():
         seeds = [random.randint(min_size,max_size) for _ in range(num_games)]
         start_time = time.time()
         results = []
-        for i in range(num_games):
-            print(i)
+        with ProcessPoolExecutor(max_workers=multiprocessing.cpu_count()) as executor:
 
-            result = self.play_game(seed=seeds[i])
-            results.append(result)
-            print(f"Seed {result['seed']}: {'Won' if result['won'] else 'Lost'} in {result['time']:.2f} seconds")
+            futures = {executor.submit(run_game, s,self.strategy): s for s in seeds}
+
+            for i, future in enumerate(as_completed(futures)):
+                result = future.result()
+                results.append(result)
+                print(f"{i}: Seed {result['seed']}: {'Won' if result['won'] else 'Lost'} in {result['time']:.2f} seconds")
+
+        # for i in range(num_games):
+        #     print(i)
+
+        #     result = self.play_game(seed=seeds[i])
+        #     results.append(result)
+        #     print(f"Seed {result['seed']}: {'Won' if result['won'] else 'Lost'} in {result['time']:.2f} seconds")
 
         total_games = len(results)
         total_wins = sum(1 for r in results if r['won'])
@@ -125,10 +144,16 @@ class Player():
         print(f"Average time per game: {avg_time:.2f} seconds")
         print(f"Average time per win: {avg_time_win:.2f} seconds")
 
-b = Solver()
-#b=Solver()
-p = Player()
-C.set_player(p)
-C.set_board(b)
-p.set_strategy(strat.SafestTileAndLikeliestOpening())
-p.play_games(100,seed=5)
+def main():
+
+    b = Solver()
+    b.display = None
+    #b=Solver()
+    p = Player()
+    # C.set_player(p)
+    # C.set_board(b)
+    p.set_strategy(strat.SafestTileAndLikeliestOpening())
+    p.play_games(1000,seed=5)
+
+if __name__ == '__main__':
+    main()
