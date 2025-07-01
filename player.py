@@ -109,8 +109,9 @@ class Player():
         seeds = [random.randint(min_size,max_size) for _ in range(num_games)]
         start_time = time.time()
         results = []
-        
-        with ProcessPoolExecutor(max_workers=multiprocessing.cpu_count()) as executor:
+        #max_workers = multiprocessing.cpu_count()
+        max_workers=1
+        with ProcessPoolExecutor(max_workers=max_workers) as executor:
 
             futures = {executor.submit(run_game, s,self.strategy): s for s in seeds}
             
@@ -142,7 +143,6 @@ class Player():
         print(f"Winrate: {total_wins / total_games:.2%}")
         print(f"Average time per game: {avg_time:.2f} seconds")
         print(f"Average time per win: {avg_time_win:.2f} seconds")
-
 def main():
 
     # b = Solver()
@@ -151,8 +151,9 @@ def main():
     p = Player()
     # C.set_player(p)
     # C.set_board(b)
-    p.set_strategy(strat.SafestTileAndLikeliestOpening())
-    p.play_games(1000,seed=5)
+    #p.set_strategy(strat.SafestTileAndLikeliestOpening())
+    p.set_strategy(strat.SafestTileAndForce())
+    p.play_games(100,seed=5)
 
 if __name__ == '__main__':
     main()

@@ -157,9 +157,9 @@ class Game:
                         #C.handle_board_click(mines=custom_mines)
                         #test -8425763037098422648, -8433645031250545356,-3837008816949211577
                         #C.handle_board_click(seed=8261430605045743384)
-                        #C.handle_board_click(seed=-3471843042740411231)
+                        C.handle_board_click(seed=-5814907404099792577)
 
-                        C.handle_board_click()
+                        #C.handle_board_click()
                     
                     elif event.button == 3:
                         C.handle_board_right_click()

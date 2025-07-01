@@ -68,7 +68,7 @@ class Tile:
         self.num_adj_flags = 0
         self.prob_mine_local = -1
         self.prob_opening = -1
-        self.force=-1
+        self.force=0
 
         # 0: non-edge non-corner 1: edge 2: corner
         if (self.row == 0 or self.row == GSM.rows-1) and (self.col == 0 or self.col == GSM.cols-1):
@@ -150,7 +150,7 @@ class Tile:
                 display.blit(prob_text, text_rect)
         elif display_probs == 3:
             if self.force != -1 and not self.revealed and not self.flagged:
-                prob_text = Tile.font.render(f"{self.force * 100:.1f}", True, (0, 0, 0))  # Black text
+                prob_text = Tile.font.render(f"{self.force}", True, (0, 0, 0))  # Black text
                 text_rect = prob_text.get_rect(center=(self.x + TILESIZE // 2, self.y + TILESIZE // 2))
                 display.blit(prob_text, text_rect)
         elif display_probs == 4:

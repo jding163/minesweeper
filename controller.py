@@ -8,7 +8,6 @@ import solver_test
 import strategy as strat
 
 import probability_test as prob
-import pickle
 import progress as prog
 #import player as P
 
@@ -185,9 +184,8 @@ def handle_keypress_s():
     player.set_strategy(strat.SafestTileAndLikeliestOpening())
     player.play_games(10,seed=5)
 def handle_keypress_d():
-    player.set_strategy(strat.SafetyAndProximityToInfo())
-    player.play_games(1000,seed=5)
-    #print(f'merges executed: {solver_test.merge_encounters}')
+    player.set_strategy(strat.SafestTileAndForce())
+    player.play_games(10,seed=5)
 
 def handle_keypress_u():
     player.set_strategy(strat.SafestTile())
@@ -199,7 +197,7 @@ def handle_keypress_y():
     player.play_one_step()
 
 def handle_keypress_l():
-    player.set_strategy(strat.SafetyAndProximityToInfo())
+    player.set_strategy(strat.SafestTileAndForce())
     player.play_one_step()
 
 def handle_keypress_k():
