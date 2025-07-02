@@ -54,7 +54,8 @@ def get_sol_counts(board):
         if mines_nonfrontier >=0:
             num_sols_for_nonfrontier = math.comb(len(nonfrontier_tiles),mines_nonfrontier)
             sols_per_mines_in_frontier[num_mines] = num_sols_for_nonfrontier * freq
-    # print(sols_per_mines_in_frontier)
+    print(sols_per_mines_in_frontier)
+    print(sum(sols_per_mines_in_frontier.values()))
     # print(local_freqs)
     # print(subdivs)
     return sols_per_mines_in_frontier, subdivs
@@ -88,6 +89,40 @@ def calc_global_prob_for_group(board,group,sols_per_mines_in_frontier,subdivs):
 
     global_prob = num_sols/total_sols
     return global_prob
+
+# def calc_prob_that_loc_is_value(board,loc,sols_per_mines_in_frontier,subdivs):
+#     regions = board.regions_list
+
+
+#     neighbor_locs = [n.locs for n in board.get_neighbor_tiles(loc) if n.is_unknown()]
+#     regions_to_combine = [r for r in regions if any(neighbor_locs) in r.locs]
+
+#     region_index = [i for i, region in enumerate(regions) if group in region.groups][0]
+
+#     region = regions[region_index]
+#     groups = region.groups
+
+#     sols = region.group_sols
+#     counts = region.group_counts
+#     sols_with_counts = list(zip(sols,counts))
+#     freqs = region.freqs
+#     group_index = find_matching_indices(groups,group)[0]
+
+#     num_sols = 0
+#     for freq in freqs.keys():
+#         matching_sols = [(sol,count) for sol,count in sols_with_counts if sum(sol) == freq]
+#         group_probs = calc_probs_from_grouped_sols(groups,[sol[0] for sol in matching_sols])
+#         if len(group_probs[0]) > 0:
+#             loc_prob_at_given_freq = group_probs[0][group_index]/len(groups[group_index])
+#             for num_mines, configs in subdivs.items():
+#                 configs_at_given_freq = [config for config in configs if config[region_index] == freq]
+#                 matching_configs = len(configs_at_given_freq)/len(configs)
+#                 num_sols_at_freq = matching_configs * loc_prob_at_given_freq * sols_per_mines_in_frontier[num_mines]
+#                 num_sols += num_sols_at_freq
+#     total_sols = sum(sols_per_mines_in_frontier.values())
+
+#     global_prob = num_sols/total_sols
+#     return global_prob
 
 def find_matching_indices(locs, targets):
     target_set = set(map(tuple, targets)) 
@@ -206,7 +241,7 @@ def calc_prob_of_opening_at_loc(board,loc):
     
 
     else:
-        if loc == (0,3):
+        if loc == (2,10):
             pass
         regions = board.regions_list
         relevant_regions = {}
@@ -215,6 +250,8 @@ def calc_prob_of_opening_at_loc(board,loc):
             indices = find_matching_indices(region.groups,frontier_tile_locs)
             if len(indices) > 0:
                 relevant_regions[region] = indices
+        num_valid_sols = 0
+
         for region, indices in relevant_regions.items():
             groups = region.groups
             sols = region.group_sols
@@ -222,39 +259,49 @@ def calc_prob_of_opening_at_loc(board,loc):
             counts = region.group_counts
             sols_with_counts = zip(sols,counts)
             locs = [groups[i] for i in indices]
-            max_mines_per_group = []
-
             for group in locs:
-                max_mines = len(group)-len(set(frontier_tile_locs).intersection(set(group)))
-                max_mines_per_group.append(max_mines)
+                group_prob = 0
 
-            valid_sols = [
-                (sol, count) for sol, count in sols_with_counts
-                if all(sol[i] <= max_mines_per_group[j] for j,i in enumerate(indices))
-            ]    
+                for l in group:
+                    if l in frontier_tile_locs:
+                        x,y =l
+                        group_prob += board.tiles[x][y].prob_mine_local
+                prob_safe_frontier *= 1-group_prob
+        #   max_mines_per_group = []
 
-            sliced_valid_sols = [([sol[i] for i in indices], count) for sol, count in valid_sols]
+        #     for group in locs:
+        #         max_mines = len(group)-len(set(frontier_tile_locs).intersection(set(group)))
+        #         max_mines_per_group.append(max_mines)
 
-            num_valid_sols = 0
-            for sol,count in valid_sols:
-                num_mines = sum(sol)
-                mines_nonfrontier = GSM.mine_count - board.flag_count - num_mines
-                count *= math.comb(len(board.nonfrontier_tiles),mines_nonfrontier)
+        #     valid_sols = [
+        #         (sol, count) for sol, count in sols_with_counts
+        #         if all(sol[i] <= max_mines_per_group[j] for j,i in enumerate(indices))
+        #     ]    
+
+        #     sliced_valid_sols = [([sol[i] for i in indices], count) for sol, count in valid_sols]
+        #     print(loc)
+        #     print(valid_sols)
+        #     for sol,count in valid_sols:
+        #         num_mines = sum(sol)
+        #         mines_nonfrontier = GSM.mine_count - board.flag_count - num_mines
+        #         count *= math.comb(len(board.nonfrontier_tiles),mines_nonfrontier)
                 
-                sliced_sol = [sol[i] for i in indices]
+        #         sliced_sol = [sol[i] for i in indices]
 
-                for j,num_mines in enumerate(sliced_sol):
+        #         for j,num_mines in enumerate(sliced_sol):
 
-                    group = groups[indices[j]]
-                    len_group = len(group)
-                    if len_group == 1:
-                        continue
-
-                    combs = math.comb(max_mines_per_group[j],num_mines)/math.comb(len_group,num_mines)
-                    count *= combs
-                    #count *= (max_mines_per_group[j] - num_mines)/len_group
-                num_valid_sols += count 
-            prob_safe_frontier *= num_valid_sols/board.total_sols
+        #             group = groups[indices[j]]
+        #             len_group = len(group)
+        #             if len_group == 1:
+        #                 continue
+        #             print(group)
+        #             combs = math.comb(max_mines_per_group[j],num_mines)/math.comb(len_group,num_mines)
+        #             #combs = 1-((len_group - max_mines_per_group[j])/len_group)
+        #             print(combs)
+        #             count *= combs
+        #             #count *= (max_mines_per_group[j] - num_mines)/len_group
+        #         num_valid_sols += count 
+        # prob_safe_frontier *= num_valid_sols/board.total_sols
             
     curr_tile.prob_opening = prob_safe_frontier * prob_safe_nonfrontier
     return curr_tile.prob_opening

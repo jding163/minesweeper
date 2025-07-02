@@ -167,10 +167,10 @@ def handle_keypress_t(seed=None):
     else:
         handle_board_click(seed=seed)
     start = time.time()
-    player.set_strategy(strat.SafestTile())
+    #player.set_strategy(strat.SafestTile())
 
     #player.set_strategy(strat.CombinedSafetyAndOpeningScore())
-    #player.set_strategy(strat.SafestTileAndLikeliestOpening())
+    player.set_strategy(strat.SafestTileAndLikeliestOpening())
     player.autoplay()
     print(game_won())
     print(time.time()-start)
@@ -220,10 +220,10 @@ def handle_keypress_n():
     game.reset()
     reset_board()
 def handle_keypress_m():
-   #reqs = {(0,0):1,(0,2):2,(29,0):1,(29,15):1,(27,15):2}
-   reqs = {(0,0):1,(0,2):1,(0,4):1}
-
-   print(player.find_matching_board_state(reqs))
+    reqs = {(0,0):1,(0,4):1}
+    #reqs = {(0,1):1,(0,2):1,(0,3):1}
+    first_click=(0,0)
+    print(player.find_matching_board_state(reqs,first_click=first_click))
 
 
 def handle_keypress_r():
@@ -239,7 +239,15 @@ def handle_keypress_b():
                 tile.force = force
     Board.display_probs = 3
 def handle_keypress_v():
-    prog.calc_prob_that_loc_is_val(board,(mx,my),1)
+    regions = board.regions_list
+    l1 = (1,1)
+    l2=(1,4)
+    r1_index = board.get_region_index_with_loc(l1)
+    r2_index = board.get_region_index_with_loc(l2)
+    r1 = regions[r1_index]
+    r2 = regions[r2_index]
+    board.merge_regions(r1,r2)
+    #prog.calc_prob_that_loc_is_val(board,(mx,my),1)
 def handle_keypress_space():
     if my<0:
         return

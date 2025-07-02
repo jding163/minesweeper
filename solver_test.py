@@ -176,6 +176,12 @@ class Solver(Board):
         ccs = self.get_ccs()
         regions = self.convert_ccs_to_regions(ccs)
         return regions
+    
+    def get_region_index_with_loc(self,loc):
+        for i,r in enumerate(self.regions_list):
+            if loc in r.locs:
+                return i
+        return -1
 
     def verify_region(self,region):
         for loc in region.locs_to_check:
@@ -190,7 +196,47 @@ class Solver(Board):
                     if tile_types[MINE] > tile.get_adj_mines() or (tile_types[UNKNOWN] == 0 and tile_types[MINE] != tile.get_adj_mines()):
                         return False
         return True
-    
+    def merge_regions(self, r1, r2):
+        # constructor: locs and locs_to_check
+        # self.locs = list(locs)
+        # self.locs_to_check = locs_to_check
+        # self.groups = []
+        # self.group_sols = []
+        # self.group_counts = []
+        # self.sols_bit = []
+        # self.num_sols = 0
+        combined_locs = r1.locs + r2.locs
+        combined_locs_to_check = r1.locs_to_check + r2.locs_to_check
+        r = Region(combined_locs,combined_locs_to_check)
+        combined_groups = r1.groups + r2.groups
+        r.groups = combined_groups
+        # combined_group_sols = []
+        # for r1sol in r1.group_sols:
+        #     for r2sol in r2.group_sols:
+        #         combined_sol = list(itertools.product(r1sol,r2sol))
+        #         combined_group_sols.append(combined_sol)
+        combined_group_sols = list(itertools.product(r1.group_sols,r2.group_sols))
+        for i,sol in enumerate(combined_group_sols):
+            combined_sol = []
+            for sub_sol in sol:
+                combined_sol += sub_sol
+            combined_group_sols[i] = combined_sol
+        combined_counts = list(itertools.product(r1.group_counts,r2.group_counts))
+        for i,counts in enumerate(combined_counts):
+
+            combined_counts[i] = math.prod(counts)
+        r.group_sols = combined_group_sols
+        r.group_counts = combined_counts
+        r.num_sols = sum(r.group_counts)
+        # print(r1.group_sols)
+        # print(r2.group_sols)
+        # print(combined_groups)
+        # print(combined_group_sols)
+        # print(r1.group_counts)
+        # print(r2.group_counts)
+        # print(combined_counts)
+        return r
+
     def verify_solution(self,region):
         for loc in region.locs_to_check:
             tile = self.tiles[loc[0]][loc[1]]

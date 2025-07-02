@@ -156,9 +156,9 @@ class Game:
                     if event.button == 1:
                         #C.handle_board_click(mines=custom_mines)
                         #test -8425763037098422648, -8433645031250545356,-3837008816949211577
-                        #C.handle_board_click(seed=8261430605045743384)
+                        C.handle_board_click(seed=-1652089496640650944)
                         # Lost in 364.86 seconds
-                        C.handle_board_click(seed=6141164966175915024)
+                        #C.handle_board_click(seed=6141164966175915024)
 
                         #C.handle_board_click()
                     

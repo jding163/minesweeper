@@ -114,6 +114,8 @@ class Player():
         #max_workers = 4
 
         #max_workers=1
+        start=3000
+        end=4000
         with ProcessPoolExecutor(max_workers=max_workers) as executor:
 
             futures = {executor.submit(run_game, s,self.strategy): s for s in seeds}
@@ -176,9 +178,9 @@ def main():
     p = Player()
     # C.set_player(p)
     # C.set_board(b)
-    seed=4
+    seed=5
     p.set_strategy(strat.SafestTileAndLikeliestOpening())
-    w1 = p.play_games(100,seed=seed)
+    w1 = p.play_games(5000,seed=seed)
     # p.set_strategy(strat.SafestTileAndForce())
     # w2 = p.play_games(100,seed=seed)
 
@@ -194,7 +196,7 @@ def main():
     # print("Only in w1:", len(only_in_w1))
     # print("Only in w2:", len(only_in_w2))
     # print(calc_mastery(w1,100))
-    #print('Best mastery:',calc_mastery(w2,100))
+    print('Best mastery:',calc_mastery(w1,100))
 
 
 
