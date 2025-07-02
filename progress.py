@@ -1,7 +1,8 @@
 from game_state_manager import GSM
 import probability_test as prob
 import copy
-
+import sprites
+from settings import *
 def calc_force_for_board(board):
     for x in range(GSM.rows):
         for y in range(GSM.cols):
@@ -41,6 +42,9 @@ def calc_force_at_loc(board,loc):
             num_guaranteed_mine += len(updated_groups[i])
     #force = (1-min(probs_per_group)) * board.tiles[loc[0]][loc[1]].prob_mine_local
     #force = (1-min(probs_per_group))
-    force = num_guaranteed_safe + num_guaranteed_mine
+    force = num_guaranteed_safe
 
     return force
+
+def calc_prob_that_loc_is_value(board,loc):
+   probs = {}

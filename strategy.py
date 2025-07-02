@@ -124,7 +124,6 @@ class SafestTileAndForce(Strategy):
                                 comp_force = tile.force
 
                                 if comp_force > force:
-                                    print('--------------------')
                                     min_x = x
                                     min_y = y
                                     force = tile.force

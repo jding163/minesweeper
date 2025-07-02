@@ -104,13 +104,16 @@ class Player():
 
 
     def play_games(self,num_games,seed=None):
+        won_seeds = []
         if seed is not None:
             random.seed(seed)
         seeds = [random.randint(min_size,max_size) for _ in range(num_games)]
         start_time = time.time()
         results = []
         #max_workers = multiprocessing.cpu_count()
-        max_workers=1
+        max_workers = 4
+
+        #max_workers=1
         with ProcessPoolExecutor(max_workers=max_workers) as executor:
 
             futures = {executor.submit(run_game, s,self.strategy): s for s in seeds}
@@ -119,6 +122,8 @@ class Player():
                 result = future.result()
                 results.append(result)
                 print(f"{i}: Seed {result['seed']}: {'Won' if result['won'] else 'Lost'} in {result['time']:.2f} seconds")
+                if result['won']:
+                    won_seeds.append(i)
 
         # for i in range(num_games):
         #     print(i)
@@ -143,6 +148,26 @@ class Player():
         print(f"Winrate: {total_wins / total_games:.2%}")
         print(f"Average time per game: {avg_time:.2f} seconds")
         print(f"Average time per win: {avg_time_win:.2f} seconds")
+        return won_seeds
+    
+# given a list of indices and length n, what is the largest # indices within any given interval of n
+# n < len(wins)
+def calc_mastery(nums, n):
+    if not nums:
+        return 0
+
+    max_count = 0
+    start = 0
+
+    for end in range(len(nums)):
+        while nums[end] > nums[start] + n:
+            start += 1
+        count = end - start + 1
+        max_count = max(max_count, count)
+
+    return max_count
+
+
 def main():
 
     # b = Solver()
@@ -151,9 +176,28 @@ def main():
     p = Player()
     # C.set_player(p)
     # C.set_board(b)
-    #p.set_strategy(strat.SafestTileAndLikeliestOpening())
+    seed=4
+    # p.set_strategy(strat.SafestTileAndLikeliestOpening())
+    # w1 = p.play_games(100,seed=seed)
     p.set_strategy(strat.SafestTileAndForce())
-    p.play_games(100,seed=5)
+    w2 = p.play_games(5000,seed=seed)
+
+    # set1 = set(w1)
+    # set2 = set(w2)
+
+    # in_both = list(set1 & set2)       # Intersection
+    # only_in_w1 = list(set1 - set2)    # Elements only in w1
+    # only_in_w2 = list(set2 - set1)    # Elements only in w2
+    # print('w1 wins:', len(w1))
+    # print('w2 wins:', len(w2))
+    # print("In both:", len(in_both))
+    # print("Only in w1:", len(only_in_w1))
+    # print("Only in w2:", len(only_in_w2))
+    # print(calc_mastery(w1,100))
+    print('Best mastery:',calc_mastery(w2,100))
+
+
+
 
 if __name__ == '__main__':
     main()

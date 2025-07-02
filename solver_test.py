@@ -734,7 +734,8 @@ class Solver(Board):
             info_found = self.open_known_tiles()
             if not info_found:
                 sols_per_mines_in_frontier, subdivs = prob.get_sol_counts(self)
-
+                self.sols_per_mines_in_frontier = sols_per_mines_in_frontier
+                self.total_sols = sum(sols_per_mines_in_frontier.values())
                 for x in range(GSM.rows):
                     for y in range(GSM.cols):
                         loc = (x,y)
