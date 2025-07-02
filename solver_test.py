@@ -723,16 +723,15 @@ class Solver(Board):
         solved = self.solve_endgame()
         if not solved and len(self.regions_list) > 0:
             info_found = self.open_known_tiles()
-            if not info_found:
-                sols_per_mines_in_frontier, subdivs = prob.get_sol_counts(self)
-                self.sols_per_mines_in_frontier = sols_per_mines_in_frontier
-                self.total_sols = sum(sols_per_mines_in_frontier.values())
-                for region in self.regions_list:
-                    for group in region.groups:
-                        global_prob = prob.calc_global_prob_for_group(self,group,sols_per_mines_in_frontier,subdivs)
-                        for x,y in group:
-                            self.tiles[x][y].prob_mine_local = global_prob
-            info_found = self.open_known_tiles()
+            sols_per_mines_in_frontier, subdivs = prob.get_sol_counts(self)
+            self.sols_per_mines_in_frontier = sols_per_mines_in_frontier
+            self.total_sols = sum(sols_per_mines_in_frontier.values())
+            for region in self.regions_list:
+                for group in region.groups:
+                    global_prob = prob.calc_global_prob_for_group(self,group,sols_per_mines_in_frontier,subdivs)
+                    for x,y in group:
+                        self.tiles[x][y].prob_mine_local = global_prob
+            #info_found = self.open_known_tiles()
 
             return info_found
         return solved

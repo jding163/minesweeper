@@ -221,7 +221,7 @@ def handle_keypress_n():
     reset_board()
 def handle_keypress_m():
    #reqs = {(0,0):1,(0,2):2,(29,0):1,(29,15):1,(27,15):2}
-   reqs = {(0,0):1,(0,2):1}
+   reqs = {(0,0):1,(0,2):1,(0,4):1}
 
    print(player.find_matching_board_state(reqs))
 
@@ -238,6 +238,8 @@ def handle_keypress_b():
                 force = prog.calc_force_at_loc(board,(x,y))
                 tile.force = force
     Board.display_probs = 3
+def handle_keypress_v():
+    prog.calc_prob_that_loc_is_val(board,(mx,my),1)
 def handle_keypress_space():
     if my<0:
         return

@@ -6,7 +6,7 @@ from collections import defaultdict
 from settings import *
 #board = None
 
-def calc_probs_from_grouped_sols(groups,sols):
+def calc_probs_from_grouped_sols(groups,sols,return_probs=True):
     num_sols_per_group = []
     for i in range(len(sols)):
         sol = sols[i]
@@ -23,7 +23,10 @@ def calc_probs_from_grouped_sols(groups,sols):
         sol_instances.append(instances)
     sum_cols = [sum(x) for x in zip(*sol_instances)]
     probs_per_group = [sum/num_sols_total for sum in sum_cols]
-    return probs_per_group, num_sols_per_group
+    if return_probs:
+        return probs_per_group, num_sols_per_group
+    else:
+        return sum_cols,num_sols_per_group
 
 def get_sol_counts(board):
 
@@ -203,7 +206,7 @@ def calc_prob_of_opening_at_loc(board,loc):
     
 
     else:
-        if loc == (0,2):
+        if loc == (0,3):
             pass
         regions = board.regions_list
         relevant_regions = {}
@@ -222,22 +225,36 @@ def calc_prob_of_opening_at_loc(board,loc):
             max_mines_per_group = []
 
             for group in locs:
-                num_frontier_tiles_in_group = len(group)-len(set(frontier_tile_locs).intersection(set(group)))
-                max_mines_per_group.append(num_frontier_tiles_in_group)
+                max_mines = len(group)-len(set(frontier_tile_locs).intersection(set(group)))
+                max_mines_per_group.append(max_mines)
 
             valid_sols = [
                 (sol, count) for sol, count in sols_with_counts
                 if all(sol[i] <= max_mines_per_group[j] for j,i in enumerate(indices))
             ]    
-            sliced_valid_sols = [([sol[i] for i in indices], count) for sol, count in valid_sols]      
+
+            sliced_valid_sols = [([sol[i] for i in indices], count) for sol, count in valid_sols]
+
             num_valid_sols = 0
-            for sol,count in sliced_valid_sols:
-                for j,num_mines in enumerate(sol):
+            for sol,count in valid_sols:
+                num_mines = sum(sol)
+                mines_nonfrontier = GSM.mine_count - board.flag_count - num_mines
+                count *= math.comb(len(board.nonfrontier_tiles),mines_nonfrontier)
+                
+                sliced_sol = [sol[i] for i in indices]
+
+                for j,num_mines in enumerate(sliced_sol):
+
                     group = groups[indices[j]]
                     len_group = len(group)
-                    count *= 1-num_mines/len_group
-                num_valid_sols += count
-            prob_safe_frontier *= num_valid_sols/total
+                    if len_group == 1:
+                        continue
+
+                    combs = math.comb(max_mines_per_group[j],num_mines)/math.comb(len_group,num_mines)
+                    count *= combs
+                    #count *= (max_mines_per_group[j] - num_mines)/len_group
+                num_valid_sols += count 
+            prob_safe_frontier *= num_valid_sols/board.total_sols
             
     curr_tile.prob_opening = prob_safe_frontier * prob_safe_nonfrontier
     return curr_tile.prob_opening

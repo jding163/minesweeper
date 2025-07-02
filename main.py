@@ -213,6 +213,8 @@ class Game:
                     C.handle_keypress_l()
                 elif event.key == pygame.K_b:
                     C.handle_keypress_b()
+                elif event.key == pygame.K_v:
+                    C.handle_keypress_v()
                 elif event.key == pygame.K_k:
                     C.handle_keypress_k()
                     print(f'test: {C.test}')

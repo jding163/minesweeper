@@ -177,10 +177,10 @@ def main():
     # C.set_player(p)
     # C.set_board(b)
     seed=4
-    # p.set_strategy(strat.SafestTileAndLikeliestOpening())
-    # w1 = p.play_games(100,seed=seed)
-    p.set_strategy(strat.SafestTileAndForce())
-    w2 = p.play_games(100,seed=seed)
+    p.set_strategy(strat.SafestTileAndLikeliestOpening())
+    w1 = p.play_games(100,seed=seed)
+    # p.set_strategy(strat.SafestTileAndForce())
+    # w2 = p.play_games(100,seed=seed)
 
     # set1 = set(w1)
     # set2 = set(w2)
