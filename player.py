@@ -110,8 +110,8 @@ class Player():
         seeds = [random.randint(min_size,max_size) for _ in range(num_games)]
         start_time = time.time()
         results = []
-        #max_workers = multiprocessing.cpu_count()
-        max_workers = 4
+        max_workers = multiprocessing.cpu_count()
+        #max_workers = 4
 
         #max_workers=1
         with ProcessPoolExecutor(max_workers=max_workers) as executor:
@@ -180,7 +180,7 @@ def main():
     # p.set_strategy(strat.SafestTileAndLikeliestOpening())
     # w1 = p.play_games(100,seed=seed)
     p.set_strategy(strat.SafestTileAndForce())
-    w2 = p.play_games(5000,seed=seed)
+    w2 = p.play_games(100,seed=seed)
 
     # set1 = set(w1)
     # set2 = set(w2)
@@ -194,7 +194,7 @@ def main():
     # print("Only in w1:", len(only_in_w1))
     # print("Only in w2:", len(only_in_w2))
     # print(calc_mastery(w1,100))
-    print('Best mastery:',calc_mastery(w2,100))
+    #print('Best mastery:',calc_mastery(w2,100))
 
 
 

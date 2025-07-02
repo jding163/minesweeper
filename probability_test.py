@@ -56,29 +56,26 @@ def get_sol_counts(board):
     # print(subdivs)
     return sols_per_mines_in_frontier, subdivs
 
-def calc_global_prob_at_loc(loc,board,sols_per_mines_in_frontier,subdivs):
+def calc_global_prob_for_group(board,group,sols_per_mines_in_frontier,subdivs):
     regions = board.regions_list
-    region_index = [i for i, region in enumerate(regions) if loc in region.locs][0]
+
+    region_index = [i for i, region in enumerate(regions) if group in region.groups][0]
 
     region = regions[region_index]
     groups = region.groups
+
     sols = region.group_sols
     counts = region.group_counts
     sols_with_counts = list(zip(sols,counts))
     freqs = region.freqs
-    group_index = find_matching_indices(region.groups,[loc])[0]
+    group_index = find_matching_indices(groups,group)[0]
 
     num_sols = 0
-    #print(sols_with_counts)
     for freq in freqs.keys():
         matching_sols = [(sol,count) for sol,count in sols_with_counts if sum(sol) == freq]
         group_probs = calc_probs_from_grouped_sols(groups,[sol[0] for sol in matching_sols])
-        # print(freq)
-        # print(matching_sols)
-        # print(group_probs)
         if len(group_probs[0]) > 0:
             loc_prob_at_given_freq = group_probs[0][group_index]/len(groups[group_index])
-            #print(loc_prob_at_given_freq)
             for num_mines, configs in subdivs.items():
                 configs_at_given_freq = [config for config in configs if config[region_index] == freq]
                 matching_configs = len(configs_at_given_freq)/len(configs)
@@ -88,6 +85,7 @@ def calc_global_prob_at_loc(loc,board,sols_per_mines_in_frontier,subdivs):
 
     global_prob = num_sols/total_sols
     return global_prob
+
 def find_matching_indices(locs, targets):
     target_set = set(map(tuple, targets)) 
     result = []

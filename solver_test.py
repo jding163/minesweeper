@@ -547,15 +547,6 @@ class Solver(Board):
 
         self.solve_exhaustive()
 
-        # print(f'{(1,0)}: {prob.calc_global_prob_at_loc((1,0),self,sols_per_mines_in_frontier, subdivs)}')
-        # print(f'{(0,1)}: {prob.calc_global_prob_at_loc((0,1),self,sols_per_mines_in_frontier, subdivs)}')
-        # print(f'{(1,1)}: {prob.calc_global_prob_at_loc((1,1),self,sols_per_mines_in_frontier, subdivs)}')
-        # print(f'{(1,2)}: {prob.calc_global_prob_at_loc((1,2),self,sols_per_mines_in_frontier, subdivs)}')
-        # print(f'{(1,3)}: {prob.calc_global_prob_at_loc((1,3),self,sols_per_mines_in_frontier, subdivs)}')
-        # print(f'{(0,3)}: {prob.calc_global_prob_at_loc((0,3),self,sols_per_mines_in_frontier, subdivs)}')
-
-        # prob.calc_global_prob_at_loc((0,1),self,sols_per_mines_in_frontier, subdivs)
-
         info_found = self.open_known_tiles()
         regions = self.get_regions()
         updated = []
@@ -736,13 +727,11 @@ class Solver(Board):
                 sols_per_mines_in_frontier, subdivs = prob.get_sol_counts(self)
                 self.sols_per_mines_in_frontier = sols_per_mines_in_frontier
                 self.total_sols = sum(sols_per_mines_in_frontier.values())
-                for x in range(GSM.rows):
-                    for y in range(GSM.cols):
-                        loc = (x,y)
-                        tile = self.tiles[x][y]
-                        if tile.get_type() is UNKNOWN and loc not in self.nonfrontier_tiles:
-                            global_prob_at_loc = prob.calc_global_prob_at_loc(loc,self,sols_per_mines_in_frontier, subdivs)
-                            tile.prob_mine_local = global_prob_at_loc
+                for region in self.regions_list:
+                    for group in region.groups:
+                        global_prob = prob.calc_global_prob_for_group(self,group,sols_per_mines_in_frontier,subdivs)
+                        for x,y in group:
+                            self.tiles[x][y].prob_mine_local = global_prob
             info_found = self.open_known_tiles()
 
             return info_found
