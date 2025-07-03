@@ -34,6 +34,7 @@ class Region():
         self.group_counts = []
         self.sols_bit = []
         self.num_sols = 0
+        self.freqs = {}
     def num_locs(self):
         return len(self.locs)
     def num_solutions(self):
@@ -165,11 +166,11 @@ class Solver(Board):
         return merged
     
     def convert_ccs_to_regions(self,ccs):
-        regions = set()
+        regions = []
         for cc in ccs:
             cc,locs_to_check = self.optimize_backtrack_order(cc)
-            #cc = sorted(cc,key=lambda coord: (coord[0], coord[1]))
-            regions.add(Region(cc,locs_to_check))
+            cc = sorted(cc,key=lambda coord: (coord[0], coord[1]))
+            regions.append(Region(cc,locs_to_check))
         return regions
     
     def get_regions(self):
@@ -228,6 +229,8 @@ class Solver(Board):
         r.group_sols = combined_group_sols
         r.group_counts = combined_counts
         r.num_sols = sum(r.group_counts)
+        r.freqs = get_minecount_freqs(r)
+
         # print(r1.group_sols)
         # print(r2.group_sols)
         # print(combined_groups)
@@ -468,10 +471,11 @@ class Solver(Board):
         for i in range(len(groups)):
             
             group = groups[i]
+            group_prob = prob.calc_global_prob_for_group(self,group)
             length = len(group)
             for j in range(length):
                 x,y = group[j]
-                self.tiles[x][y].prob_mine_local = group_probs[i]/length
+                self.tiles[x][y].prob_mine_local = group_prob
 
     def update_solutions_with_new_constraints(self,region,updated_region):
         if region.locs != updated_region.locs or region.is_equal(updated_region):
@@ -607,6 +611,7 @@ class Solver(Board):
             if matching:
                 updated.append(region)
         self.regions_list = updated
+
 
         return info_found
     
@@ -774,7 +779,7 @@ class Solver(Board):
             self.total_sols = sum(sols_per_mines_in_frontier.values())
             for region in self.regions_list:
                 for group in region.groups:
-                    global_prob = prob.calc_global_prob_for_group(self,group,sols_per_mines_in_frontier,subdivs)
+                    global_prob = prob.calc_global_prob_for_group(self,group)
                     for x,y in group:
                         self.tiles[x][y].prob_mine_local = global_prob
             #info_found = self.open_known_tiles()

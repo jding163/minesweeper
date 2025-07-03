@@ -220,7 +220,7 @@ def handle_keypress_n():
     game.reset()
     reset_board()
 def handle_keypress_m():
-    reqs = {(0,0):1,(0,4):1}
+    reqs = {(0,0):1,(0,4):1,(2,1):1,(2,3):1}
     #reqs = {(0,1):1,(0,2):1,(0,3):1}
     first_click=(0,0)
     print(player.find_matching_board_state(reqs,first_click=first_click))
@@ -240,14 +240,19 @@ def handle_keypress_b():
     Board.display_probs = 3
 def handle_keypress_v():
     regions = board.regions_list
-    l1 = (1,1)
-    l2=(1,4)
-    r1_index = board.get_region_index_with_loc(l1)
-    r2_index = board.get_region_index_with_loc(l2)
-    r1 = regions[r1_index]
-    r2 = regions[r2_index]
-    board.merge_regions(r1,r2)
-    #prog.calc_prob_that_loc_is_val(board,(mx,my),1)
+    # l1 = (1,1)
+    # l2=(1,4)
+    # l1 = (0,9)
+    # l2 = (3,9)
+    # r1_index = board.get_region_index_with_loc(l1)
+    # r2_index = board.get_region_index_with_loc(l2)
+    # r1 = regions[r1_index]
+    # r2 = regions[r2_index]
+    # board.merge_regions(r1,r2)
+    loc = (0,2)
+    prob_loc_is_val = prob.calc_prob_that_loc_is_val(board,loc)
+    print(f'probs at {loc}:',prob_loc_is_val.items())
+    print('total_prob:',sum([p for _,p in prob_loc_is_val.items()]))
 def handle_keypress_space():
     if my<0:
         return

@@ -45,11 +45,6 @@ class SafestTileAndLikeliestOpening(Strategy):
         return 'SafestTileAndLikeliestOpening'
     def find_move(self,board):
         min_prob = 1
-        min_x=0
-        min_y=0
-        prob_opening = 0
-        priority = 0
-        prob.calc_prob_of_opening_for_board(board)
         for x in range(GSM.rows):
             for y in range(GSM.cols):
                 tile = board.tiles[x][y]
@@ -57,25 +52,38 @@ class SafestTileAndLikeliestOpening(Strategy):
                     # print('{},{}'.format(x,y))
                     if tile.prob_mine_local < min_prob:
                         min_prob = tile.prob_mine_local
-                        min_x = x
-                        min_y = y
-                        priority = tile.pos_type
-                        prob_opening = tile.prob_opening
 
-                    elif tile.prob_mine_local == min_prob:
-                        if tile.pos_type > priority:
-                            min_x = x
-                            min_y = y
-                            priority = tile.pos_type
-                            prob_opening = tile.prob_opening
+        candidates = []
+        eps = 0.00
+        for x in range(GSM.rows):
+            for y in range(GSM.cols):
+                tile = board.tiles[x][y]
+                if not tile.is_revealed() and not tile.is_flagged():
+                    if tile.prob_mine_local <= min_prob + eps:
+                        candidates.append(tile)
+        if len(candidates) == 1:
+            return candidates[0].loc
+        progress_dists = {}
+        filtered = []
+        for c in candidates:
+            if c.num_adj_flags == 0:
+                filtered.append(c)
+        if len(progress_dists) == 0:
+            return candidates[0].loc
+        if len(filtered) == 1:
+            return filtered[0].loc
+        for c in filtered:
+            progress_dists[c.loc] = prob.calc_prob_dist_for_val(board,c.loc,max_val=1)
 
-                        elif tile.pos_type == priority:
-                            comp_prob_opening = tile.prob_opening
-                            if comp_prob_opening > prob_opening:
-                                min_x = x
-                                min_y = y
-                                prob_opening = comp_prob_opening
-        return min_x,min_y
+        
+        best = None
+        prob_opening_best = -1
+        for k,v in progress_dists.items():
+            prob_opening = v[0]
+            if prob_opening > prob_opening_best:
+                prob_opening_best = prob_opening
+                best = k
+        return best
     
 
 class SafestTileAndForce(Strategy):

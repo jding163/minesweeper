@@ -1,34 +1,4 @@
-Seed -3628500538012883497: Won in 0.08 seconds
-Seed -1917387021196612659: Lost in 1.13 seconds
-Seed -7561315818300226726: Won in 0.17 seconds
-Seed 4891386765580059730: Lost in 0.29 seconds
-Seed 6029718241297022474: Lost in 0.00 seconds
-Seed 5656737394922367923: Won in 4.16 seconds
-Seed -4210510651926632891: Won in 0.04 seconds
-Seed -3507649212400433275: Lost in 0.04 seconds
-Seed -2353931851576704624: Won in 0.50 seconds
-Seed 1952622651856132950: Lost in 0.09 seconds
-Seed -5943722213852697300: Lost in 0.34 seconds
-Seed -4058328039203991995: Lost in 0.17 seconds
-Seed -3684815691335561226: Won in 0.30 seconds
-Seed 7052508346564528104: Lost in 0.00 seconds
-Seed -1587415303263635165: Lost in 2.11 seconds
-Seed -3906954471823748099: Lost in 0.00 seconds
-Seed -6247532119144455110: Lost in 0.00 seconds
-Seed -8425763037098422648: Lost in 0.25 seconds
-Seed 2730082748384213315: Won in 0.06 seconds
-Seed -2899030006129964630: Won in 0.10 seconds
-Seed 3205653247717911312: Lost in 0.12 seconds
-Seed -4126447449018509903: Lost in 0.08 seconds
-Seed 3839920124048289859: Lost in 0.09 seconds
-Seed 6679548500185511124: Lost in 0.18 seconds
-Seed -3856766810117161523: Won in 0.18 seconds
+CORRECT
 
---- Statistics Summary ---
-Total games: 25
-Total time: 13.076637029647827
-Wins: 9
-Losses: 16
-Winrate: 36.00%
-Average time per game: 0.42 seconds
-Average time per win: 0.62 seconds
+candidate: (4, 6)
+[<solver_test.Region object at 0x115407050>, <solver_test.Region object at 0x115615bd0>]

@@ -103,36 +103,36 @@ class Player():
 
 
 
-    def play_games(self,num_games,seed=None):
+    def play_games(self,num_games,seed=None,parallel=True):
         won_seeds = []
         if seed is not None:
             random.seed(seed)
         seeds = [random.randint(min_size,max_size) for _ in range(num_games)]
         start_time = time.time()
         results = []
-        max_workers = multiprocessing.cpu_count()
-        #max_workers = 4
+        if parallel:
+            max_workers = multiprocessing.cpu_count()
 
-        #max_workers=1
-        start=3000
-        end=4000
-        with ProcessPoolExecutor(max_workers=max_workers) as executor:
+            start=3000
+            end=4000
+            with ProcessPoolExecutor(max_workers=max_workers) as executor:
 
-            futures = {executor.submit(run_game, s,self.strategy): s for s in seeds}
-            
-            for i, future in enumerate(as_completed(futures)):
-                result = future.result()
+                futures = {executor.submit(run_game, s,self.strategy): s for s in seeds}
+                
+                for i, future in enumerate(as_completed(futures)):
+                    result = future.result()
+                    results.append(result)
+                    print(f"{i}: Seed {result['seed']}: {'Won' if result['won'] else 'Lost'} in {result['time']:.2f} seconds")
+                    if result['won']:
+                        won_seeds.append(i)
+        else:
+
+            for i in range(num_games):
+                print(i)
+
+                result = self.play_game(seed=seeds[i])
                 results.append(result)
-                print(f"{i}: Seed {result['seed']}: {'Won' if result['won'] else 'Lost'} in {result['time']:.2f} seconds")
-                if result['won']:
-                    won_seeds.append(i)
-
-        # for i in range(num_games):
-        #     print(i)
-
-        #     result = self.play_game(seed=seeds[i])
-        #     results.append(result)
-        #     print(f"Seed {result['seed']}: {'Won' if result['won'] else 'Lost'} in {result['time']:.2f} seconds")
+                print(f"Seed {result['seed']}: {'Won' if result['won'] else 'Lost'} in {result['time']:.2f} seconds")
 
         total_games = len(results)
         total_wins = sum(1 for r in results if r['won'])
@@ -180,7 +180,7 @@ def main():
     # C.set_board(b)
     seed=5
     p.set_strategy(strat.SafestTileAndLikeliestOpening())
-    w1 = p.play_games(5000,seed=seed)
+    w1 = p.play_games(100,seed=seed,parallel=True)
     # p.set_strategy(strat.SafestTileAndForce())
     # w2 = p.play_games(100,seed=seed)
 
