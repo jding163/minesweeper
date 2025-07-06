@@ -6,6 +6,8 @@ from collections import defaultdict
 from settings import *
 from itertools import combinations, product
 from scipy import stats
+from line_profiler import profile
+
 #board = None
 
 def calc_probs_from_grouped_sols(groups,sols,return_probs=True):

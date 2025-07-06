@@ -1,8 +1,10 @@
 import probability_test as prob
 from game_state_manager import GSM
 import progress as prog
+import time
 
 class Strategy:
+
     def __str__(self):
         raise NotImplementedError
 
@@ -41,6 +43,7 @@ class SafestTile(Strategy):
 
 # looks for tile with lowest prob of being a mine; as tiebreaker, looks for tile that is most likely to be an opening
 class SafestTileAndLikeliestOpening(Strategy):
+
     def __str__(self):
         return 'SafestTileAndLikeliestOpening'
     def find_move(self,board):
