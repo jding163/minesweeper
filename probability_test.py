@@ -149,7 +149,7 @@ def expand_batch(batch_sols, groups):
 def convolve_mine_distributions(dist_frontier, nf, prob_nonfrontier_tile,prob_mine_local,adj_flags,eps=0.00005):
     dist_total = defaultdict(float)
     if nf ==0:
-        for k, p in dist_frontier:
+        for k, p in dist_frontier.items():
             dist_total[k] = p
     elif len(dist_frontier) == 0:
         for total_mines in range(nf + 1):
@@ -167,33 +167,24 @@ def convolve_mine_distributions(dist_frontier, nf, prob_nonfrontier_tile,prob_mi
                     dist_total[total_mines] += p_frontier * p_nonfrontier
 
     for key in dist_total.keys():
-        dist_total[key] = float(dist_total[key])
+        dist_total[key] = float(dist_total[key] * (1-prob_mine_local))
     new_dict = defaultdict(lambda:0)
     for k,v in dist_total.items():
         new_dict[k+adj_flags] = v
     sum_probs = sum(new_dict.values())
     err = abs((1-sum_probs)-prob_mine_local)
-    new_dict[9] = float(1-sum_probs)
+    assert(err < eps)
 
-    # print(new_dict)
-    # print(prob_mine_local)
-    # print('err:',err)
-    #assert(err <= eps)
 
     return new_dict
-def calc_prob_dist_for_val(board,loc,opening_only=False):
-    regions = board.regions_list
-
+def calc_prob_dist_for_loc(board,loc):
 
     neighbor_locs = [n.loc for n in board.get_neighbor_tiles(loc) if n.is_unknown()]
     nonfrontier_neighbor_locs = [n for n in neighbor_locs if n in board.nonfrontier_tiles]
     frontier_neighbor_locs = [n for n in neighbor_locs if n not in nonfrontier_neighbor_locs]
-    # if loc in board.nonfrontier_tiles:
-    #     nonfrontier_neighbor_locs.append(loc)
     if loc not in board.nonfrontier_tiles:
         frontier_neighbor_locs.append(loc)
 
-    #regions_to_merge = [r for r in regions if any(loc in r.locs for loc in frontier_neighbor_locs)]
     regions_to_merge = board.regions_list
 
     vals_dict_frontier = defaultdict(lambda:1)  
@@ -205,7 +196,6 @@ def calc_prob_dist_for_val(board,loc,opening_only=False):
         if len(regions_to_merge) > 1:
             for i in range(1,len(regions_to_merge)):
                 region = board.merge_regions(region,regions_to_merge[i])
-            #print(region.groups)
 
         groups = region.groups
 
@@ -218,33 +208,35 @@ def calc_prob_dist_for_val(board,loc,opening_only=False):
 
         neighbor_indices = [flat_groups.index(l) for l in frontier_neighbor_locs]
 
-        max_val = len(frontier_neighbor_locs) + 1
-        if opening_only:
-            max_val = 1
 
-        # calculate probability distribution for val mines within frontier tiles
-        for val in range(max_val):
-            num_sols = 0
-            for freq in freqs.keys():
+        num_sols_at_val = defaultdict(int)
+
+        for freq in freqs.keys():
+            if loc in frontier_neighbor_locs:
+                loc_index = flat_groups.index(loc)
+                matching_sols = [
+                    sol for sol in flat_sols
+                    if sol[loc_index] == 0 and sum(sol) == freq
+                ]
+            else:
                 matching_sols = [sol for sol in flat_sols if sum(sol) == freq]
+            matching_sols_at_val = defaultdict(int)
+            for sol in matching_sols:
+                neighbor_sum = sum(sol[i] for i in neighbor_indices)
+                matching_sols_at_val[neighbor_sum] += 1
 
-                matching_sols_at_val = [sol for sol in matching_sols 
-                                                if sum(sol[i] for i in neighbor_indices) == val]
-                if len(matching_sols_at_val)==0:
-                    continue
-                if loc in frontier_neighbor_locs:
-                    loc_index = flat_groups.index(loc)
-                    matching_sols_at_val = [sol for sol in matching_sols_at_val if sol[loc_index] == 0]
-                frac = len(matching_sols_at_val)/len(matching_sols)
+            for num_mines,num_sols in matching_sols_at_val.items():
+                frac = num_sols/len(matching_sols)
                 num_sols_at_freq = board.sols_per_mines_in_frontier[freq]*frac
-                num_sols +=num_sols_at_freq 
-            total_sols = sum(board.sols_per_mines_in_frontier.values())
+                num_sols_at_val[num_mines] += num_sols_at_freq
+        total_sols = sum(board.sols_per_mines_in_frontier.values())
+        for num_mines,num_sols in num_sols_at_val.items():
             global_prob_for_frontier_tiles = num_sols/total_sols
             if loc not in frontier_neighbor_locs:
                 x1,y1 = loc
                 loc_prob = board.tiles[x1][y1].prob_mine_local
                 global_prob_for_frontier_tiles *= 1-loc_prob
-            vals_dict_frontier[val] *= global_prob_for_frontier_tiles
+            vals_dict_frontier[num_mines] *= global_prob_for_frontier_tiles
     nf = len(nonfrontier_neighbor_locs)
     nf_prob = 0
     if nf>0:
@@ -252,9 +244,8 @@ def calc_prob_dist_for_val(board,loc,opening_only=False):
         nf_prob = board.tiles[x][y].prob_mine_local
     x1,y1 = loc
     loc_prob = board.tiles[x1][y1].prob_mine_local
-    vals_dict_frontier = {(k,v) for k,v in vals_dict_frontier.items() if v > 0}
+    vals_dict_frontier = {k:v for k,v in vals_dict_frontier.items() if v > 0}
     total_distribution = convolve_mine_distributions(vals_dict_frontier, nf,nf_prob, loc_prob,adj_flags)
-
     return total_distribution
 
 def find_matching_indices(locs, targets):

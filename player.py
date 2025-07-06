@@ -9,6 +9,9 @@ import pygame
 import strategy as strat
 from concurrent.futures import ProcessPoolExecutor, as_completed
 import multiprocessing
+import time
+import cProfile
+import pstats
 
 
 max_size = sys.maxsize
@@ -58,7 +61,7 @@ class Player():
                 break
             self.play_one_step(risk=risk)
     
-    def play_game(self,starts=[(0,0)],seed=None):
+    def play_game(self,seed=None):
         #C.handle_keypress_n()  # full reset
         #GSM.set_game_state(True)
         self.board = Solver(run_pygame=False)
@@ -112,9 +115,8 @@ class Player():
         results = []
         if parallel:
             max_workers = multiprocessing.cpu_count()
+            #max_workers = 4
 
-            start=3000
-            end=4000
             with ProcessPoolExecutor(max_workers=max_workers) as executor:
 
                 futures = {executor.submit(run_game, s,self.strategy): s for s in seeds}
@@ -178,10 +180,13 @@ def main():
     p = Player()
     # C.set_player(p)
     # C.set_board(b)
-    seed=5
+    seed=-1569694061328666230
+    #seed=5
     p.set_strategy(strat.SafestTileAndLikeliestOpening())
-    w1 = p.play_games(1000,seed=seed,parallel=True)
-    # p.set_strategy(strat.SafestTileAndForce())
+    res = p.play_game(seed=seed)
+    print(res)
+    #w1 = p.play_games(100,seed=seed,parallel=True)
+    #p.set_strategy(strat.SafestTileAndForce())
     # w2 = p.play_games(100,seed=seed)
 
     # set1 = set(w1)
@@ -195,8 +200,7 @@ def main():
     # print("In both:", len(in_both))
     # print("Only in w1:", len(only_in_w1))
     # print("Only in w2:", len(only_in_w2))
-    # print(calc_mastery(w1,100))
-    print('Best mastery:',calc_mastery(w1,100))
+    # print('Best mastery:',calc_mastery(w1,100))
 
 
 
