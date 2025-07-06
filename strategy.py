@@ -68,13 +68,13 @@ class SafestTileAndLikeliestOpening(Strategy):
         for c in candidates:
             if c.num_adj_flags == 0:
                 filtered.append(c)
-        if len(progress_dists) == 0:
-            return candidates[0].loc
+
         if len(filtered) == 1:
             return filtered[0].loc
+        if len(filtered) == 0:
+            return candidates[0].loc
         for c in filtered:
-            progress_dists[c.loc] = prob.calc_prob_dist_for_val(board,c.loc,max_val=1)
-
+            progress_dists[c.loc] = prob.calc_prob_dist_for_val(board,c.loc)
         
         best = None
         prob_opening_best = -1

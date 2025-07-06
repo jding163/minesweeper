@@ -180,7 +180,7 @@ def main():
     # C.set_board(b)
     seed=5
     p.set_strategy(strat.SafestTileAndLikeliestOpening())
-    w1 = p.play_games(100,seed=seed,parallel=True)
+    w1 = p.play_games(1000,seed=seed,parallel=True)
     # p.set_strategy(strat.SafestTileAndForce())
     # w2 = p.play_games(100,seed=seed)
 

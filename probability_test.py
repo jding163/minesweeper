@@ -212,34 +212,17 @@ def calc_prob_dist_for_val(board,loc,opening_only=False):
         sols = region.group_sols
         freqs = region.freqs
 
-        # regions_list = [r for r in board.regions_list if r not in regions_to_merge]
-
-        # regions_list.append(region)
-
-        # local_freqs = [region.freqs for region in regions_list]
-        # region_index = len(local_freqs) -1
-
-        # #_,subdivs = convolve_freqs(local_freqs)
-
-        # _,subdivs = convolve_freqs(local_freqs)
-
-        # print('subdivs:',subdivs)
-        # print(board.sols_per_mines_in_frontier)
-
         flat_sols = expand_batch(sols,groups)
 
-        # print(region.num_sols)
         flat_groups = sum(groups,[])
 
         neighbor_indices = [flat_groups.index(l) for l in frontier_neighbor_locs]
-        # print(flat_groups)
-        # print(frontier_neighbor_locs)
-        # print(neighbor_indices)
-        if loc == (4,8):
-            pass
-        max_val = 9
+
+        max_val = len(frontier_neighbor_locs) + 1
         if opening_only:
             max_val = 1
+
+        # calculate probability distribution for val mines within frontier tiles
         for val in range(max_val):
             num_sols = 0
             for freq in freqs.keys():
@@ -270,23 +253,9 @@ def calc_prob_dist_for_val(board,loc,opening_only=False):
     x1,y1 = loc
     loc_prob = board.tiles[x1][y1].prob_mine_local
     vals_dict_frontier = {(k,v) for k,v in vals_dict_frontier.items() if v > 0}
-    # print(vals_dict_frontier)
-    # print(nf)
-    # print(len(frontier_neighbor_locs))
     total_distribution = convolve_mine_distributions(vals_dict_frontier, nf,nf_prob, loc_prob,adj_flags)
 
     return total_distribution
-
-# def calc_prob_that_loc_is_val(board,loc,val,freq,matching_sols,neighbor_indices):
-#     matching_sols_at_val = [sol for sol in matching_sols 
-#                                     if sum(sol[i] for i in neighbor_indices) == val]
-#     if len(matching_sols_at_val)==0:
-#         continue
-#     if loc in frontier_neighbor_locs:
-#         loc_index = flat_groups.index(loc)
-#         matching_sols_at_val = [sol for sol in matching_sols_at_val if sol[loc_index] == 0]
-#     frac = len(matching_sols_at_val)/len(matching_sols)
-#     num_sols_at_freq = board.sols_per_mines_in_frontier[freq]*frac
 
 def find_matching_indices(locs, targets):
     target_set = set(map(tuple, targets)) 
