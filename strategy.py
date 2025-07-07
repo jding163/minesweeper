@@ -86,6 +86,7 @@ class SafestTileAndLikeliestOpening(Strategy):
             if prob_opening > prob_opening_best:
                 prob_opening_best = prob_opening
                 best = k
+        print('best:',best)
         return best
     
 

@@ -208,12 +208,11 @@ def handle_keypress_o():
     # x,y = (0,0)
     # tile = board.tiles[x][y]
     # if not tile.is_revealed() and not tile.is_flagged():
-    #     prob.calc_prob_of_opening_at_loc(board,(x,y))
     for x in range(GSM.rows):
         for y in range(GSM.cols):
             tile = board.tiles[x][y]
             if not tile.is_revealed() and not tile.is_flagged():
-                prob.calc_prob_of_opening_at_loc(board,(x,y))
+                prob.calc_local_prob_of_opening_at_loc(board,(x,y))
     Board.display_probs = 2
 
 def handle_keypress_n():

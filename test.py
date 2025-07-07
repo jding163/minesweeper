@@ -3,6 +3,9 @@ import copy
 from itertools import combinations, product
 from scipy import stats
 from collections import defaultdict
+from functools import reduce
+
+from math import comb
 
 def remove_coordinates(coords, sols, coords_to_remove):
     # Make copies so input is not modified
@@ -178,9 +181,40 @@ def convolve_mine_distributions(dist_frontier, nf, prob_nonfrontier_tile):
 
     return sorted(dist_total.items())
 
-dist = [(0, 0.16666666666666669), (1, 0.6070282881306504), (2, 0.22630504520268302)]
-prob_nonfrontier_tile = 0.208
-nf = 2
-total_distribution = convolve_mine_distributions(dist, nf, prob_nonfrontier_tile)
-for count, prob in total_distribution:
-    print(f"{count} mines: {prob:.6f}")
+
+# x = group size
+# y = neighbors in group
+# z = number of mines in group
+# want to find distribution of counts on how many of the y tiles are mines
+def hypergeometric_counts(x, y, z):
+    counts = {}
+    min_k = max(0, z - (x - y))
+    max_k = min(y, z)
+
+    total = 0
+    for k in range(min_k, max_k + 1):
+        count = comb(y, k) * comb(x - y, z - k)
+        counts[k] = count
+        total += count
+
+    assert total == comb(x, z), f"Sum {total} does not equal total combinations {comb(x, z)}"
+    return counts
+
+def convolve_counts(dict1, dict2):
+    """
+    Convolve two count distributions: dicts with {k: count}.
+    Returns a new dict where keys are summed, and counts are convolved.
+    """
+    result = defaultdict(int)
+    for k1, v1 in dict1.items():
+        for k2, v2 in dict2.items():
+            result[k1 + k2] += v1 * v2
+    return dict(result)
+
+def convolve_multiple(distributions):
+    """
+    Convolve a list of count distributions.
+    """
+    return reduce(convolve_counts, distributions)
+d = [{0: 1, 1: 2}, {0: 1}, {1: 1}, {0: 2, 1: 1}]
+print(convolve_multiple(d))

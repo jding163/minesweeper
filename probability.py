@@ -52,7 +52,7 @@ def calc_prob_for_nonfrontier_tiles(prob_dist, mines_left, num_nonfrontier_tiles
 # then take the product of the frontier and nonfrontier mine probabilities
 # note that this calculation is NOT the chance that (x,y) is an opening assuming (x,y) is safe; it assumes 
 # that (x,y) may or may not be a mine
-def calc_prob_of_opening_at_loc(board,loc):    
+def calc_local_prob_of_opening_at_loc(board,loc):    
     cc_keys = board.ccs_dict.keys()
     relevant_ccs = {}
     
@@ -140,7 +140,7 @@ def calc_prob_of_opening_for_board(board):
         for y in range(GSM.cols):
             tile = board.tiles[x][y]
             if not tile.is_revealed() and not tile.is_flagged():
-                calc_prob_of_opening_at_loc(board,(x,y))
+                calc_local_prob_of_opening_at_loc(board,(x,y))
                 
 
 
