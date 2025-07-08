@@ -1,4 +1,5 @@
 pygame-ce 2.5.3 (SDL 2.30.12, Python 3.11.8)
+{1: 2, 2: 5, 3: 2}
 seed: -1569694061328666230
 loc: (8, 7)
 loc: (11, 7)
@@ -13,139 +14,140 @@ best: (16, 8)
 loc: (10, 12)
 loc: (11, 13)
 best: (10, 12)
-{'seed': -1569694061328666230, 'won': True, 'time': 61.32448697090149}
+{'seed': -1569694061328666230, 'won': True, 'time': 57.34157991409302}
 Wrote profile results to player.py.lprof
 Timer unit: 1e-06 s
 
-Total time: 6.81835 s
+Total time: 3.44456 s
 File: /Users/jeremyding/Desktop/projects/minesweeper/probability_test.py
-Function: calc_prob_dist_for_loc at line 185
+Function: calc_prob_dist_for_loc at line 186
 
 Line #      Hits         Time  Per Hit   % Time  Line Contents
 ==============================================================
-   185                                           @profile
-   186                                           def calc_prob_dist_for_loc(board,loc):
-   187         9        118.0     13.1      0.0      print('loc:',loc)
-   188         9        277.0     30.8      0.0      neighbor_locs = [n.loc for n in board.get_neighbor_tiles(loc) if n.is_unknown()]
-   189         9        185.0     20.6      0.0      nonfrontier_neighbor_locs = [n for n in neighbor_locs if n in board.nonfrontier_tiles]
-   190         9         14.0      1.6      0.0      frontier_neighbor_locs = [n for n in neighbor_locs if n not in nonfrontier_neighbor_locs]
-   191         9         42.0      4.7      0.0      if loc not in board.nonfrontier_tiles:
-   192         9          2.0      0.2      0.0          frontier_neighbor_locs.append(loc)
-   193                                           
-   194         9          2.0      0.2      0.0      regions_to_merge = board.regions_list
-   195                                           
-   196         9         17.0      1.9      0.0      vals_dict_frontier = defaultdict(lambda:1)  
-   197         9          8.0      0.9      0.0      adj_flags = board.tiles[loc[0]][loc[1]].num_adj_flags
-   198                                           
-   199         9          7.0      0.8      0.0      if len(regions_to_merge) >= 1:
-   200         9          3.0      0.3      0.0          region = regions_to_merge[0]
-   201                                           
-   202         9          2.0      0.2      0.0          if len(regions_to_merge) > 1:
-   203        18         16.0      0.9      0.0              for i in range(1,len(regions_to_merge)):
-   204         9      46746.0   5194.0      0.7                  region = board.merge_regions(region,regions_to_merge[i])
-   205                                           
-   206         9          5.0      0.6      0.0          groups = region.groups
+   186                                           @profile
+   187                                           def calc_prob_dist_for_loc(board,loc):
+   188         9        105.0     11.7      0.0      print('loc:',loc)
+   189         9        239.0     26.6      0.0      neighbor_locs = [n.loc for n in board.get_neighbor_tiles(loc) if n.is_unknown()]
+   190         9        189.0     21.0      0.0      nonfrontier_neighbor_locs = [n for n in neighbor_locs if n in board.nonfrontier_tiles]
+   191         9         16.0      1.8      0.0      frontier_neighbor_locs = [n for n in neighbor_locs if n not in nonfrontier_neighbor_locs]
+   192         9         42.0      4.7      0.0      if loc not in board.nonfrontier_tiles:
+   193         9          4.0      0.4      0.0          frontier_neighbor_locs.append(loc)
+   194                                           
+   195         9          8.0      0.9      0.0      regions_to_merge = board.regions_list
+   196                                           
+   197         9          9.0      1.0      0.0      vals_dict_frontier = defaultdict(lambda:1)  
+   198         9          7.0      0.8      0.0      adj_flags = board.tiles[loc[0]][loc[1]].num_adj_flags
+   199                                           
+   200         9          7.0      0.8      0.0      if len(regions_to_merge) >= 1:
+   201                                                   #region = board.merge_multiple_regions(regions_to_merge)
+   202         9          4.0      0.4      0.0          region = regions_to_merge[0]
+   203                                           
+   204         9          3.0      0.3      0.0          if len(regions_to_merge) > 1:
+   205        18         18.0      1.0      0.0              for i in range(1,len(regions_to_merge)):
+   206         9      45625.0   5069.4      1.3                  region = board.merge_regions(region,regions_to_merge[i])
    207                                           
-   208         9          2.0      0.2      0.0          sols = region.group_sols
-   209         9          3.0      0.3      0.0          freqs = region.freqs
-   210                                           
-   211                                           
-   212         9          3.0      0.3      0.0          counts = region.group_counts
-   213         9       2476.0    275.1      0.0          sols_with_counts = list(zip(sols,counts))
-   214         9        484.0     53.8      0.0          neighbor_indices = find_matching_indices(groups,frontier_neighbor_locs)
-   215         9         10.0      1.1      0.0          neighbor_indices_with_counts = defaultdict(int)
-   216        44         12.0      0.3      0.0          for i in neighbor_indices:
-   217        35         12.0      0.3      0.0              group = groups[i]
-   218        81         43.0      0.5      0.0              for l in group:
-   219        46         13.0      0.3      0.0                  if l in frontier_neighbor_locs:
-   220        39         22.0      0.6      0.0                      neighbor_indices_with_counts[i] += 1
-   221                                           
-   222         9          3.0      0.3      0.0          num_sols_at_val = defaultdict(int)
-   223        71         70.0      1.0      0.0          for freq in freqs.keys():
-   224                                           
-   225        62         54.0      0.9      0.0              if loc in frontier_neighbor_locs:
-   226        62       3408.0     55.0      0.0                  loc_index = find_matching_indices(groups,[loc])[0]
-   227       124     130568.0   1053.0      1.9                  matching_sols = [
-   228        62         18.0      0.3      0.0                      (sol,count) for (sol,count) in sols_with_counts
-   229                                                               if sol[loc_index] < len(groups[loc_index]) and sum(sol) == freq
-   230                                                           ]
-   231                                                       else:
-   232                                                           matching_sols = [(sol,count) for sol,count in sols_with_counts if sum(sol) == freq]
-   233                                           
-   234        62       2909.0     46.9      0.0              num_matching_sols = sum([count for _,count in matching_sols])
-   235        62         83.0      1.3      0.0              matching_sols_at_val = defaultdict(int)
-   236     20708       8391.0      0.4      0.1              for sol,num_configs in matching_sols:
-   237     20646      19733.0      1.0      0.3                  counts_dicts = []
-   238                                           
-   239   1108116     342260.0      0.3      5.0                  for idx in range(len(sol)):
-   240   1087470     265837.0      0.2      3.9                      group = groups[idx]
-   241   1087470     281986.0      0.3      4.1                      num_mines = sol[idx]
-   242   1087470     301390.0      0.3      4.4                      if idx in neighbor_indices:
-   243                                           
-   244     89037      22251.0      0.2      0.3                          num_tiles = neighbor_indices_with_counts[idx]
-   245     89037     195064.0      2.2      2.9                          counts = hypergeometric_counts(len(group),num_tiles,num_mines)
-   246                                                               else:
-   247    998433     513276.0      0.5      7.5                          counts = {0:math.comb(len(group), num_mines)}
-   248   1087470     449977.0      0.4      6.6                      counts_dicts.append(counts)
-   249     20646    4192572.0    203.1     61.5                  merged,_ = convolve_freqs(counts_dicts)
-   250                                           
-   251     45045      22276.0      0.5      0.3                  for num_mines, count in merged.items():
-   252     24399      10697.0      0.4      0.2                      matching_sols_at_val[num_mines] += count
-   253                                                       
-   254                                                       
-   255       174         93.0      0.5      0.0              for num_mines,num_sols in matching_sols_at_val.items():
-   256       112         78.0      0.7      0.0                  frac = num_sols/num_matching_sols
-   257       112        138.0      1.2      0.0                  num_sols_at_freq = board.sols_per_mines_in_frontier[freq]*frac
-   258       112         55.0      0.5      0.0                  num_sols_at_val[num_mines] += num_sols_at_freq
-   259                                           
-   260                                           
+   208         9          7.0      0.8      0.0          groups = region.groups
+   209                                           
+   210         9          4.0      0.4      0.0          sols = region.group_sols
+   211         9          7.0      0.8      0.0          freqs = region.freqs
+   212                                           
+   213                                           
+   214         9          4.0      0.4      0.0          counts = region.group_counts
+   215         9       2837.0    315.2      0.1          sols_with_counts = list(zip(sols,counts))
+   216         9        468.0     52.0      0.0          neighbor_indices = find_matching_indices(groups,frontier_neighbor_locs)
+   217         9          9.0      1.0      0.0          neighbor_indices_with_counts = defaultdict(int)
+   218        44         18.0      0.4      0.0          for i in neighbor_indices:
+   219        35         13.0      0.4      0.0              group = groups[i]
+   220        81         45.0      0.6      0.0              for l in group:
+   221        46         17.0      0.4      0.0                  if l in frontier_neighbor_locs:
+   222        39         20.0      0.5      0.0                      neighbor_indices_with_counts[i] += 1
+   223                                           
+   224         9          4.0      0.4      0.0          num_sols_at_val = defaultdict(int)
+   225        71         47.0      0.7      0.0          for freq in freqs.keys():
+   226                                           
+   227        62         33.0      0.5      0.0              if loc in frontier_neighbor_locs:
+   228        62       3108.0     50.1      0.1                  loc_index = find_matching_indices(groups,[loc])[0]
+   229       124     120193.0    969.3      3.5                  matching_sols = [
+   230        62         11.0      0.2      0.0                      (sol,count) for (sol,count) in sols_with_counts
+   231                                                               if sol[loc_index] < len(groups[loc_index]) and sum(sol) == freq
+   232                                                           ]
+   233                                                       else:
+   234                                                           matching_sols = [(sol,count) for sol,count in sols_with_counts if sum(sol) == freq]
+   235                                           
+   236        62       2800.0     45.2      0.1              num_matching_sols = sum([count for _,count in matching_sols])
+   237        62         91.0      1.5      0.0              matching_sols_at_val = defaultdict(int)
+   238     20708       8293.0      0.4      0.2              for sol,num_configs in matching_sols:
+   239     20646      18513.0      0.9      0.5                  counts_dicts = []
+   240                                           
+   241   1108116     320649.0      0.3      9.3                  for idx in range(len(sol)):
+   242   1087470     249624.0      0.2      7.2                      group = groups[idx]
+   243   1087470     240222.0      0.2      7.0                      num_mines = sol[idx]
+   244   1087470     294945.0      0.3      8.6                      if idx in neighbor_indices:
+   245                                           
+   246     89037      21646.0      0.2      0.6                          num_tiles = neighbor_indices_with_counts[idx]
+   247     89037     185532.0      2.1      5.4                          counts = hypergeometric_counts(len(group),num_tiles,num_mines)
+   248                                                               else:
+   249    998433     435736.0      0.4     12.6                          counts = {0:math.comb(len(group), num_mines)}
+   250   1087470     419198.0      0.4     12.2                      counts_dicts.append(counts)
+   251     20646    1039790.0     50.4     30.2                  merged = convolve_freqs(counts_dicts)
+   252                                           
+   253     45045      19825.0      0.4      0.6                  for num_mines, count in merged.items():
+   254     24399       8907.0      0.4      0.3                      matching_sols_at_val[num_mines] += count
+   255                                                       
+   256                                                       
+   257       174         85.0      0.5      0.0              for num_mines,num_sols in matching_sols_at_val.items():
+   258       112         69.0      0.6      0.0                  frac = num_sols/num_matching_sols
+   259       112        120.0      1.1      0.0                  num_sols_at_freq = board.sols_per_mines_in_frontier[freq]*frac
+   260       112         54.0      0.5      0.0                  num_sols_at_val[num_mines] += num_sols_at_freq
    261                                           
-   262                                                   # flat_sols = expand_batch(sols,groups)
-   263                                                   # flat_groups = sum(groups,[])
-   264                                           
-   265                                                   # neighbor_indices = [flat_groups.index(l) for l in frontier_neighbor_locs]
-   266                                                   # print('total sols:', len(flat_sols))
-   267                                           
-   268                                                   # num_sols_at_val = defaultdict(int)
+   262                                           
+   263                                           
+   264                                                   # flat_sols = expand_batch(sols,groups)
+   265                                                   # flat_groups = sum(groups,[])
+   266                                           
+   267                                                   # neighbor_indices = [flat_groups.index(l) for l in frontier_neighbor_locs]
+   268                                                   # print('total sols:', len(flat_sols))
    269                                           
-   270                                                   # for freq in freqs.keys():
-   271                                                   #     if loc in frontier_neighbor_locs:
-   272                                                   #         loc_index = flat_groups.index(loc)
-   273                                                   #         matching_sols = [
-   274                                                   #             sol for sol in flat_sols
-   275                                                   #             if sol[loc_index] == 0 and sum(sol) == freq
-   276                                                   #         ]
-   277                                                   #     else:
-   278                                                   #         matching_sols = [sol for sol in flat_sols if sum(sol) == freq]
-   279                                                   #     print(f'{freq}:',len(matching_sols))
-   280                                                   #     matching_sols_at_val = defaultdict(int)
-   281                                                   #     for sol in matching_sols:
-   282                                                   #         neighbor_sum = sum(sol[i] for i in neighbor_indices)
-   283                                                   #         matching_sols_at_val[neighbor_sum] += 1
-   284                                                   #     print(f'{freq}:',sorted(matching_sols_at_val.items()))
-   285                                                   #     for num_mines,num_sols in matching_sols_at_val.items():
-   286                                                   #         frac = num_sols/len(matching_sols)
-   287                                                   #         num_sols_at_freq = board.sols_per_mines_in_frontier[freq]*frac
-   288                                                   #         num_sols_at_val[num_mines] += num_sols_at_freq
-   289                                           
-   290                                           
+   270                                                   # num_sols_at_val = defaultdict(int)
+   271                                           
+   272                                                   # for freq in freqs.keys():
+   273                                                   #     if loc in frontier_neighbor_locs:
+   274                                                   #         loc_index = flat_groups.index(loc)
+   275                                                   #         matching_sols = [
+   276                                                   #             sol for sol in flat_sols
+   277                                                   #             if sol[loc_index] == 0 and sum(sol) == freq
+   278                                                   #         ]
+   279                                                   #     else:
+   280                                                   #         matching_sols = [sol for sol in flat_sols if sum(sol) == freq]
+   281                                                   #     print(f'{freq}:',len(matching_sols))
+   282                                                   #     matching_sols_at_val = defaultdict(int)
+   283                                                   #     for sol in matching_sols:
+   284                                                   #         neighbor_sum = sum(sol[i] for i in neighbor_indices)
+   285                                                   #         matching_sols_at_val[neighbor_sum] += 1
+   286                                                   #     print(f'{freq}:',sorted(matching_sols_at_val.items()))
+   287                                                   #     for num_mines,num_sols in matching_sols_at_val.items():
+   288                                                   #         frac = num_sols/len(matching_sols)
+   289                                                   #         num_sols_at_freq = board.sols_per_mines_in_frontier[freq]*frac
+   290                                                   #         num_sols_at_val[num_mines] += num_sols_at_freq
    291                                           
-   292         9         25.0      2.8      0.0          total_sols = sum(board.sols_per_mines_in_frontier.values())
-   293        28         11.0      0.4      0.0          for num_mines,num_sols in num_sols_at_val.items():
-   294        19          9.0      0.5      0.0              global_prob_for_frontier_tiles = num_sols/total_sols
-   295        19          8.0      0.4      0.0              if loc not in frontier_neighbor_locs:
-   296                                                           x1,y1 = loc
-   297                                                           loc_prob = board.tiles[x1][y1].prob_mine_local
-   298                                                           global_prob_for_frontier_tiles *= 1-loc_prob
-   299        19         37.0      1.9      0.0              vals_dict_frontier[num_mines] *= global_prob_for_frontier_tiles
-   300         9          6.0      0.7      0.0      nf = len(nonfrontier_neighbor_locs)
-   301         9          1.0      0.1      0.0      nf_prob = 0
-   302         9          3.0      0.3      0.0      if nf>0:
-   303         6          2.0      0.3      0.0          x,y = nonfrontier_neighbor_locs[0]
-   304         6         11.0      1.8      0.0          nf_prob = board.tiles[x][y].prob_mine_local
-   305         9          5.0      0.6      0.0      x1,y1 = loc
-   306         9         22.0      2.4      0.0      loc_prob = board.tiles[x1][y1].prob_mine_local
-   307         9         55.0      6.1      0.0      vals_dict_frontier = {k:v for k,v in vals_dict_frontier.items() if v > 0}
-   308         9       4439.0    493.2      0.1      total_distribution = convolve_mine_distributions(vals_dict_frontier, nf,nf_prob, loc_prob,adj_flags)
-   309         9          5.0      0.6      0.0      return total_distribution
+   292                                           
+   293                                           
+   294         9         19.0      2.1      0.0          total_sols = sum(board.sols_per_mines_in_frontier.values())
+   295        28          6.0      0.2      0.0          for num_mines,num_sols in num_sols_at_val.items():
+   296        19         10.0      0.5      0.0              global_prob_for_frontier_tiles = num_sols/total_sols
+   297        19         10.0      0.5      0.0              if loc not in frontier_neighbor_locs:
+   298                                                           x1,y1 = loc
+   299                                                           loc_prob = board.tiles[x1][y1].prob_mine_local
+   300                                                           global_prob_for_frontier_tiles *= 1-loc_prob
+   301        19         38.0      2.0      0.0              vals_dict_frontier[num_mines] *= global_prob_for_frontier_tiles
+   302         9          2.0      0.2      0.0      nf = len(nonfrontier_neighbor_locs)
+   303         9          4.0      0.4      0.0      nf_prob = 0
+   304         9          2.0      0.2      0.0      if nf>0:
+   305         6          2.0      0.3      0.0          x,y = nonfrontier_neighbor_locs[0]
+   306         6          9.0      1.5      0.0          nf_prob = board.tiles[x][y].prob_mine_local
+   307         9          2.0      0.2      0.0      x1,y1 = loc
+   308         9          6.0      0.7      0.0      loc_prob = board.tiles[x1][y1].prob_mine_local
+   309         9         40.0      4.4      0.0      vals_dict_frontier = {k:v for k,v in vals_dict_frontier.items() if v > 0}
+   310         9       5186.0    576.2      0.2      total_distribution = convolve_mine_distributions(vals_dict_frontier, nf,nf_prob, loc_prob,adj_flags)
+   311         9          2.0      0.2      0.0      return total_distribution
 

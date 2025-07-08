@@ -62,6 +62,34 @@ class Region():
     
     def is_subset_of_region(self,region):
         return set(self.locs).issubset(set(region.locs))
+    def combine_region_data(regions):
+        all_locs = []
+        all_locs_to_check = []
+        all_groups = []
+        all_group_sols = [[]]
+        all_group_counts = [1]
+
+        for region in regions:
+            all_locs += region.locs
+            all_locs_to_check += region.locs_to_check
+            all_groups += region.groups
+
+            # Expand group_sols via Cartesian product
+            all_group_sols = [
+                sol1 + sol2
+                for sol1 in all_group_sols
+                for sol2 in region.group_sols
+            ]
+
+            # Expand group_counts via Cartesian product with product of counts
+            all_group_counts = [
+                c1 * c2
+                for c1 in all_group_counts
+                for c2 in region.group_counts
+            ]
+
+        return all_locs, all_locs_to_check, all_groups, all_group_sols, all_group_counts
+
 
 
 class Solver(Board):
@@ -197,25 +225,32 @@ class Solver(Board):
                     if tile_types[MINE] > tile.get_adj_mines() or (tile_types[UNKNOWN] == 0 and tile_types[MINE] != tile.get_adj_mines()):
                         return False
         return True
+    
+    # def merge_regions(self, r1, r2):
+    #     return Region.merge_multiple_regions([r1, r2])
+    def merge_multiple_regions(self, regions):
+        if not regions:
+            return None
+
+        locs, locs_to_check, groups, group_sols, group_counts = Region.combine_region_data(regions)
+        
+        r = Region(locs, locs_to_check)
+        r.groups = groups
+        r.group_sols = group_sols
+        r.group_counts = group_counts
+        r.num_sols = sum(group_counts)
+        r.freqs = get_minecount_freqs(r)
+        return r
+
+
+
+
     def merge_regions(self, r1, r2):
-        # constructor: locs and locs_to_check
-        # self.locs = list(locs)
-        # self.locs_to_check = locs_to_check
-        # self.groups = []
-        # self.group_sols = []
-        # self.group_counts = []
-        # self.sols_bit = []
-        # self.num_sols = 0
         combined_locs = r1.locs + r2.locs
         combined_locs_to_check = r1.locs_to_check + r2.locs_to_check
         r = Region(combined_locs,combined_locs_to_check)
         combined_groups = r1.groups + r2.groups
         r.groups = combined_groups
-        # combined_group_sols = []
-        # for r1sol in r1.group_sols:
-        #     for r2sol in r2.group_sols:
-        #         combined_sol = list(itertools.product(r1sol,r2sol))
-        #         combined_group_sols.append(combined_sol)
         combined_group_sols = list(itertools.product(r1.group_sols,r2.group_sols))
         for i,sol in enumerate(combined_group_sols):
             combined_sol = []
@@ -224,20 +259,11 @@ class Solver(Board):
             combined_group_sols[i] = combined_sol
         combined_counts = list(itertools.product(r1.group_counts,r2.group_counts))
         for i,counts in enumerate(combined_counts):
-
             combined_counts[i] = math.prod(counts)
         r.group_sols = combined_group_sols
         r.group_counts = combined_counts
         r.num_sols = sum(r.group_counts)
         r.freqs = get_minecount_freqs(r)
-
-        # print(r1.group_sols)
-        # print(r2.group_sols)
-        # print(combined_groups)
-        # print(combined_group_sols)
-        # print(r1.group_counts)
-        # print(r2.group_counts)
-        # print(combined_counts)
         return r
 
     def verify_solution(self,region):
@@ -774,7 +800,7 @@ class Solver(Board):
         solved = self.solve_endgame()
         if not solved and len(self.regions_list) > 0:
             info_found = self.open_known_tiles()
-            sols_per_mines_in_frontier, subdivs = prob.get_sol_counts(self)
+            sols_per_mines_in_frontier = prob.get_sol_counts(self)
             self.sols_per_mines_in_frontier = sols_per_mines_in_frontier
             self.total_sols = sum(sols_per_mines_in_frontier.values())
             for region in self.regions_list:

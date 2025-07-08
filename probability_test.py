@@ -3,7 +3,7 @@ from collections import Counter
 import copy
 import math
 from math import comb
-
+import test
 from collections import defaultdict
 from settings import *
 from itertools import combinations, product
@@ -52,7 +52,7 @@ def get_sol_counts(board):
     board.nonfrontier_tiles = nonfrontier_tiles
 
     local_freqs = [region.freqs for region in board.regions_list]
-    global_freqs,subdivs = convolve_freqs(local_freqs)
+    global_freqs = convolve_freqs(local_freqs)
     sols_per_mines_in_frontier = defaultdict(int)
     for num_mines,freq in global_freqs.items():
         
@@ -61,7 +61,7 @@ def get_sol_counts(board):
             num_sols_for_nonfrontier = math.comb(len(nonfrontier_tiles),mines_nonfrontier)
             sols_per_mines_in_frontier[num_mines] = num_sols_for_nonfrontier * freq
     
-    return sols_per_mines_in_frontier, subdivs
+    return sols_per_mines_in_frontier
 
 def calc_global_prob_for_group(board,group):
     regions = board.regions_list
@@ -80,6 +80,7 @@ def calc_global_prob_for_group(board,group):
     merged_regions = regions[0]
     for i in range(1,len(regions)):
         merged_regions = board.merge_regions(merged_regions,regions[i])
+    #merged_regions = board.merge_multiple_regions(regions)
     sols = merged_regions.group_sols
     counts = merged_regions.group_counts
     freqs = merged_regions.freqs
@@ -197,6 +198,7 @@ def calc_prob_dist_for_loc(board,loc):
     adj_flags = board.tiles[loc[0]][loc[1]].num_adj_flags
 
     if len(regions_to_merge) >= 1:
+        #region = board.merge_multiple_regions(regions_to_merge)
         region = regions_to_merge[0]
 
         if len(regions_to_merge) > 1:
@@ -246,7 +248,7 @@ def calc_prob_dist_for_loc(board,loc):
                     else:
                         counts = {0:math.comb(len(group), num_mines)}
                     counts_dicts.append(counts)
-                merged,_ = convolve_freqs(counts_dicts)
+                merged = convolve_freqs(counts_dicts)
 
                 for num_mines, count in merged.items():
                     matching_sols_at_val[num_mines] += count
@@ -325,22 +327,18 @@ def convolve_freqs(freqs):
     if len(freqs) == 0:
         return {},{}
     total_freqs = Counter()
-    subdivs = defaultdict(list)
     for tm,tc in freqs[0].items():
-        convolve_freqs_helper(freqs,1,tm,tc,total_freqs,subdivs,[tm])
-    return total_freqs,subdivs
+        convolve_freqs_helper(freqs,1,tm,tc,total_freqs)
+    return total_freqs
 
-def convolve_freqs_helper(freqs, index, total_mines, total_count, total_freqs,subdivs,subdiv):
+def convolve_freqs_helper(freqs, index, total_mines, total_count, total_freqs):
     if index == len(freqs):
         total_freqs[total_mines] += total_count
-        subdivs[total_mines].append(subdiv)
     else:
         for tm,tc in freqs[index].items():
             new_tm = total_mines + tm
             new_tc = total_count * tc
-            new_subdiv = [num for num in subdiv]
-            new_subdiv.append(tm)
-            convolve_freqs_helper(freqs,index+1,new_tm,new_tc,total_freqs,subdivs,new_subdiv)
+            convolve_freqs_helper(freqs,index+1,new_tm,new_tc,total_freqs)
 
 def calc_prob_for_nonfrontier_tiles(prob_dist, mines_left, num_nonfrontier_tiles):
     total_prob = 0
@@ -405,7 +403,7 @@ def calc_local_prob_of_opening_at_loc(board,loc):
 
     local_freqs = [region.freqs for region in board.regions_list]
 
-    global_freqs,_ = convolve_freqs(local_freqs)
+    global_freqs = convolve_freqs(local_freqs)
     if len(global_freqs) == 0:
         max_mines_in_frontier = 0
     else:
@@ -459,7 +457,7 @@ def update_nonfrontier_tile_probs(board):
         else:
             local_freqs = [region.freqs for region in board.regions_list]
 
-            global_freqs,_ = convolve_freqs(local_freqs)        
+            global_freqs = convolve_freqs(local_freqs)        
             num_sols_total = sum(global_freqs.values())
             prob_dist = {mc: num_sols_for_mc / num_sols_total for mc, num_sols_for_mc in global_freqs.items()}
             mines_left = len(board.mines) - board.flag_count

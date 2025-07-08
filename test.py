@@ -201,10 +201,13 @@ def hypergeometric_counts(x, y, z):
     return counts
 
 def convolve_counts(dict1, dict2):
-    """
-    Convolve two count distributions: dicts with {k: count}.
-    Returns a new dict where keys are summed, and counts are convolved.
-    """
+
+    if len(dict1) == 1:
+        k1, v1 = next(iter(dict1.items()))
+        return {k + k1: v * v1 for k, v in dict2.items()}
+    elif len(dict2) == 1:
+        k2, v2 = next(iter(dict2.items()))
+        return {k + k2: v * v2 for k, v in dict1.items()}
     result = defaultdict(int)
     for k1, v1 in dict1.items():
         for k2, v2 in dict2.items():
@@ -212,9 +215,10 @@ def convolve_counts(dict1, dict2):
     return dict(result)
 
 def convolve_multiple(distributions):
-    """
-    Convolve a list of count distributions.
-    """
-    return reduce(convolve_counts, distributions)
+    sorted_dists = sorted(distributions, key=len)
+    merged = sorted_dists[0]
+    for d in sorted_dists[1:]:
+        merged = convolve_counts(merged, d)
+    return merged
 d = [{0: 1, 1: 2}, {0: 1}, {1: 1}, {0: 2, 1: 1}]
 print(convolve_multiple(d))
