@@ -47,45 +47,5 @@ def calc_force_at_loc(board,loc):
 
     return force
 
-def calc_prob_that_loc_is_val(board,loc,val):
-
-    x,y = loc
-    tile = board.tiles[x][y]
-    total_sols = sum(board.sols_per_mines_in_frontier.values())
-
-    num_sols_where_tile_is_safe = round(total_sols * tile.prob_mine_local)
-    neighbors = board.get_neighbor_tiles(loc)
-    num_mine_neighbors = tile.num_adj_flags
-    if val < num_mine_neighbors:
-        return 0
-    unknown_neighbors = [n for n in neighbors if n.is_unknown()]
-    unknown_neighbors_out_frontier = [n for n in unknown_neighbors if n.loc in board.nonfrontier_tiles]
-    unknown_neighbors_in_frontier = [n for n in unknown_neighbors if n not in unknown_neighbors_out_frontier]
-    print([n.loc for n in unknown_neighbors_in_frontier])
-    print([n.loc for n in unknown_neighbors_out_frontier])
-    region_indices = {}
-    for region in board.regions_list:
-        indices = prob.find_matching_indices(region.groups,[n.loc for n in unknown_neighbors_in_frontier])
-        if len(indices) > 0:
-            region_indices[region] = indices
-    print(region_indices)
-    for region, indices in region_indices.items():
-        groups = region.groups
-        print(groups)
-        loc_index = prob.find_matching_indices(region.groups,[loc])
-        if len(loc_index) > 0:
-            loc_index = loc_index[0]
-            sols = [sol for sol in region.group_sols if sol[loc_index] < len(region.groups[loc_index])]
-        else:
-            sols = [sol for sol in region.group_sols]
-        sliced_sols = [[sol[i] for i in indices] for sol in sols]
-        print(sliced_sols)
-        sums_of_sliced_sols = [sum(sol) for sol in sliced_sols]
-
-            
-
-
-
-        
 
         
