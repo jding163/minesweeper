@@ -3,7 +3,6 @@ from collections import Counter
 import copy
 import math
 from math import comb
-import test
 from collections import defaultdict
 from settings import *
 from itertools import combinations, product
@@ -38,7 +37,6 @@ def get_sol_counts(board):
 
     frontier_tiles = set()
     regions = board.get_regions()
-    #region_locs = [region.locs for region in regions]
     for region in regions:
         for loc in region.locs:
             frontier_tiles.add(loc)
@@ -65,18 +63,6 @@ def get_sol_counts(board):
 
 def calc_global_prob_for_group(board,group):
     regions = board.regions_list
-
-    # region_index = [i for i, region in enumerate(regions) if group in region.groups][0]
-
-    # region = regions[region_index]
-    # groups = region.groups
-
-    # sols = region.group_sols
-    # counts = region.group_counts
-    # sols_with_counts = list(zip(sols,counts))
-    # freqs = region.freqs
-    # group_index = find_matching_indices(groups,group)[0]
-
     merged_regions = regions[0]
     for i in range(1,len(regions)):
         merged_regions = board.merge_regions(merged_regions,regions[i])

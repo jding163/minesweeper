@@ -9,7 +9,6 @@ import controller as C
 from player import Player
 import solver
 from solver import Solver
-import solver_test
 import multiprocessing
 
 
@@ -156,9 +155,8 @@ class Game:
                     if event.button == 1:
                         #C.handle_board_click(mines=custom_mines)
                         #test -8425763037098422648, -8433645031250545356,-3837008816949211577
-                        C.handle_board_click(seed=-1569694061328666230)
-                        # Lost in 364.86 seconds
-                        #C.handle_board_click(seed=6141164966175915024)
+                        #C.handle_board_click(seed=-1569694061328666230)
+                        C.handle_board_click(seed=-9125361901619617366)
 
                         #C.handle_board_click()
                     
@@ -220,14 +218,11 @@ class Game:
                     print(f'test: {C.test}')
                 elif event.key == pygame.K_SPACE:
                     C.handle_keypress_space()
-#b = merge_tester.SolverData()
 def main():
     Tile.set_font(tile_font)
 
-    b = solver_test.Solver()
-    #b=Solver()
+    b=Solver()
     p = Player()
-    #p = merge_tester.Collector()
     C.set_player(p)
     C.set_board(b)
     g = Game()

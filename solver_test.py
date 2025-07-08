@@ -16,8 +16,7 @@ logging.basicConfig(
 )
 
 import time
-import probability_test as prob
-import pickle
+import probability as prob
 
 paths_explored = 0
 merge_encounters = 0

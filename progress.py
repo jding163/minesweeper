@@ -1,5 +1,5 @@
 from game_state_manager import GSM
-import probability_test as prob
+import probability as prob
 import copy
 import sprites
 from settings import *
@@ -49,7 +49,6 @@ def calc_force_at_loc(board,loc):
 
 def calc_prob_that_loc_is_val(board,loc,val):
 
-    print(loc)
     x,y = loc
     tile = board.tiles[x][y]
     total_sols = sum(board.sols_per_mines_in_frontier.values())

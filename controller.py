@@ -4,10 +4,10 @@ import time
 from sprites import *
 from solver import Solver
 #import probability as prob
-import solver_test
+import solver
 import strategy as strat
 
-import probability_test as prob
+import probability as prob
 import progress as prog
 #import player as P
 
@@ -47,8 +47,7 @@ def reset_board():
     if not test:
         b = Solver()
     else:
-        b = solver_test.Solver()
-        #b = merge_tester.SolverData()
+        b = solver.Solver()
     set_board(b)
 
 def draw_board(screen):
@@ -174,7 +173,6 @@ def handle_keypress_t(seed=None):
     player.autoplay()
     print(game_won())
     print(time.time()-start)
-    #print(f'merges executed: {solver_test.merge_encounters}')
 
 
 def handle_keypress_a():

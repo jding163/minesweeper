@@ -1,4 +1,4 @@
-from solver_test import Solver
+from solver import Solver
 import controller as C
 import time
 from game_state_manager import GSM
