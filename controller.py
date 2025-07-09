@@ -134,7 +134,7 @@ def handle_board_right_click():
 
 
 def handle_keypress_p():
-    player.set_strategy(strat.CombinedSafetyAndOpeningScore())
+    player.set_strategy(strat.SecSafety())
     player.play_one_step()
 
 def handle_keypress_q():
@@ -168,8 +168,8 @@ def handle_keypress_t(seed=None):
     start = time.time()
     #player.set_strategy(strat.SafestTile())
 
-    #player.set_strategy(strat.CombinedSafetyAndOpeningScore())
-    player.set_strategy(strat.SafestTileAndLikeliestOpening())
+    player.set_strategy(strat.SecSafety())
+    #player.set_strategy(strat.SafestTileAndLikeliestOpening())
     player.autoplay()
     print(game_won())
     print(time.time()-start)
@@ -180,9 +180,9 @@ def handle_keypress_a():
     player.play_games(1000,seed=5)
 def handle_keypress_s():
     player.set_strategy(strat.SafestTileAndLikeliestOpening())
-    player.play_games(10,seed=5)
+    player.play_games(10,seed=5,parallel=True)
 def handle_keypress_d():
-    player.set_strategy(strat.SafestTileAndForce())
+    player.set_strategy(strat.SecSafety())
     player.play_games(10,seed=5)
 
 def handle_keypress_u():
@@ -246,10 +246,12 @@ def handle_keypress_v():
     # r1 = regions[r1_index]
     # r2 = regions[r2_index]
     # board.merge_regions(r1,r2)
-    loc = (0,2)
-    prob_loc_is_val = prob.calc_prob_that_loc_is_val(board,loc)
-    print(f'probs at {loc}:',prob_loc_is_val.items())
-    print('total_prob:',sum([p for _,p in prob_loc_is_val.items()]))
+    loc = (mx,my)
+    ss, probs, finished = prog.calc_sec_safety_at_loc(board,loc,0)
+    print(f'secondary safety at {loc}:',ss)
+    print(f'finished: {finished}')
+    if finished:
+        print(f'probs at {loc}:',probs.items())
 def handle_keypress_space():
     if my<0:
         return

@@ -178,15 +178,16 @@ def main():
     # b.display = None
     #b=Solver()
     p = Player()
+    p.set_strategy(strat.SafestTileAndLikeliestOpening())
+
     # C.set_player(p)
     # C.set_board(b)
-    seed=-1569694061328666230
-    #seed=5
-    p.set_strategy(strat.SafestTileAndLikeliestOpening())
-    res = p.play_game(seed=seed)
-    print(res)
-    #w1 = p.play_games(100,seed=seed,parallel=True)
-    #p.set_strategy(strat.SafestTileAndForce())
+    #seed=-7135090535216748403
+    seed=5
+    # res = p.play_game(seed=seed)
+    # print(res)
+    w1 = p.play_games(1000,seed=seed,parallel=True)
+    # p.set_strategy(strat.SafestTileAndForce())
     # w2 = p.play_games(100,seed=seed)
 
     # set1 = set(w1)
@@ -200,7 +201,7 @@ def main():
     # print("In both:", len(in_both))
     # print("Only in w1:", len(only_in_w1))
     # print("Only in w2:", len(only_in_w2))
-    # print('Best mastery:',calc_mastery(w1,100))
+    print('Best mastery:',calc_mastery(w1,100))
 
 
 

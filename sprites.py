@@ -119,7 +119,7 @@ class Tile:
         return self.revealed
 
     def is_unknown(self):
-        return not self.is_flagged() and not self.is_revealed()
+        return not self.type is NUMBER and not self.is_flagged() and not self.is_revealed()
 
     def set_revealed(self,revealed):
         self.revealed = revealed
@@ -196,7 +196,7 @@ class Board:
     
     def get_number_neighbor_tiles(self,loc):
         neighbors = self.get_neighbor_tiles(loc)
-        return [neighbor for neighbor in neighbors if neighbor.is_revealed()]
+        return [neighbor for neighbor in neighbors if neighbor.type is NUMBER]
     
     
     def get_unrevealed_neighbor_tiles(self,loc):
