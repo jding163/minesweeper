@@ -6,6 +6,7 @@ from collections import Counter
 import math
 import itertools
 import logging
+from line_profiler import profile
 
 # Set up logging
 logging.basicConfig(
@@ -122,7 +123,20 @@ class Solver(Board):
         self.region_freqs = []
         #self.populate(first_click)
         #self.reveal_tiles(first_click[0],first_click[1])
-
+    def is_loc_candidate_for_analysis(self,loc):
+        if loc not in self.nonfrontier_tiles:
+            return True
+        neighbor_coords = get_neighbors(loc)
+        count_nonfrontier = 0
+        count_frontier = 0
+        for x,y in neighbor_coords:
+            if (x,y) in self.nonfrontier_tiles:
+                count_nonfrontier += 1
+            elif self.tiles[x][y].is_unknown():
+                x,y=loc
+                count_frontier += 1
+        return count_nonfrontier- count_frontier < 4
+    
     def group_equivalent_tiles(self,region):
         locs = region.locs
         groups = set()
@@ -140,6 +154,7 @@ class Solver(Board):
 
         sorted_groups.sort(key=lambda group: (group[0][0], group[0][1]))
         return sorted_groups
+    
 
 
     # flags neighbors if they are known to be mines
@@ -232,20 +247,66 @@ class Solver(Board):
             if loc in r.locs:
                 return i
         return -1
-
-    def verify_region(self,region):
+    def verify_region(self, region):
         for loc in region.locs_to_check:
             tile = self.tiles[loc[0]][loc[1]]
-            tiles_to_check = self.get_neighbor_tiles((tile.row,tile.col))
-            tiles_to_check.append(tile)
-            for t in tiles_to_check:
-                if t.get_type() is NUMBER:
-                    tile_types = {UNKNOWN: 0, MINE: 0, NUMBER: 0, OPENING: 0}
-                    for t in tiles_to_check:
-                        tile_types[t.get_type()] += 1
-                    if tile_types[MINE] > tile.get_adj_mines() or (tile_types[UNKNOWN] == 0 and tile_types[MINE] != tile.get_adj_mines()):
-                        return False
+
+            if tile.get_type() != NUMBER:
+                continue  # Only verify constraints on NUMBER tiles
+
+            # Gather the relevant neighboring tiles (including the tile itself if needed)
+            neighbors = self.get_neighbor_tiles((tile.row, tile.col))
+            neighbors.append(tile)
+
+            # Count tile types only once
+            tile_type_counts = {UNKNOWN: 0, MINE: 0, NUMBER: 0, OPENING: 0}
+            for neighbor in neighbors:
+                tile_type_counts[neighbor.get_type()] += 1
+
+            mine_count = tile_type_counts[MINE]
+            unknown_count = tile_type_counts[UNKNOWN]
+            target_mines = tile.get_adj_mines()
+
+            # Check for constraint violation
+            if mine_count > target_mines:
+                return False
+            if unknown_count == 0 and mine_count != target_mines:
+                return False
+
         return True
+
+        # for loc in region.locs_to_check:
+        #     tile = self.tiles[loc[0]][loc[1]]
+        #     tiles_to_check = self.get_neighbor_tiles((tile.row,tile.col))
+        #     tiles_to_check.append(tile)
+        #     for t in tiles_to_check:
+        #         if t.get_type() is NUMBER:
+        #             count_mine = 0
+        #             count_unknown = 0
+        #             t_neighbors = self.get_neighbor_tiles((t.row,t.col))
+        #             for tn in t_neighbors:
+        #                 if tn.type == MINE:
+        #                     count_mine += 1
+        #                 elif tn.type == UNKNOWN:
+        #                     count_unknown += 1
+
+        #             if count_mine > t.get_adj_mines() or (count_unknown == 0 and count_mine != t.get_adj_mines()):
+        #                 return False
+        # return True
+    
+    def verify_neighbors_of_loc(self,loc):
+        tile = self.tiles[loc[0]][loc[1]]
+        tiles_to_check = self.get_neighbor_tiles((tile.row,tile.col))
+        tiles_to_check.append(tile)
+        for t in tiles_to_check:
+            if t.get_type() is NUMBER:
+                tile_types = {UNKNOWN: 0, MINE: 0, NUMBER: 0, OPENING: 0}
+                for t in tiles_to_check:
+                    tile_types[t.get_type()] += 1
+                if tile_types[MINE] > tile.get_adj_mines() or (tile_types[UNKNOWN] == 0 and tile_types[MINE] != tile.get_adj_mines()):
+                    return False
+        return True
+
     
     # def merge_regions(self, r1, r2):
     #     return Region.merge_multiple_regions([r1, r2])
@@ -306,6 +367,10 @@ class Solver(Board):
     def get_sol_counts(regions,nonfrontier_tiles,flag_count):
         local_freqs = [region.freqs for region in regions]
         global_freqs = prob.convolve_freqs(local_freqs)
+        if len(global_freqs) == 0:
+            mines_nonfrontier = GSM.mine_count - flag_count
+            num_sols_for_nonfrontier = math.comb(len(nonfrontier_tiles),mines_nonfrontier)
+            return {0:num_sols_for_nonfrontier}
         sols_per_mines_in_frontier = defaultdict(int)
         for num_mines,freq in global_freqs.items():
             
@@ -336,9 +401,9 @@ class Solver(Board):
             if not solved:
                 regions_to_solve.append(r1)
 
-        assert len(regions_to_solve) > 0
         for region in regions_to_solve:
             groups = self.group_equivalent_tiles(region)
+            groups = self.order_groups_by_information(groups)
             region.groups = groups
             group_sols = self.find_solutions_group(region,groups)
             #board is not solvable
@@ -366,6 +431,11 @@ class Solver(Board):
                     nonfrontier_tiles.append((row,col))
         sols_per_mines_in_frontier = Solver.get_sol_counts(regions_with_sols,nonfrontier_tiles,self.flag_count)
         total_count = sum(sols_per_mines_in_frontier.values())
+        if len(regions_to_solve) == 0:
+            mines_left = len(self.mines) - self.flag_count
+            tile.num_adj_mines = orig_val_at_loc
+            tile.type = UNKNOWN
+            return total_count, mines_left/len(nonfrontier_tiles)
 
         probs = []
         merged_regions = regions_with_sols[0]
@@ -428,7 +498,6 @@ class Solver(Board):
             for i in range(len(loc)):
                 self.undo_inject(loc[i])
         return sols
-
 
     def find_solutions_group_helper(self,region,groups,sols,index,mine_count):
         global paths_explored
@@ -626,13 +695,13 @@ class Solver(Board):
         valid_sols_bit = merged_region.get_sols_as_bits(merged_sols)            
         merged_region.set_sols_bit(valid_sols_bit)
         return merged_region
-    
     def solve_exhaustive(self,merge=True):
         global merge_encounters
         ccs = self.get_ccs()
         regions = self.convert_ccs_to_regions(ccs)
         for region in regions:
             groups = self.group_equivalent_tiles(region)
+            groups = self.order_groups_by_information(groups)
             region.groups = groups
 
         self.start_time = time.time()
@@ -683,7 +752,7 @@ class Solver(Board):
                         groups = region.groups
                         group_sols = self.find_solutions_group(region,groups)
                         group_probs,group_counts = prob.calc_probs_from_grouped_sols(groups,group_sols)
-                        
+
                         for i in range(len(groups)):
                             
                             group = groups[i]
@@ -852,6 +921,66 @@ class Solver(Board):
                         return False
                         
         return True
+    
+    def score_group(self,group):
+        score = 0
+        number_neighbors = set()
+        for (x,y) in group:
+            neighbors = self.get_neighbor_tiles((x, y))
+            for n in neighbors:
+                if n.type == NUMBER:
+                    number_neighbors.add(n.loc)
+
+
+
+        score = len(number_neighbors)
+        return score
+    
+
+    def order_groups_by_information(self,groups):
+        #print(groups)
+        # random_groups = random.sample(groups,k=len(groups))
+        # return random_groups
+        # return groups
+        # Sort groups to ensure deterministic iteration
+        groups = sorted(groups, key=lambda g: sorted(g))
+
+        # Step 1: Compute group scores
+        group_scores = {}
+        for group in groups:
+            group_key = tuple(sorted(group))  
+            group_scores[group_key] = self.score_group(group)
+
+        ordered = []
+        visited_keys = set()
+
+        # Step 2: Start with best-scoring group, break ties by coordinate
+        start_key = max(group_scores.keys(), key=lambda g: (group_scores[g], g))
+        ordered.append(list(start_key))
+        visited_keys.add(start_key)
+
+        # Step 3: Greedy deterministic expansion
+        while len(visited_keys) < len(groups):
+            current_tiles = {t for group in ordered for t in group}
+            frontier_keys = set()
+
+            for group in groups:
+                group_key = tuple(sorted(group))
+                if group_key in visited_keys:
+                    continue
+                if any(any(n in current_tiles for n in get_neighbors(t)) for t in group):
+                    frontier_keys.add(group_key)
+
+            if frontier_keys:
+                next_key = max(frontier_keys, key=lambda g: (group_scores[g], g))
+            else:
+                remaining_keys = set(group_scores.keys()) - visited_keys
+                next_key = max(remaining_keys, key=lambda g: (group_scores[g], g))
+
+            ordered.append(list(next_key))
+            visited_keys.add(next_key)
+        return ordered
+
 
         
     def optimize_backtrack_order(self,locs):
@@ -902,6 +1031,10 @@ class Solver(Board):
             #info_found = self.open_known_tiles()
 
             return info_found
+        elif len(self.regions_list) == 0:
+            prob.update_nonfrontier_tile_probs(self)
+            self.sols_per_mines_in_frontier = {}
+            self.total_sols = math.comb(len(self.nonfrontier_tiles),GSM.mine_count - self.flag_count)
         return solved
 
     def open_known_tiles(self):
@@ -1075,6 +1208,7 @@ def get_n_closest_coords(coords, target, n):
     return closest_coords
 
 
+
 # locs = [(0,0),(1,1),(2,2)]
 
 # r = Region(locs,locs)
@@ -1087,3 +1221,11 @@ def get_n_closest_coords(coords, target, n):
 # r.set_sols_bit(solutions)
 # sets=r.get_sols_as_sets()
 # print(sets)
+
+# group_scores = {
+#     ((1, 2),): 3,
+#     ((0, 1),): 3,
+#     ((2, 0),): 2,
+# }
+# start_key = max(group_scores.keys(), key=lambda g: (group_scores[g], g))
+# print(start_key)

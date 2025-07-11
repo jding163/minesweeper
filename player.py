@@ -10,8 +10,7 @@ import strategy as strat
 from concurrent.futures import ProcessPoolExecutor, as_completed
 import multiprocessing
 import time
-import cProfile
-import pstats
+from line_profiler import profile
 
 
 max_size = sys.maxsize
@@ -32,9 +31,13 @@ class Player():
         self.strategy = strat
     def set_game(self,game):
         self.game = game
-        
+    
     def play_one_step(self,risk=True):
-        game_over = not GSM.get_game_state() or (self.board.is_complete() and self.board.verify_win())
+
+
+        #game_over = not GSM.get_game_state() or (self.board.is_complete() and self.board.verify_win())
+        game_over = not GSM.get_game_state() or self.board.is_complete()
+
         if game_over:
             return
         if self.board.solve_trivial_and_open():
@@ -45,18 +48,31 @@ class Player():
         elif self.board.solve_endgame_and_open():
             return 
         #probs should be marked already
-        game_over = not GSM.get_game_state() or (self.board.is_complete() and self.board.verify_win())
+        #game_over = not GSM.get_game_state() or (self.board.is_complete() and self.board.verify_win())
+        game_over = not GSM.get_game_state() or self.board.is_complete()
+
 
         if risk is True and not game_over:
             x,y = self.strategy.find_move(self.board)
             #x,y = prob.find_safest_tile(self.board)
+            if (x,y) == (1,14):
+                print('here')
             self.board.reveal_tiles(x,y)
-            #self.board.open_safest_tile(convolve)
+        num_revealed = 0
+        for x in range(GSM.rows):
+            for y in range(GSM.cols):
+                tile = self.board.tiles[x][y]
+                if tile.is_revealed():
+                    num_revealed +=1
+                # elif (x,y) not in self.board.mines:
+                #     print((x,y))
+        print(num_revealed)
+        print(self.board.num_revealed)
 
     def autoplay(self,risk=True):
         while True:
-            game_over = not GSM.get_game_state() or (self.board.is_complete() and self.board.verify_win())
-
+            #game_over = not GSM.get_game_state() or (self.board.is_complete() and self.board.verify_win())
+            game_over = not GSM.get_game_state() or self.board.is_complete()
             if game_over:
                 break
             self.play_one_step(risk=risk)
@@ -105,18 +121,13 @@ class Player():
             return seed
 
 
-
-    def play_games(self,num_games,seed=None,parallel=True):
-        won_seeds = []
-        if seed is not None:
-            random.seed(seed)
-        seeds = [random.randint(min_size,max_size) for _ in range(num_games)]
+    def play_games_on_seed(self,num_games,seed,parallel=True):
+        seeds = [seed] * num_games
         start_time = time.time()
         results = []
         if parallel:
             max_workers = multiprocessing.cpu_count()
             #max_workers = 4
-
             with ProcessPoolExecutor(max_workers=max_workers) as executor:
 
                 futures = {executor.submit(run_game, s,self.strategy): s for s in seeds}
@@ -125,8 +136,60 @@ class Player():
                     result = future.result()
                     results.append(result)
                     print(f"{i}: Seed {result['seed']}: {'Won' if result['won'] else 'Lost'} in {result['time']:.2f} seconds")
-                    if result['won']:
-                        won_seeds.append(i)
+
+        else:
+
+            for i in range(num_games):
+                print(i)
+
+                result = self.play_game(seed=seeds[i])
+                results.append(result)
+                print(f"Seed {result['seed']}: {'Won' if result['won'] else 'Lost'} in {result['time']:.2f} seconds")
+
+        total_games = len(results)
+        total_wins = sum(1 for r in results if r['won'])
+        total_losses = total_games - total_wins
+        total_time = sum(r['time'] for r in results)
+        avg_time = total_time / total_games if total_games > 0 else 0
+        avg_time_win = (sum(r['time'] for r in results if r['won']) / total_wins) if total_wins > 0 else 0
+
+        print("\n--- Statistics Summary ---")
+        print(f'Strategy used: {self.strategy}')
+        print(f"Total games: {total_games}")
+        print(f"Total time: {time.time()-start_time}")
+        print(f"Wins: {total_wins}")
+        print(f"Losses: {total_losses}")
+        print(f"Winrate: {total_wins / total_games:.2%}")
+        print(f"Average time per game: {avg_time:.2f} seconds")
+        print(f"Average time per win: {avg_time_win:.2f} seconds")
+
+    def play_games(self,num_games,seed=None,parallel=True):
+        won_seeds = []
+        if seed is not None:
+            random.seed(seed)
+        seeds = [random.randint(min_size,max_size) for _ in range(num_games)]
+        start_time = time.time()
+        seeds = seeds[2350:2400]
+
+        results = []
+        if parallel:
+            max_workers = multiprocessing.cpu_count()
+            #max_workers = 4
+            with ProcessPoolExecutor(max_workers=max_workers) as executor:
+
+                futures = {executor.submit(run_game, s,self.strategy): s for s in seeds}
+                
+                for i, future in enumerate(as_completed(futures)):
+                    try:
+                        result = future.result()
+                        results.append(result)
+                        print(f"{i}: Seed {result['seed']}: {'Won' if result['won'] else 'Lost'} in {result['time']:.2f} seconds")
+                        if result['won']:
+                            won_seeds.append(i)
+                    except:
+                        with open('t1.txt', 'w') as f:
+                            f.write(f'error at {seeds[i]}')
+
         else:
 
             for i in range(num_games):
@@ -178,15 +241,16 @@ def main():
     # b.display = None
     #b=Solver()
     p = Player()
-    p.set_strategy(strat.SafestTileAndLikeliestOpening())
-
+    #p.set_strategy(strat.SafestTileAndLikeliestOpening())
+    p.set_strategy(strat.SecSafety())
     # C.set_player(p)
     # C.set_board(b)
     #seed=-7135090535216748403
-    seed=5
+    seed=5093029
     # res = p.play_game(seed=seed)
     # print(res)
-    w1 = p.play_games(1000,seed=seed,parallel=True)
+    w1 = p.play_games(10000,seed=seed,parallel=False)
+    # p.play_games_on_seed(10,-1443323327528190823)
     # p.set_strategy(strat.SafestTileAndForce())
     # w2 = p.play_games(100,seed=seed)
 

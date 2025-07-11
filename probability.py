@@ -154,8 +154,9 @@ def convolve_mine_distributions(dist_frontier, nf, prob_nonfrontier_tile,prob_mi
     return new_dict
 
 def calc_prob_opening_for_loc(board,loc):
-    num_sols = board.total_sols
     count,_ = board.get_sol_counts_at_loc_for_val(loc,0)
+    num_sols = board.total_sols
+
     return count/num_sols
 
 # def calc_sec_safety_at_loc(board,loc):
@@ -316,7 +317,7 @@ def find_matching_indices(locs, targets):
 # freqs is a list of dicts
 def convolve_freqs(freqs):
     if len(freqs) == 0:
-        return {},{}
+        return {}
     total_freqs = Counter()
     for tm,tc in freqs[0].items():
         convolve_freqs_helper(freqs,1,tm,tc,total_freqs)

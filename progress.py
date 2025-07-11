@@ -11,17 +11,17 @@ def find_loc_with_best_sec_safety_over_locs(board,locs):
     threshold = -1
     best_loc = None
     for loc in locs:
-        print(f'loc: {loc}')
+        # print(f'loc: {loc}')
         sec_safety_so_far, _, finished = calc_sec_safety_at_loc(board,loc,threshold)
         if finished and sec_safety_so_far > threshold:
             threshold = sec_safety_so_far
             best_loc = loc
+        # if finished:
+        #     print(f'ss: {sec_safety_so_far}')
+        # print(f'finished: {finished}')
 
-        print(f'finished: {finished}')
-        if finished:
-            print(f'ss: {sec_safety_so_far}')
 
-    print(f'best: {best_loc}')
+    # print(f'best: {best_loc}')
     return best_loc
 
 def calc_sec_safety_at_loc(board,loc,threshold):
@@ -53,7 +53,7 @@ def calc_sec_safety_at_loc(board,loc,threshold):
         # Check whether it's still possible to reach the threshold
         remaining_weight = 1.0-prob_mine - weight_so_far
         max_possible = sec_safety_so_far + remaining_weight  # assume val=1 for remaining
-        print(f'max possible at val {i}:',max_possible)
+        # print(f'max possible at val {i}:',max_possible)
         if max_possible < threshold:
             # Cannot reach the threshold no matter what remains
             return sec_safety_so_far, probs, False

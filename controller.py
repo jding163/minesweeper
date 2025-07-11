@@ -217,8 +217,9 @@ def handle_keypress_n():
     game.reset()
     reset_board()
 def handle_keypress_m():
-    reqs = {(0,0):1,(0,4):1,(2,1):1,(2,3):1}
+    #reqs = {(0,0):1,(0,4):1,(2,1):1,(2,3):1}
     #reqs = {(0,1):1,(0,2):1,(0,3):1}
+    reqs = {(0,0):3}
     first_click=(0,0)
     print(player.find_matching_board_state(reqs,first_click=first_click))
 

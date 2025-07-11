@@ -8,6 +8,8 @@ from game_state_manager import GSM
 import sys
 import pprint
 import copy
+from line_profiler import profile
+
 # UNKNOWN = 0
 # NUMBER = 1
 # OPENING = 2
@@ -69,6 +71,7 @@ class Tile:
         self.prob_mine_local = -1
         self.prob_opening = -1
         self.force=0
+        self.neighbors = []
 
         # 0: non-edge non-corner 1: edge 2: corner
         if (self.row == 0 or self.row == GSM.rows-1) and (self.col == 0 or self.col == GSM.cols-1):
@@ -171,7 +174,10 @@ class Board:
         for row in range(GSM.rows):
             self.tiles.append([])
             for col in range(GSM.cols):
-                self.tiles[row].append(Tile(row,col,tile_unknown_path,UNKNOWN))
+                tile = Tile(row,col,tile_unknown_path,UNKNOWN)
+                tile.neighbors = get_neighbors((row,col))
+                self.tiles[row].append(tile)
+                
         self.num_revealed = 0
         self.flag_count = 0
         self.complete = False
@@ -188,9 +194,11 @@ class Board:
     def get_type_at_loc(self,loc):
         return self.tiles[loc[0]][loc[1]].get_type()
     def get_neighbor_tiles(self,loc):
-        neighbor_coords = get_neighbors(loc)
+       #neighbor_coords = get_neighbors(loc)
+        x,y=loc
+        tile = self.tiles[x][y]
         neighbors = []
-        for coord in neighbor_coords:
+        for coord in tile.neighbors:
             neighbors.append(self.tiles[coord[0]][coord[1]])
         return neighbors
     
@@ -199,14 +207,7 @@ class Board:
         return [neighbor for neighbor in neighbors if neighbor.type is NUMBER]
     
     
-    def get_unrevealed_neighbor_tiles(self,loc):
-        neighbor_coords = get_neighbors(loc)
-        neighbors = []
-        for coord in neighbor_coords:
-            tile = self.tiles[loc[0]][loc[1]]
-            if not tile.is_flagged() and not tile.is_revealed():
-                neighbors.append(self.tiles[coord[0]][coord[1]])
-        return neighbors
+
     
     def toggle_flag_at_loc(self,loc):
         if not self.tiles[loc[0]][loc[1]].is_revealed():

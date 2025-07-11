@@ -57,13 +57,15 @@ class SafestTileAndLikeliestOpening(Strategy):
                         min_prob = tile.prob_mine_local
 
         candidates = []
-        #eps = (1-min_prob)/10
-        eps=0
+        # threshold = 1-((1-min_prob)*0.9)
+        # print(threshold)
+        threshold = min_prob
+        #eps=0
         for x in range(GSM.rows):
             for y in range(GSM.cols):
                 tile = board.tiles[x][y]
                 if not tile.is_revealed() and not tile.is_flagged():
-                    if tile.prob_mine_local <= min_prob + eps:
+                    if tile.prob_mine_local <= threshold:
                         candidates.append(tile)
         if len(candidates) == 1:
             return candidates[0].loc
@@ -78,10 +80,12 @@ class SafestTileAndLikeliestOpening(Strategy):
         if len(filtered) == 0:
             return candidates[0].loc
         for c in filtered:
-            #print('candidate:',c.loc)
+            if board.is_loc_candidate_for_analysis(c.loc):
+
+                #print('candidate:',c.loc)
             # progress_dists[c.loc] = prob.calc_prob_dist_for_loc(board,c.loc)
             # print(progress_dists)
-            progress_dists[c.loc] = prob.calc_prob_opening_for_loc(board,c.loc)
+                progress_dists[c.loc] = prob.calc_prob_opening_for_loc(board,c.loc)
         best = None
         prob_opening_best = -1
         for k,v in progress_dists.items():
@@ -96,12 +100,11 @@ class SafestTileAndLikeliestOpening(Strategy):
 class SecSafety(Strategy):
     count = 0
     def __str__(self):
-        return 'SafestTileAndForce'
+        return 'SecSafety'
     def find_move(self, board):
         min_prob = 1
-        min_x=0
-        min_y=0
-
+        min_x = -1
+        min_y = -1
         for x in range(GSM.rows):
             for y in range(GSM.cols):
                 tile = board.tiles[x][y]
@@ -110,19 +113,22 @@ class SecSafety(Strategy):
                         min_prob = tile.prob_mine_local
                         min_x = x
                         min_y = y
+        if len(board.nonfrontier_tiles) == 0:
+            return min_x,min_y
 
         candidates = []
-        #eps = (1-min_prob)/10
-        eps=0
+        eps = (1-min_prob)/10
+        #eps=0
         for x in range(GSM.rows):
             for y in range(GSM.cols):
                 tile = board.tiles[x][y]
                 if not tile.is_revealed() and not tile.is_flagged():
-                    if tile.prob_mine_local <= min_prob + eps:
+                    if tile.prob_mine_local <= min_prob + eps and board.is_loc_candidate_for_analysis((x,y)):
                         candidates.append(tile)
         if len(candidates) == 1:
             return candidates[0].loc
         candidate_locs = [c.loc for c in candidates]
+        best_loc = None
         best_loc = prog.find_loc_with_best_sec_safety_over_locs(board,candidate_locs)
         return best_loc
  
