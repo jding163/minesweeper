@@ -114,7 +114,7 @@ class Region():
         return r
 
 class Solver(Board):
-
+    count = 0
     def __init__(self,first_click=(0,0),run_pygame=True):
         super().__init__(run_pygame=run_pygame)
         self.first_click = first_click
@@ -792,6 +792,7 @@ class Solver(Board):
 
         remaining_mines = GSM.mine_count-self.flag_count
         if remaining_mines == 0:
+            Solver.count += 1
             for x,y in nonfrontier_tiles:
                 self.reveal_tiles(x,y)
             return True
@@ -810,6 +811,8 @@ class Solver(Board):
             min_flags += local_min
             max_flags += local_max
         if max_flags + len(nonfrontier_tiles) == remaining_mines:
+            Solver.count += 1
+
             for region in self.regions_list:
                 if region not in regions:
                     continue
@@ -819,6 +822,8 @@ class Solver(Board):
             self.mark_tile_probs(nonfrontier_tiles,[[1] * len(nonfrontier_tiles)])
         # all non-border tiles are safe, solution uses min amount of mines
         elif min_flags == remaining_mines:
+            Solver.count += 1
+
             for region in self.regions_list:
                 if region not in regions:
                     continue
@@ -1169,26 +1174,3 @@ def get_n_closest_coords(coords, target, n):
     closest_coords = [coord for _, coord in distances[:n]]
     
     return closest_coords
-
-
-
-# locs = [(0,0),(1,1),(2,2)]
-
-# r = Region(locs,locs)
-# solutions = [
-#     [0, 1, 1],
-#     [1, 0, 0],
-#     [1, 1, 0],
-#     [0, 0, 0]
-# ]
-# r.set_sols_bit(solutions)
-# sets=r.get_sols_as_sets()
-# print(sets)
-
-# group_scores = {
-#     ((1, 2),): 3,
-#     ((0, 1),): 3,
-#     ((2, 0),): 2,
-# }
-# start_key = max(group_scores.keys(), key=lambda g: (group_scores[g], g))
-# print(start_key)

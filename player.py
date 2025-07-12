@@ -188,7 +188,7 @@ class Player():
 
                 result = self.play_game(seed=seeds[i])
                 results.append(result)
-                #print(f"Seed {result['seed']}: {'Won' if result['won'] else 'Lost'} in {result['time']:.2f} seconds")
+                print(f"Seed {result['seed']}: {'Won' if result['won'] else 'Lost'} in {result['time']:.2f} seconds")
 
         total_games = len(results)
         total_wins = sum(1 for r in results if r['won'])
@@ -241,6 +241,7 @@ def main():
     # res = p.play_game(seed=seed)
     # print(res)
     w1 = p.play_games(1000,seed=seed,parallel=True)
+    print(Solver.count)
     # p.play_games_on_seed(10,-1443323327528190823)
     # p.set_strategy(strat.SafestTileAndForce())
     # w2 = p.play_games(100,seed=seed)
@@ -256,7 +257,7 @@ def main():
     # print("In both:", len(in_both))
     # print("Only in w1:", len(only_in_w1))
     # print("Only in w2:", len(only_in_w2))
-    print('Best mastery:',calc_mastery(w1,100))
+    # print('Best mastery:',calc_mastery(w1,100))
 
 
 

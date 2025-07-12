@@ -157,10 +157,10 @@ class Game:
                         #test -8425763037098422648, -8433645031250545356,-3837008816949211577
                         #C.handle_board_click(seed=-1443323327528190823)
 
-                        C.handle_board_click(seed=-1569694061328666230)
+                        #C.handle_board_click(seed=-1569694061328666230)
                         #C.handle_board_click(seed=3180935053634563155)
                         #C.handle_board_click(seed=4717504199111745942)
-                        #C.handle_board_click(seed=-3663526568848306319)
+                        C.handle_board_click(seed=845689555483707202)
 
                         #C.handle_board_click()
                     
