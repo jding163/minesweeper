@@ -70,7 +70,6 @@ class Tile:
         self.num_adj_flags = 0
         self.prob_mine_local = -1
         self.prob_opening = -1
-        self.force=0
         self.neighbors = []
 
         # 0: non-edge non-corner 1: edge 2: corner
