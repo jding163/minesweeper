@@ -299,7 +299,9 @@ class Solver(Board):
             # Check for constraint violation
             if mine_count > target_mines:
                 return False
-            if unknown_count == 0 and mine_count != target_mines:
+            #if unknown_count == 0 and mine_count != target_mines:
+            if unknown_count + mine_count < target_mines:
+
                 return False
 
         return True
@@ -442,8 +444,36 @@ class Solver(Board):
         if region.num_locs() == 0:
             return
         sols = []
+        # unknown_tracker = {}
+        # mine_tracker = {}
+        # neighbor_tracker = {}
+        # for g in groups:
+        #     x,y = g[0]
+        #     tile = self.tiles[x][y]
+        #     neighbors = [n for n in tile.neighbors if n in region.locs_to_check]
+        #     neighbor_tracker[(x,y)] = neighbors
 
-        loc = groups[0]
+        # for i in range(region.locs_to_check):
+        #     loc = region.locs_to_check[i]
+        #     x,y=loc
+        #     tile = self.tiles[x][y]
+        #     num_mines_curr = tile.num_adj_flags
+        #     num_mines_curr_to_satisfy = tile.num_adj_mines
+        #     mine_tracker[loc] = (num_mines_curr,num_mines_curr_to_satisfy)
+
+        #     num_unknown = 0
+        #     neighbors = self.get_neighbor_tiles(loc)
+
+        #     for n in neighbors:
+        #         if n.type == UNKNOWN:
+        #             num_unknown += 1
+        #     unknown_tracker[loc] = num_unknown
+                
+
+
+        group = groups[0]
+
+            
 
         # count flagged mines from previous play
         mine_count = 0 # includes flagged mines and unflagged mines deduced from prior calls to find_solution
@@ -452,19 +482,19 @@ class Solver(Board):
                 if self.get_type_at_loc((row,col)) is MINE: 
                     mine_count += 1 
 
-        for total_mines in range(len(loc)+1):
-            for i in range(len(loc)):
+        for total_mines in range(len(group)+1):
+            for i in range(len(group)):
                 if i < total_mines:
-                    self.inject_mine(loc[i])
+                    self.inject_mine(group[i])
                 else:
-                    self.inject_num(loc[i])
+                    self.inject_num(group[i])
             #if self.verify_region(region):
-            if self.verify_neighbors_of_loc(loc[0],region.locs_to_check):
+            if self.verify_neighbors_of_loc(group[0],region.locs_to_check):
                 self.find_solutions_group_helper(region,groups,sols,1,mine_count + total_mines)
-            for i in range(len(loc)):
-                self.undo_inject(loc[i])
+            for i in range(len(group)):
+                self.undo_inject(group[i])
         return sols
-    @profile
+    
     def find_solutions_group_helper(self,region,groups,sols,index,mine_count):
         global paths_explored
         paths_explored += 1
@@ -473,10 +503,10 @@ class Solver(Board):
         if index == len(groups): # valid solution found
             #if self.verify_solution(region):
                 sol = []
-                for loc in groups:
+                for group in groups:
                     num_mines = 0
-                    for i in range(len(loc)):
-                        x,y = loc[i]
+                    for i in range(len(group)):
+                        x,y = group[i]
                         curr = self.tiles[x][y]
                         if curr.type is MINE:
                             num_mines +=1
@@ -484,19 +514,18 @@ class Solver(Board):
 
                 sols.append(sol)
         else:
-            loc = groups[index]
-            for total_mines in range(len(loc)+1):
-                for i in range(len(loc)):
+            group = groups[index]
+            for total_mines in range(len(group)+1):
+                for i in range(len(group)):
                     if i < total_mines:
-                        self.inject_mine(loc[i])
+                        self.inject_mine(group[i])
                     else:
-                        self.inject_num(loc[i])
+                        self.inject_num(group[i])
                 #if self.verify_region(region):
-                if self.verify_neighbors_of_loc(loc[0],region.locs_to_check):
-
+                if self.verify_neighbors_of_loc(group[0],region.locs_to_check):
                     self.find_solutions_group_helper(region,groups,sols,index+1,mine_count + total_mines)
-                for i in range(len(loc)):
-                    self.undo_inject(loc[i])
+                for i in range(len(group)):
+                    self.undo_inject(group[i])
             
 
 

@@ -237,7 +237,7 @@ def main():
     seed=987865
     # res = p.play_game(seed=seed)
     # print(res)
-    w1 = p.play_games(5000,seed=seed,parallel=True)
+    w1 = p.play_games(100,seed=seed,parallel=True)
     # p.play_games_on_seed(10,-1443323327528190823)
     # p.set_strategy(strat.SafestTileAndForce())
     # w2 = p.play_games(100,seed=seed)
