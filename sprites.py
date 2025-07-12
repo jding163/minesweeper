@@ -259,13 +259,13 @@ class Board:
                 #print('aaaaaa')
                 random.seed(seed)
                 self.seed = seed
-                print('seed: {}'.format(seed))
+                #print('seed: {}'.format(seed))
             else:
                 genned_seed=random.randint(-sys.maxsize - 1,sys.maxsize)
                 self.seed = genned_seed
 
                 random.seed(genned_seed)
-                print('seed: {}'.format(genned_seed))
+                #print('seed: {}'.format(genned_seed))
             locs = random.sample(possible_locs, GSM.mine_count+1)
 
             if first_click in locs:

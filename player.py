@@ -31,7 +31,7 @@ class Player():
         self.strategy = strat
     def set_game(self,game):
         self.game = game
-    
+    @profile
     def play_one_step(self,risk=True):
 
 
@@ -69,9 +69,10 @@ class Player():
         #C.handle_keypress_n()  # full reset
         #GSM.set_game_state(True)
         self.board = Solver(run_pygame=False)
-        start_time = time.time()
 
         self.board.populate((0,0),seed=seed)
+        start_time = time.time()
+
         self.board.reveal_tiles(0,0)
         self.autoplay()
 
@@ -171,9 +172,11 @@ class Player():
                     try:
                         result = future.result()
                         results.append(result)
-                        print(f"{i}: Seed {result['seed']}: {'Won' if result['won'] else 'Lost'} in {result['time']:.2f} seconds")
+                        #print(f"{i}: Seed {result['seed']}: {'Won' if result['won'] else 'Lost'} in {result['time']:.2f} seconds")
                         if result['won']:
                             won_seeds.append(i)
+                        if i % 250 == 0:
+                            print(i)
                     except:
                         with open('t1.txt', 'w') as f:
                             f.write(f'error at {seeds[i]}')
@@ -185,7 +188,7 @@ class Player():
 
                 result = self.play_game(seed=seeds[i])
                 results.append(result)
-                print(f"Seed {result['seed']}: {'Won' if result['won'] else 'Lost'} in {result['time']:.2f} seconds")
+                #print(f"Seed {result['seed']}: {'Won' if result['won'] else 'Lost'} in {result['time']:.2f} seconds")
 
         total_games = len(results)
         total_wins = sum(1 for r in results if r['won'])
@@ -229,15 +232,15 @@ def main():
     # b.display = None
     #b=Solver()
     p = Player()
-    #p.set_strategy(strat.SafestTileAndLikeliestOpening())
-    p.set_strategy(strat.SecSafety())
+    p.set_strategy(strat.SafestTileAndLikeliestOpening())
+    #p.set_strategy(strat.SecSafety())
     # C.set_player(p)
     # C.set_board(b)
-    #seed=6694725406751175162
+    #seed=-1569694061328666230
     seed=987865
     # res = p.play_game(seed=seed)
     # print(res)
-    w1 = p.play_games(100,seed=seed,parallel=True)
+    w1 = p.play_games(1000,seed=seed,parallel=True)
     # p.play_games_on_seed(10,-1443323327528190823)
     # p.set_strategy(strat.SafestTileAndForce())
     # w2 = p.play_games(100,seed=seed)

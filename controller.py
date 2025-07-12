@@ -165,10 +165,10 @@ def handle_keypress_t(seed=None):
         handle_board_click()
     else:
         handle_board_click(seed=seed)
-    start = time.time()
     #player.set_strategy(strat.SafestTile())
 
     player.set_strategy(strat.SecSafety())
+    start = time.time()
     #player.set_strategy(strat.SafestTileAndLikeliestOpening())
     player.autoplay()
     print(game_won())
