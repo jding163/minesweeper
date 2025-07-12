@@ -1,1 +1,77 @@
-error at 6731192789635602699
+pygame-ce 2.5.3 (SDL 2.30.12, Python 3.11.8)
+seed: 6694725406751175162
+{'seed': 6694725406751175162, 'won': True, 'time': 14.138718128204346}
+Wrote profile results to player.py.lprof
+Timer unit: 1e-06 s
+
+Total time: 13.1847 s
+File: /Users/jeremyding/Desktop/projects/minesweeper/solver.py
+Function: find_solutions_group at line 475
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   475                                               @profile
+   476                                               def find_solutions_group(self,region,groups):
+   477       749        938.0      1.3      0.0          if region.num_locs() == 0:
+   478                                                       return
+   479       749        260.0      0.3      0.0          sols = []
+   480                                           
+   481       749        305.0      0.4      0.0          loc = groups[0]
+   482                                           
+   483                                                   # count flagged mines from previous play
+   484       749        226.0      0.3      0.0          mine_count = 0 # includes flagged mines and unflagged mines deduced from prior calls to find_solution
+   485     23219       7604.0      0.3      0.1          for row in range(GSM.rows):
+   486    381990     140420.0      0.4      1.1              for col in range(GSM.cols):
+   487    359520     345320.0      1.0      2.6                  if self.get_type_at_loc((row,col)) is MINE: 
+   488     54807      13846.0      0.3      0.1                      mine_count += 1 
+   489                                           
+   490      2568       1148.0      0.4      0.0          for total_mines in range(len(loc)+1):
+   491      4627       2199.0      0.5      0.0              for i in range(len(loc)):
+   492      2808        914.0      0.3      0.0                  if i < total_mines:
+   493      1404       1875.0      1.3      0.0                      self.inject_mine(loc[i])
+   494                                                           else:
+   495      1404       2551.0      1.8      0.0                      self.inject_num(loc[i])
+   496      1819     110339.0     60.7      0.8              if self.verify_region(region):
+   497      1141   12550111.0  10999.2     95.2                  self.find_solutions_group_helper(region,groups,sols,1,mine_count + total_mines)
+   498      4627       2313.0      0.5      0.0              for i in range(len(loc)):
+   499      2808       4056.0      1.4      0.0                  self.undo_inject(loc[i])
+   500       749        226.0      0.3      0.0          return sols
+
+Total time: 11.8653 s
+File: /Users/jeremyding/Desktop/projects/minesweeper/solver.py
+Function: find_solutions_group_helper at line 501
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   501                                               @profile
+   502                                               def find_solutions_group_helper(self,region,groups,sols,index,mine_count):
+   503                                                   global paths_explored
+   504     49404      14934.0      0.3      0.1          paths_explored += 1
+   505     49404      18340.0      0.4      0.2          if mine_count > len(self.mines):
+   506       582        194.0      0.3      0.0              return
+   507     48822      16493.0      0.3      0.1          if index == len(groups): # valid solution found
+   508                                                       #if self.verify_solution(region):
+   509      3113        720.0      0.2      0.0                  sol = []
+   510     45676      13079.0      0.3      0.1                  for loc in groups:
+   511     42563       9205.0      0.2      0.1                      num_mines = 0
+   512     97876      45367.0      0.5      0.4                      for i in range(len(loc)):
+   513     55313      19191.0      0.3      0.2                          x,y = loc[i]
+   514     55313      16689.0      0.3      0.1                          curr = self.tiles[x][y]
+   515     55313      28943.0      0.5      0.2                          if curr.get_type() is MINE:
+   516     22398       5982.0      0.3      0.1                              num_mines +=1
+   517     42563      16207.0      0.4      0.1                      sol.append(num_mines)
+   518                                           
+   519      3113       1372.0      0.4      0.0                  sols.append(sol)
+   520                                                   else:
+   521     45709      13223.0      0.3      0.1              loc = groups[index]
+   522    152569      68649.0      0.4      0.6              for total_mines in range(len(loc)+1):
+   523    277964     125742.0      0.5      1.1                  for i in range(len(loc)):
+   524    171104      48275.0      0.3      0.4                      if i < total_mines:
+   525     85552     109620.0      1.3      0.9                          self.inject_mine(loc[i])
+   526                                                               else:
+   527     85552     128306.0      1.5      1.1                          self.inject_num(loc[i])
+   528    106860   10771352.0    100.8     90.8                  if self.verify_region(region):
+   529     48263      60474.0      1.3      0.5                      self.find_solutions_group_helper(region,groups,sols,index+1,mine_count + total_mines)
+   530    277964     102677.0      0.4      0.9                  for i in range(len(loc)):
+   531    171104     230232.0      1.3      1.9                      self.undo_inject(loc[i])
+

@@ -55,19 +55,7 @@ class Player():
         if risk is True and not game_over:
             x,y = self.strategy.find_move(self.board)
             #x,y = prob.find_safest_tile(self.board)
-            if (x,y) == (1,14):
-                print('here')
             self.board.reveal_tiles(x,y)
-        num_revealed = 0
-        for x in range(GSM.rows):
-            for y in range(GSM.cols):
-                tile = self.board.tiles[x][y]
-                if tile.is_revealed():
-                    num_revealed +=1
-                # elif (x,y) not in self.board.mines:
-                #     print((x,y))
-        print(num_revealed)
-        print(self.board.num_revealed)
 
     def autoplay(self,risk=True):
         while True:
@@ -169,7 +157,7 @@ class Player():
             random.seed(seed)
         seeds = [random.randint(min_size,max_size) for _ in range(num_games)]
         start_time = time.time()
-        seeds = seeds[2350:2400]
+        #seeds = seeds[2350:2400]
 
         results = []
         if parallel:
@@ -245,11 +233,11 @@ def main():
     p.set_strategy(strat.SecSafety())
     # C.set_player(p)
     # C.set_board(b)
-    #seed=-7135090535216748403
-    seed=5093029
+    #seed=6694725406751175162
+    seed=987865
     # res = p.play_game(seed=seed)
     # print(res)
-    w1 = p.play_games(10000,seed=seed,parallel=False)
+    w1 = p.play_games(5000,seed=seed,parallel=True)
     # p.play_games_on_seed(10,-1443323327528190823)
     # p.set_strategy(strat.SafestTileAndForce())
     # w2 = p.play_games(100,seed=seed)

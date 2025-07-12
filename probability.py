@@ -154,6 +154,7 @@ def convolve_mine_distributions(dist_frontier, nf, prob_nonfrontier_tile,prob_mi
     return new_dict
 
 def calc_prob_opening_for_loc(board,loc):
+
     count,_ = board.get_sol_counts_at_loc_for_val(loc,0)
     num_sols = board.total_sols
 

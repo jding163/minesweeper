@@ -204,7 +204,7 @@ class Solver(Board):
             for col in range(GSM.cols):
                 if self.tiles[row][col].is_revealed():
                     self.tiles[row][col].prob_mine_local = 0
-                    if self.tiles[row][col].get_type() is OPENING:
+                    if self.tiles[row][col].type is OPENING:
                         self.tiles[row][col].prob_opening = 1
                     else:
                         self.tiles[row][col].prob_opening = 0
@@ -251,21 +251,20 @@ class Solver(Board):
         for loc in region.locs_to_check:
             tile = self.tiles[loc[0]][loc[1]]
 
-            if tile.get_type() != NUMBER:
-                continue  # Only verify constraints on NUMBER tiles
 
             # Gather the relevant neighboring tiles (including the tile itself if needed)
             neighbors = self.get_neighbor_tiles((tile.row, tile.col))
-            neighbors.append(tile)
+            #neighbors.append(tile)
 
-            # Count tile types only once
-            tile_type_counts = {UNKNOWN: 0, MINE: 0, NUMBER: 0, OPENING: 0}
+            unknown_count = 0
+            mine_count = 0
             for neighbor in neighbors:
-                tile_type_counts[neighbor.get_type()] += 1
+                if neighbor.type == MINE:
+                    mine_count += 1
+                elif neighbor.type == UNKNOWN:
+                    unknown_count+=1
 
-            mine_count = tile_type_counts[MINE]
-            unknown_count = tile_type_counts[UNKNOWN]
-            target_mines = tile.get_adj_mines()
+            target_mines = tile.num_adj_mines
 
             # Check for constraint violation
             if mine_count > target_mines:
@@ -274,37 +273,35 @@ class Solver(Board):
                 return False
 
         return True
-
-        # for loc in region.locs_to_check:
-        #     tile = self.tiles[loc[0]][loc[1]]
-        #     tiles_to_check = self.get_neighbor_tiles((tile.row,tile.col))
-        #     tiles_to_check.append(tile)
-        #     for t in tiles_to_check:
-        #         if t.get_type() is NUMBER:
-        #             count_mine = 0
-        #             count_unknown = 0
-        #             t_neighbors = self.get_neighbor_tiles((t.row,t.col))
-        #             for tn in t_neighbors:
-        #                 if tn.type == MINE:
-        #                     count_mine += 1
-        #                 elif tn.type == UNKNOWN:
-        #                     count_unknown += 1
-
-        #             if count_mine > t.get_adj_mines() or (count_unknown == 0 and count_mine != t.get_adj_mines()):
-        #                 return False
-        # return True
     
-    def verify_neighbors_of_loc(self,loc):
-        tile = self.tiles[loc[0]][loc[1]]
+    def verify_neighbors_of_loc(self,loc,locs_to_check):
+        x,y=loc
+        tile = self.tiles[x][y]
         tiles_to_check = self.get_neighbor_tiles((tile.row,tile.col))
-        tiles_to_check.append(tile)
-        for t in tiles_to_check:
-            if t.get_type() is NUMBER:
-                tile_types = {UNKNOWN: 0, MINE: 0, NUMBER: 0, OPENING: 0}
-                for t in tiles_to_check:
-                    tile_types[t.get_type()] += 1
-                if tile_types[MINE] > tile.get_adj_mines() or (tile_types[UNKNOWN] == 0 and tile_types[MINE] != tile.get_adj_mines()):
-                    return False
+        tiles_to_check = [t for t in tiles_to_check if t.loc in locs_to_check]
+        for tile in tiles_to_check:
+
+
+            # Gather the relevant neighboring tiles (including the tile itself if needed)
+            neighbors = self.get_neighbor_tiles((tile.row, tile.col))
+
+            # Count tile types only once
+            unknown_count = 0
+            mine_count = 0
+            for neighbor in neighbors:
+                if neighbor.type == MINE:
+                    mine_count += 1
+                elif neighbor.type == UNKNOWN:
+                    unknown_count+=1
+
+            target_mines = tile.get_adj_mines()
+
+            # Check for constraint violation
+            if mine_count > target_mines:
+                return False
+            if unknown_count == 0 and mine_count != target_mines:
+                return False
+
         return True
 
     
@@ -323,38 +320,6 @@ class Solver(Board):
         r.num_sols = sum(group_counts)
         r.freqs = get_minecount_freqs(r)
         return r
-
-
-
-
-
-
-    def verify_solution(self,region):
-        for loc in region.locs_to_check:
-            tile = self.tiles[loc[0]][loc[1]]
-            tiles_to_check = self.get_neighbor_tiles((tile.row,tile.col))
-            tiles_to_check.append(tile)
-            for t in tiles_to_check:
-                num_neighbors = 0
-                safe_neighbors = 0
-                mine_neighbors = 0
-                for t in tiles_to_check:
-                    if t.get_type() == MINE:
-                        mine_neighbors += 1
-                    else:
-                        safe_neighbors+=1
-                    num_neighbors+=1
-                if mine_neighbors != t.get_adj_mines() or num_neighbors - mine_neighbors != safe_neighbors:
-                    return False
-        return True        
-    
-    def verify_bit_solution(self,sol,region):
-        self.inject_bit_solution(sol,region)
-        valid = False
-        if self.verify_region(region):
-            valid = True
-        self.undo_sol_inject(region)
-        return valid
     
     def verify_group_sol(self,sol,region):
         self.inject_group_sol(sol,region)
@@ -472,7 +437,7 @@ class Solver(Board):
 
 
 
-
+    @profile
     def find_solutions_group(self,region,groups):
         if region.num_locs() == 0:
             return
@@ -493,12 +458,13 @@ class Solver(Board):
                     self.inject_mine(loc[i])
                 else:
                     self.inject_num(loc[i])
-            if self.verify_region(region):
+            #if self.verify_region(region):
+            if self.verify_neighbors_of_loc(loc[0],region.locs_to_check):
                 self.find_solutions_group_helper(region,groups,sols,1,mine_count + total_mines)
             for i in range(len(loc)):
                 self.undo_inject(loc[i])
         return sols
-
+    @profile
     def find_solutions_group_helper(self,region,groups,sols,index,mine_count):
         global paths_explored
         paths_explored += 1
@@ -512,7 +478,7 @@ class Solver(Board):
                     for i in range(len(loc)):
                         x,y = loc[i]
                         curr = self.tiles[x][y]
-                        if curr.get_type() is MINE:
+                        if curr.type is MINE:
                             num_mines +=1
                     sol.append(num_mines)
 
@@ -525,7 +491,9 @@ class Solver(Board):
                         self.inject_mine(loc[i])
                     else:
                         self.inject_num(loc[i])
-                if self.verify_region(region):
+                #if self.verify_region(region):
+                if self.verify_neighbors_of_loc(loc[0],region.locs_to_check):
+
                     self.find_solutions_group_helper(region,groups,sols,index+1,mine_count + total_mines)
                 for i in range(len(loc)):
                     self.undo_inject(loc[i])
@@ -572,7 +540,7 @@ class Solver(Board):
                 sol = []
                 for x,y in region.locs:
                     curr = self.tiles[x][y]
-                    if curr.get_type() is MINE:
+                    if curr.type is MINE:
                         sol.append(1)
                     else:
                         sol.append(0)
@@ -876,7 +844,8 @@ class Solver(Board):
 
 
     def inject_mine(self,loc):
-        self.tiles[loc[0]][loc[1]].set_type(MINE)
+        tile = self.tiles[loc[0]][loc[1]]
+        tile.set_type(MINE)
 
     def inject_num(self,loc):
         self.tiles[loc[0]][loc[1]].set_type(NUMBER)
@@ -916,7 +885,7 @@ class Solver(Board):
                     neighbors = self.get_neighbor_tiles((row,col))
                     neighbor_types = {UNKNOWN: 0, MINE: 0, NUMBER: 0, OPENING: 0}
                     for neighbor in neighbors:
-                        neighbor_types[neighbor.get_type()] += 1
+                        neighbor_types[neighbor.type] += 1
                     if neighbor_types[MINE] > curr.get_adj_mines() or (neighbor_types[UNKNOWN] == 0 and neighbor_types[MINE] != curr.get_adj_mines()):
                         return False
                         
