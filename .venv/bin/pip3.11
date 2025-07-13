@@ -1,4 +1,4 @@
-#!/Users/jeremyding/Desktop/projects/minesweeper/.venv/bin/python
+#!/Users/jeremyding/minesweeper/.venv/bin/python
 # -*- coding: utf-8 -*-
 import re
 import sys

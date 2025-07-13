@@ -112,6 +112,7 @@ class Player():
 
     def play_games_on_seed(self,num_games,seed,parallel=True):
         seeds = [seed] * num_games
+
         start_time = time.time()
         results = []
         if parallel:
@@ -152,11 +153,14 @@ class Player():
         print(f"Average time per game: {avg_time:.2f} seconds")
         print(f"Average time per win: {avg_time_win:.2f} seconds")
 
-    def play_games(self,num_games,seed=None,parallel=True):
+    def play_games(self,num_games,seed=None,seeds_list=None,parallel=True):
         won_seeds = []
-        if seed is not None:
-            random.seed(seed)
-        seeds = [random.randint(min_size,max_size) for _ in range(num_games)]
+        if seeds_list is not None:
+            seeds = seeds_list
+        else:
+            if seed is not None:
+                random.seed(seed)
+            seeds = [random.randint(min_size,max_size) for _ in range(num_games)]
         start_time = time.time()
         #seeds = seeds[2350:2400]
 
@@ -180,15 +184,21 @@ class Player():
                     except:
                         with open('t1.txt', 'w') as f:
                             f.write(f'error at {seeds[i]}')
+            
 
         else:
 
             for i in range(num_games):
-                print(i)
-
+                #print(i)
+                if i % 250 == 0:
+                    print(i)
                 result = self.play_game(seed=seeds[i])
                 results.append(result)
-                print(f"Seed {result['seed']}: {'Won' if result['won'] else 'Lost'} in {result['time']:.2f} seconds")
+                #print(f"Seed {result['seed']}: {'Won' if result['won'] else 'Lost'} in {result['time']:.2f} seconds")
+            print(Solver.collected_seeds)
+            with open('seeds2.txt', 'w') as f:
+                for item in Solver.collected_seeds:
+                    f.write(f"{item}\n")
 
         total_games = len(results)
         total_wins = sum(1 for r in results if r['won'])
@@ -231,17 +241,22 @@ def main():
     # b = Solver()
     # b.display = None
     #b=Solver()
+
     p = Player()
     p.set_strategy(strat.SafestTileAndLikeliestOpening())
     #p.set_strategy(strat.SecSafety())
+
+    # with open('seeds1.txt', 'r') as f:
+    #     seeds_list = [int(line.strip()) for line in f]
+    # p.play_games(len(seeds_list),seeds_list=seeds_list,parallel=False)
     # C.set_player(p)
     # C.set_board(b)
     #seed=-1569694061328666230
     seed=987865
+    seed=5
     # res = p.play_game(seed=seed)
     # print(res)
     w1 = p.play_games(1000,seed=seed,parallel=True)
-    print(Solver.count)
     # p.play_games_on_seed(10,-1443323327528190823)
     # p.set_strategy(strat.SafestTileAndForce())
     # w2 = p.play_games(100,seed=seed)
@@ -264,3 +279,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
+    # max_workers = multiprocessing.cpu_count()
+    # print(max_workers)

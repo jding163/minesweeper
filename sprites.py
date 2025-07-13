@@ -71,6 +71,7 @@ class Tile:
         self.prob_mine_local = -1
         self.prob_opening = -1
         self.neighbors = []
+        self.force = 0
 
         # 0: non-edge non-corner 1: edge 2: corner
         if (self.row == 0 or self.row == GSM.rows-1) and (self.col == 0 or self.col == GSM.cols-1):
