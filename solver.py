@@ -869,7 +869,8 @@ class Solver(Board):
                 # print('valid_sols:',valid_sols)
 
             self.mark_tile_probs(nonfrontier_tiles,[[0] * len(nonfrontier_tiles)])
-        prob.update_nonfrontier_tile_probs(self)
+        else:
+            prob.update_nonfrontier_tile_probs(self)
         return False
 
                             

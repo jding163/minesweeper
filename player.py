@@ -195,10 +195,10 @@ class Player():
                 result = self.play_game(seed=seeds[i])
                 results.append(result)
                 #print(f"Seed {result['seed']}: {'Won' if result['won'] else 'Lost'} in {result['time']:.2f} seconds")
-            print(Solver.collected_seeds)
-            with open('seeds2.txt', 'w') as f:
-                for item in Solver.collected_seeds:
-                    f.write(f"{item}\n")
+            # print(Solver.collected_seeds)
+            # with open('seeds2.txt', 'w') as f:
+            #     for item in Solver.collected_seeds:
+            #         f.write(f"{item}\n")
 
         total_games = len(results)
         total_wins = sum(1 for r in results if r['won'])
@@ -256,7 +256,7 @@ def main():
     seed=5
     # res = p.play_game(seed=seed)
     # print(res)
-    w1 = p.play_games(1000,seed=seed,parallel=True)
+    w1 = p.play_games(100,seed=seed,parallel=False)
     # p.play_games_on_seed(10,-1443323327528190823)
     # p.set_strategy(strat.SafestTileAndForce())
     # w2 = p.play_games(100,seed=seed)
