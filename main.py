@@ -9,7 +9,6 @@ import controller as C
 from player import Player
 import solver
 from solver import Solver
-import solver_test
 import multiprocessing
 
 
@@ -19,7 +18,7 @@ font = pygame.font.SysFont(None, 50)
 tile_font = pygame.font.Font(None, 12)  
 
 
-
+#bruh
 def format_time(seconds):
     seconds = int(seconds)
     if seconds > 999:
@@ -156,10 +155,14 @@ class Game:
                     if event.button == 1:
                         #C.handle_board_click(mines=custom_mines)
                         #test -8425763037098422648, -8433645031250545356,-3837008816949211577
-                        #C.handle_board_click(seed=8261430605045743384)
-                        #C.handle_board_click(seed=-3471843042740411231)
+                        #C.handle_board_click(seed=-1443323327528190823)
 
-                        C.handle_board_click()
+                        #C.handle_board_click(seed=-1569694061328666230)
+                        #C.handle_board_click(seed=3180935053634563155)
+                        #C.handle_board_click(seed=4717504199111745942)
+                        C.handle_board_click(seed=1633728108409607470)
+
+                        #C.handle_board_click()
                     
                     elif event.button == 3:
                         C.handle_board_right_click()
@@ -203,7 +206,7 @@ class Game:
                     C.handle_keypress_u()
                 elif event.key == pygame.K_i:
                     Board.display_probs += 1
-                    Board.display_probs %= 4
+                    Board.display_probs %= 5
                 elif event.key == pygame.K_o:
                     C.handle_keypress_o()
                 elif event.key == pygame.K_p:
@@ -212,19 +215,18 @@ class Game:
                     C.handle_keypress_l()
                 elif event.key == pygame.K_b:
                     C.handle_keypress_b()
+                elif event.key == pygame.K_v:
+                    C.handle_keypress_v()
                 elif event.key == pygame.K_k:
                     C.handle_keypress_k()
                     print(f'test: {C.test}')
                 elif event.key == pygame.K_SPACE:
                     C.handle_keypress_space()
-#b = merge_tester.SolverData()
 def main():
     Tile.set_font(tile_font)
 
-    b = solver_test.Solver()
-    #b=Solver()
+    b=Solver()
     p = Player()
-    #p = merge_tester.Collector()
     C.set_player(p)
     C.set_board(b)
     g = Game()

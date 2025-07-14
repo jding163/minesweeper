@@ -4,10 +4,11 @@ import time
 from sprites import *
 from solver import Solver
 #import probability as prob
-import solver_test
+import solver
 import strategy as strat
 
-import probability_test as prob
+import probability as prob
+import progress as prog
 #import player as P
 
 test=True
@@ -46,8 +47,7 @@ def reset_board():
     if not test:
         b = Solver()
     else:
-        b = solver_test.Solver()
-        #b = merge_tester.SolverData()
+        b = solver.Solver()
     set_board(b)
 
 def draw_board(screen):
@@ -134,7 +134,7 @@ def handle_board_right_click():
 
 
 def handle_keypress_p():
-    player.set_strategy(strat.CombinedSafetyAndOpeningScore())
+    player.set_strategy(strat.SecSafety())
     player.play_one_step()
 
 def handle_keypress_q():
@@ -148,7 +148,9 @@ def handle_keypress_w():
     print(time.time()-start)
 
 def handle_keypress_e():
-    board.solve_endgame_and_open()
+    #board.solve_endgame_and_open()
+    board.solve_endgame()
+
     Board.display_probs = 1
 
     #prob.update_nonfrontier_tile_probs(board)
@@ -165,15 +167,14 @@ def handle_keypress_t(seed=None):
         handle_board_click()
     else:
         handle_board_click(seed=seed)
-    start = time.time()
-    player.set_strategy(strat.SafestTile())
+    #player.set_strategy(strat.SafestTile())
 
-    #player.set_strategy(strat.CombinedSafetyAndOpeningScore())
-    #player.set_strategy(strat.SafestTileAndLikeliestOpening())
+    #player.set_strategy(strat.SecSafety())
+    start = time.time()
+    player.set_strategy(strat.SafestTileAndLikeliestOpening())
     player.autoplay()
     print(game_won())
     print(time.time()-start)
-    #print(f'merges executed: {solver_test.merge_encounters}')
 
 
 def handle_keypress_a():
@@ -181,11 +182,10 @@ def handle_keypress_a():
     player.play_games(1000,seed=5)
 def handle_keypress_s():
     player.set_strategy(strat.SafestTileAndLikeliestOpening())
-    player.play_games(10,seed=5)
+    player.play_games(10,seed=5,parallel=True)
 def handle_keypress_d():
-    player.set_strategy(strat.SafetyAndProximityToInfo())
-    player.play_games(1000,seed=5)
-    #print(f'merges executed: {solver_test.merge_encounters}')
+    player.set_strategy(strat.SecSafety())
+    player.play_games(10,seed=5)
 
 def handle_keypress_u():
     player.set_strategy(strat.SafestTile())
@@ -197,7 +197,7 @@ def handle_keypress_y():
     player.play_one_step()
 
 def handle_keypress_l():
-    player.set_strategy(strat.SafetyAndProximityToInfo())
+    player.set_strategy(strat.SafestTileAndForce())
     player.play_one_step()
 
 def handle_keypress_k():
@@ -208,22 +208,22 @@ def handle_keypress_o():
     # x,y = (0,0)
     # tile = board.tiles[x][y]
     # if not tile.is_revealed() and not tile.is_flagged():
-    #     prob.calc_prob_of_opening_at_loc(board,(x,y))
     for x in range(GSM.rows):
         for y in range(GSM.cols):
             tile = board.tiles[x][y]
             if not tile.is_revealed() and not tile.is_flagged():
-                prob.calc_prob_of_opening_at_loc(board,(x,y))
+                prob.calc_local_prob_of_opening_at_loc(board,(x,y))
     Board.display_probs = 2
 
 def handle_keypress_n():
     game.reset()
     reset_board()
 def handle_keypress_m():
-   reqs = {(0,0):1,(0,2):2,(29,0):1,(29,15):1,(27,15):2}
-   #reqs = {(0,0):1}
-
-   print(player.find_matching_board_state(reqs))
+    #reqs = {(0,0):1,(0,4):1,(2,1):1,(2,3):1}
+    #reqs = {(0,1):1,(0,2):1,(0,3):1}
+    reqs = {(0,0):3}
+    first_click=(0,0)
+    print(player.find_matching_board_state(reqs,first_click=first_click))
 
 
 def handle_keypress_r():
@@ -231,7 +231,30 @@ def handle_keypress_r():
     print(sorted(board.mines,key=lambda coord: (coord[0], coord[1]))
 )
 def handle_keypress_b():
-    player.play_game()
+    for x in range(GSM.rows):
+        for y in range(GSM.cols):
+            tile = board.tiles[x][y]
+            if not tile.is_revealed() and not tile.is_flagged() and not (x,y) in board.nonfrontier_tiles:
+                force = prog.calc_force_at_loc(board,(x,y))
+                tile.force = force
+    Board.display_probs = 3
+def handle_keypress_v():
+    regions = board.regions_list
+    # l1 = (1,1)
+    # l2=(1,4)
+    # l1 = (0,9)
+    # l2 = (3,9)
+    # r1_index = board.get_region_index_with_loc(l1)
+    # r2_index = board.get_region_index_with_loc(l2)
+    # r1 = regions[r1_index]
+    # r2 = regions[r2_index]
+    # board.merge_regions(r1,r2)
+    loc = (mx,my)
+    ss, probs, finished = prog.calc_sec_safety_at_loc(board,loc,0)
+    print(f'secondary safety at {loc}:',ss)
+    print(f'finished: {finished}')
+    if finished:
+        print(f'probs at {loc}:',probs.items())
 def handle_keypress_space():
     if my<0:
         return

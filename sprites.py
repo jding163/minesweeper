@@ -8,6 +8,8 @@ from game_state_manager import GSM
 import sys
 import pprint
 import copy
+from line_profiler import profile
+
 # UNKNOWN = 0
 # NUMBER = 1
 # OPENING = 2
@@ -68,6 +70,8 @@ class Tile:
         self.num_adj_flags = 0
         self.prob_mine_local = -1
         self.prob_opening = -1
+        self.neighbors = []
+        self.force = 0
 
         # 0: non-edge non-corner 1: edge 2: corner
         if (self.row == 0 or self.row == GSM.rows-1) and (self.col == 0 or self.col == GSM.cols-1):
@@ -118,7 +122,7 @@ class Tile:
         return self.revealed
 
     def is_unknown(self):
-        return not self.is_flagged() and not self.is_revealed()
+        return not self.type is NUMBER and not self.is_flagged() and not self.is_revealed()
 
     def set_revealed(self,revealed):
         self.revealed = revealed
@@ -148,6 +152,11 @@ class Tile:
                 text_rect = prob_text.get_rect(center=(self.x + TILESIZE // 2, self.y + TILESIZE // 2))
                 display.blit(prob_text, text_rect)
         elif display_probs == 3:
+            if self.force != -1 and not self.revealed and not self.flagged:
+                prob_text = Tile.font.render(f"{self.force}", True, (0, 0, 0))  # Black text
+                text_rect = prob_text.get_rect(center=(self.x + TILESIZE // 2, self.y + TILESIZE // 2))
+                display.blit(prob_text, text_rect)
+        elif display_probs == 4:
             loc_text = Tile.font.render(f"{self.loc}", True, (0, 0, 0))  # Black text
             text_rect = loc_text.get_rect(center=(self.x + TILESIZE // 2, self.y + TILESIZE // 2))
             display.blit(loc_text, text_rect)
@@ -165,7 +174,10 @@ class Board:
         for row in range(GSM.rows):
             self.tiles.append([])
             for col in range(GSM.cols):
-                self.tiles[row].append(Tile(row,col,tile_unknown_path,UNKNOWN))
+                tile = Tile(row,col,tile_unknown_path,UNKNOWN)
+                tile.neighbors = get_neighbors((row,col))
+                self.tiles[row].append(tile)
+                
         self.num_revealed = 0
         self.flag_count = 0
         self.complete = False
@@ -182,25 +194,20 @@ class Board:
     def get_type_at_loc(self,loc):
         return self.tiles[loc[0]][loc[1]].get_type()
     def get_neighbor_tiles(self,loc):
-        neighbor_coords = get_neighbors(loc)
+       #neighbor_coords = get_neighbors(loc)
+        x,y=loc
+        tile = self.tiles[x][y]
         neighbors = []
-        for coord in neighbor_coords:
+        for coord in tile.neighbors:
             neighbors.append(self.tiles[coord[0]][coord[1]])
         return neighbors
     
     def get_number_neighbor_tiles(self,loc):
         neighbors = self.get_neighbor_tiles(loc)
-        return [neighbor for neighbor in neighbors if neighbor.is_revealed()]
+        return [neighbor for neighbor in neighbors if neighbor.type is NUMBER]
     
     
-    def get_unrevealed_neighbor_tiles(self,loc):
-        neighbor_coords = get_neighbors(loc)
-        neighbors = []
-        for coord in neighbor_coords:
-            tile = self.tiles[loc[0]][loc[1]]
-            if not tile.is_flagged() and not tile.is_revealed():
-                neighbors.append(self.tiles[coord[0]][coord[1]])
-        return neighbors
+
     
     def toggle_flag_at_loc(self,loc):
         if not self.tiles[loc[0]][loc[1]].is_revealed():
@@ -253,13 +260,13 @@ class Board:
                 #print('aaaaaa')
                 random.seed(seed)
                 self.seed = seed
-                print('seed: {}'.format(seed))
+                #print('seed: {}'.format(seed))
             else:
                 genned_seed=random.randint(-sys.maxsize - 1,sys.maxsize)
                 self.seed = genned_seed
 
                 random.seed(genned_seed)
-                print('seed: {}'.format(genned_seed))
+                #print('seed: {}'.format(genned_seed))
             locs = random.sample(possible_locs, GSM.mine_count+1)
 
             if first_click in locs:
