@@ -321,6 +321,7 @@ class Solver(Board):
 
     def get_sol_counts(regions,nonfrontier_tiles,flag_count):
         local_freqs = [region.freqs for region in regions]
+        
         global_freqs = prob.convolve_freqs(local_freqs)
         if len(global_freqs) == 0:
             mines_nonfrontier = GSM.mine_count - flag_count
@@ -679,7 +680,6 @@ class Solver(Board):
             groups = self.group_equivalent_tiles(region)
             groups = self.order_groups_by_information(groups)
             region.groups = groups
-
         self.start_time = time.time()
         for region in regions:
             region_solved = self.check_for_existing_solutions_in_set(region,self.regions_list)
@@ -730,7 +730,7 @@ class Solver(Board):
                         group_probs,group_counts = prob.calc_probs_from_grouped_sols(groups,group_sols)
 
                         for i in range(len(groups)):
-                            
+                        
                             group = groups[i]
                             length = len(group)
                             for j in range(length):
@@ -773,105 +773,6 @@ class Solver(Board):
 
 
         return info_found
-    
-    # assume all known mines are flagged
-    # assume that solve_board() was called previously and failed
-    def solve_endgame(self):
-        regions = self.get_regions()
-
-        #assert(len(regions) == len(self.regions_list))
-        min_flags = 0
-        max_flags = 0
-
-        # border_tiles = []
-        # ccs = self.get_ccs()
-        
-
-        # for cc in ccs:
-        #     for loc in cc:
-        #         border_tiles.append(loc)
-        frontier_tiles = set()
-        regions = self.get_regions()
-        #region_locs = [region.locs for region in regions]
-        for region in regions:
-            for loc in region.locs:
-                frontier_tiles.add(loc)
-
-
-        nonfrontier_tiles = []
-        for row in range(GSM.rows):
-            for col in range(GSM.cols):
-                if self.get_type_at_loc((row,col)) == UNKNOWN and (row,col) not in frontier_tiles:
-                    nonfrontier_tiles.append((row,col))
-        self.nonfrontier_tiles = nonfrontier_tiles
-
-        remaining_mines = GSM.mine_count-self.flag_count
-        if remaining_mines == 0:
-            #Solver.collected_seeds.append(self.seed)
-            #return nonfrontier_tiles, []
-            for x,y in nonfrontier_tiles:
-                self.reveal_tiles(x,y)
-            return True
-        
-        region_min={}
-        region_max={}
-        self.region_freqs = []
-
-        for region in self.regions_list:
-            freqs = region.freqs
-
-            local_min = min(freqs)
-            local_max = max(freqs)
-            region_min[region] = local_min
-            region_max[region] = local_max
-            min_flags += local_min
-            max_flags += local_max
-
-        safe_locs = []
-        mine_locs = []
-        if max_flags + len(nonfrontier_tiles) == remaining_mines:
-            #Solver.count += 1
-            #for region in regions:
-            for region in self.regions_list:
-
-            #     if region not in regions:
-            #         continue
-                local_max = region_max[region]
-                valid_sols = [sol for sol in region.group_sols if sum(sol) == local_max]
-                # print('valid_sols:',valid_sols)
-                #valid_sols = [sol for sol in region.sols_bit if sum(sol) == local_max]
-
-                groups = region.groups
-                group_probs,_ = prob.calc_probs_from_grouped_sols(groups,valid_sols)
-                self.mark_group_probs(groups,group_probs)
-            self.mark_tile_probs(nonfrontier_tiles,[[1] * len(nonfrontier_tiles)])
-        # all non-border tiles are safe, solution uses min amount of mines
-        elif min_flags == remaining_mines:
-            #Solver.count += 1
-            # Solver.collected_seeds.append(self.seed)
-            # print('here')
-            # for region in regions:
-                # print(region.locs)
-            for region in self.regions_list:
-                local_min = region_min[region]
-                valid_sols = [sol for sol in region.group_sols if sum(sol) == local_min]
-                groups = region.groups
-                group_probs,_ = prob.calc_probs_from_grouped_sols(groups,valid_sols)
-
-                self.mark_group_probs(groups,group_probs)
-                # if len(region.group_sols) != len(valid_sols):
-                #     Solver.collected_seeds.append(self.seed)
-
-                # valid_sols = [sol for sol in region.group_sols if sum(sol) == local_min]
-                # # valid_sols = [sol for sol in region.sols_bit if sum(sol) == local_min]
-
-                # self.mark_tile_probs(region.locs,valid_sols)
-                # print('valid_sols:',valid_sols)
-
-            self.mark_tile_probs(nonfrontier_tiles,[[0] * len(nonfrontier_tiles)])
-        else:
-            prob.update_nonfrontier_tile_probs(self)
-        return False
 
                             
     def open_remaining(self):
@@ -1019,27 +920,132 @@ class Solver(Board):
             if set(r.locs) == set(region.locs):
                 return r
         return None
+    # assume all known mines are flagged
+    # assume that solve_board() was called previously and failed
+    def solve_endgame(self):
+        regions = self.get_regions()
+
+        #assert(len(regions) == len(self.regions_list))
+        min_flags = 0
+        max_flags = 0
+
+        frontier_tiles = set()
+        regions = self.get_regions()
+        for region in regions:
+            for loc in region.locs:
+                frontier_tiles.add(loc)
+
+
+        nonfrontier_tiles = []
+        for row in range(GSM.rows):
+            for col in range(GSM.cols):
+                if self.get_type_at_loc((row,col)) == UNKNOWN and (row,col) not in frontier_tiles:
+                    nonfrontier_tiles.append((row,col))
+        self.nonfrontier_tiles = nonfrontier_tiles
+
+        remaining_mines = GSM.mine_count-self.flag_count
+        if remaining_mines == 0:
+            #Solver.collected_seeds.append(self.seed)
+            #return nonfrontier_tiles, []
+            for x,y in nonfrontier_tiles:
+                tile = self.tiles[x][y]
+                tile.prob_mine_local = 0
+            return True
+        
+        region_min={}
+        region_max={}
+        self.region_freqs = []
+
+        for region in self.regions_list:
+            freqs = region.freqs
+
+            local_min = min(freqs)
+            local_max = max(freqs)
+            region_min[region] = local_min
+            region_max[region] = local_max
+            min_flags += local_min
+            max_flags += local_max
+
+        safe_locs = []
+        mine_locs = []
+        if max_flags + len(nonfrontier_tiles) == remaining_mines:
+            #Solver.count += 1
+            #for region in regions:
+            for region in self.regions_list:
+
+            #     if region not in regions:
+            #         continue
+                local_max = region_max[region]
+                valid_sols = [sol for sol in region.group_sols if sum(sol) == local_max]
+                # print('valid_sols:',valid_sols)
+                #valid_sols = [sol for sol in region.sols_bit if sum(sol) == local_max]
+
+                groups = region.groups
+                group_probs,_ = prob.calc_probs_from_grouped_sols(groups,valid_sols)
+                self.mark_group_probs(groups,group_probs)
+            self.mark_tile_probs(nonfrontier_tiles,[[1] * len(nonfrontier_tiles)])
+            group_probs = [group_probs[i]/len(groups[i]) for i in range(len(group_probs))]
+            if any(element in (0, 1) for element in group_probs):
+                return True
+        # all non-border tiles are safe, solution uses min amount of mines
+        elif min_flags == remaining_mines:
+            #Solver.count += 1
+            # Solver.collected_seeds.append(self.seed)
+            # print('here')
+            # for region in regions:
+                # print(region.locs)
+            for region in self.regions_list:
+                local_min = region_min[region]
+                valid_sols = [sol for sol in region.group_sols if sum(sol) == local_min]
+                groups = region.groups
+                group_probs,_ = prob.calc_probs_from_grouped_sols(groups,valid_sols)
+
+                self.mark_group_probs(groups,group_probs)
+                # if len(region.group_sols) != len(valid_sols):
+                #     Solver.collected_seeds.append(self.seed)
+
+                # valid_sols = [sol for sol in region.group_sols if sum(sol) == local_min]
+                # # valid_sols = [sol for sol in region.sols_bit if sum(sol) == local_min]
+
+                # self.mark_tile_probs(region.locs,valid_sols)
+                # print('valid_sols:',valid_sols)
+
+            self.mark_tile_probs(nonfrontier_tiles,[[0] * len(nonfrontier_tiles)])
+            return True
+        else:
+            prob.update_nonfrontier_tile_probs(self)
+        return False
 
     def solve_endgame_and_open(self):
         solved = self.solve_endgame()
+        if solved:
+            self.open_known_tiles()
+
+            return True
         if not solved and len(self.regions_list) > 0:
-            info_found = self.open_known_tiles()
+            # game_over = not GSM.get_game_state() or self.is_complete()
+            # if game_over:
+            #     print('here')
+            #if not info_found:
+            #info_found = self.open_known_tiles()
+
             sols_per_mines_in_frontier = Solver.get_sol_counts(self.regions_list,self.nonfrontier_tiles,self.flag_count)
             self.sols_per_mines_in_frontier = sols_per_mines_in_frontier
             self.total_sols = sum(sols_per_mines_in_frontier.values())
             merged_regions = self.regions_list[0]
             for i in range(1,len(self.regions_list)):
                 merged_regions = merged_regions.merge_regions(self.regions_list[i])
-            for region in self.regions_list:
-                for group in region.groups:
-                    global_prob = prob.calc_global_prob_for_group(merged_regions,group,sols_per_mines_in_frontier)
-                    for x,y in group:
-                        self.tiles[x][y].prob_mine_local = global_prob
+            # print(sols_per_mines_in_frontier)
+            # print(self.total_sols)
+            for group in merged_regions.groups:
+                global_prob = prob.calc_global_prob_for_group(merged_regions,group,sols_per_mines_in_frontier)
+                for x,y in group:
+                    self.tiles[x][y].prob_mine_local = global_prob
             #info_found = self.open_known_tiles()
 
-            return info_found
         elif len(self.regions_list) == 0:
-            prob.update_nonfrontier_tile_probs(self)
+            Solver.collected_seeds.append(self.seed)
+            #prob.update_nonfrontier_tile_probs(self)
             self.sols_per_mines_in_frontier = {}
             self.total_sols = math.comb(len(self.nonfrontier_tiles),GSM.mine_count - self.flag_count)
         return solved

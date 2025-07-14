@@ -262,7 +262,7 @@ class Board:
                 self.seed = seed
                 #print('seed: {}'.format(seed))
             else:
-                genned_seed=random.randint(-sys.maxsize - 1,sys.maxsize)
+                genned_seed=random.randint(0,sys.maxsize)
                 self.seed = genned_seed
 
                 random.seed(genned_seed)

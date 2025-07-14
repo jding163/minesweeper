@@ -143,13 +143,14 @@ def handle_keypress_q():
 def handle_keypress_w():
     #board.solve_exhaustive(instant_break=True)
     start=time.time()
+    #board.solve_exhaustive()
     board.solve_exhaustive_and_open()
     Board.display_probs = 1
     print(time.time()-start)
 
 def handle_keypress_e():
-    #board.solve_endgame_and_open()
-    board.solve_endgame()
+    board.solve_endgame_and_open()
+    #board.solve_endgame()
 
     Board.display_probs = 1
 
