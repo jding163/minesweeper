@@ -114,7 +114,7 @@ class Region():
         return r
 
 class Solver(Board):
-
+    collected_seeds = []
     def __init__(self,first_click=(0,0),run_pygame=True):
         super().__init__(run_pygame=run_pygame)
         self.first_click = first_click
@@ -254,7 +254,6 @@ class Solver(Board):
 
             # Gather the relevant neighboring tiles (including the tile itself if needed)
             neighbors = self.get_neighbor_tiles((tile.row, tile.col))
-            #neighbors.append(tile)
 
             unknown_count = 0
             mine_count = 0
@@ -274,16 +273,10 @@ class Solver(Board):
 
         return True
     
-    def verify_neighbors_of_loc(self,loc,locs_to_check):
-        x,y=loc
-        tile = self.tiles[x][y]
-        tiles_to_check = self.get_neighbor_tiles((tile.row,tile.col))
-        tiles_to_check = [t for t in tiles_to_check if t.loc in locs_to_check]
+    def verify_neighbors_of_loc(self,tiles_to_check):
         for tile in tiles_to_check:
-
-
-            # Gather the relevant neighboring tiles (including the tile itself if needed)
-            neighbors = self.get_neighbor_tiles((tile.row, tile.col))
+            # Gather the relevant neighboring tiles
+            neighbors = self.get_neighbor_tiles((tile.row,tile.col))
 
             # Count tile types only once
             unknown_count = 0
@@ -292,21 +285,18 @@ class Solver(Board):
                 if neighbor.type == MINE:
                     mine_count += 1
                 elif neighbor.type == UNKNOWN:
-                    unknown_count+=1
+                    unknown_count += 1
 
-            target_mines = tile.get_adj_mines()
-
+            target_mines = tile.num_adj_mines
             # Check for constraint violation
             if mine_count > target_mines:
                 return False
-            if unknown_count == 0 and mine_count != target_mines:
+            if unknown_count + mine_count < target_mines:
                 return False
 
         return True
 
     
-    # def merge_regions(self, r1, r2):
-    #     return Region.merge_multiple_regions([r1, r2])
     def merge_multiple_regions(self, regions):
         if not regions:
             return None
@@ -409,7 +399,6 @@ class Solver(Board):
         for region in regions_with_sols:
             groups = region.groups
             group_probs = []
-
             for i in range(len(groups)):
                 group = groups[i]
                 group_prob = prob.calc_global_prob_for_group(merged_regions,group,sols_per_mines_in_frontier)
@@ -437,13 +426,16 @@ class Solver(Board):
 
 
 
-    @profile
     def find_solutions_group(self,region,groups):
         if region.num_locs() == 0:
             return
         sols = []
-
-        loc = groups[0]
+        constraint_tracker = {}
+        for group in groups:
+            loc = group[0]
+            neighbors = self.get_neighbor_tiles(loc)
+            neighbors = [n for n in neighbors if n.loc in region.locs_to_check]
+            constraint_tracker[loc] = neighbors
 
         # count flagged mines from previous play
         mine_count = 0 # includes flagged mines and unflagged mines deduced from prior calls to find_solution
@@ -451,52 +443,54 @@ class Solver(Board):
             for col in range(GSM.cols):
                 if self.get_type_at_loc((row,col)) is MINE: 
                     mine_count += 1 
+        index = 0
+        group = groups[index]
+        for i in range(len(group)):
+            self.inject_num(group[i])
+        for total_mines in range(len(group)+1):
+            if total_mines > 0:
+                self.inject_mine(group[total_mines-1])
+            tiles_to_check = constraint_tracker[group[0]]
+            if self.verify_neighbors_of_loc(tiles_to_check):
+                curr_sol = [total_mines]
+                self.find_solutions_group_helper(region,groups,sols,index + 1,mine_count + total_mines,constraint_tracker,curr_sol)
+        for i in range(len(group)):
+            self.undo_inject(group[i])
 
-        for total_mines in range(len(loc)+1):
-            for i in range(len(loc)):
-                if i < total_mines:
-                    self.inject_mine(loc[i])
-                else:
-                    self.inject_num(loc[i])
-            #if self.verify_region(region):
-            if self.verify_neighbors_of_loc(loc[0],region.locs_to_check):
-                self.find_solutions_group_helper(region,groups,sols,1,mine_count + total_mines)
-            for i in range(len(loc)):
-                self.undo_inject(loc[i])
         return sols
-    @profile
-    def find_solutions_group_helper(self,region,groups,sols,index,mine_count):
-        global paths_explored
-        paths_explored += 1
+    
+    def find_solutions_group_helper(self,region,groups,sols,index,mine_count,constraint_tracker,curr_sol):
         if mine_count > len(self.mines):
             return
         if index == len(groups): # valid solution found
-            #if self.verify_solution(region):
-                sol = []
-                for loc in groups:
-                    num_mines = 0
-                    for i in range(len(loc)):
-                        x,y = loc[i]
-                        curr = self.tiles[x][y]
-                        if curr.type is MINE:
-                            num_mines +=1
-                    sol.append(num_mines)
+            sols.append(curr_sol[:])
+            return
+            # #if self.verify_solution(region):
+            #     sol = []
+            #     for group in groups:
+            #         num_mines = 0
+            #         for i in range(len(group)):
+            #             x,y = group[i]
+            #             curr = self.tiles[x][y]
+            #             if curr.type is MINE:
+            #                 num_mines +=1
+            #         sol.append(num_mines)
 
-                sols.append(sol)
+            #     sols.append(sol)
         else:
-            loc = groups[index]
-            for total_mines in range(len(loc)+1):
-                for i in range(len(loc)):
-                    if i < total_mines:
-                        self.inject_mine(loc[i])
-                    else:
-                        self.inject_num(loc[i])
-                #if self.verify_region(region):
-                if self.verify_neighbors_of_loc(loc[0],region.locs_to_check):
-
-                    self.find_solutions_group_helper(region,groups,sols,index+1,mine_count + total_mines)
-                for i in range(len(loc)):
-                    self.undo_inject(loc[i])
+            group = groups[index]
+            for i in range(len(group)):
+                self.inject_num(group[i])
+            for total_mines in range(len(group)+1):
+                if total_mines > 0:
+                    self.inject_mine(group[total_mines-1])
+                tiles_to_check = constraint_tracker[group[0]]
+                if self.verify_neighbors_of_loc(tiles_to_check):
+                    curr_sol.append(total_mines)
+                    self.find_solutions_group_helper(region,groups,sols,index + 1,mine_count + total_mines,constraint_tracker,curr_sol)
+                    curr_sol.pop()
+            for i in range(len(group)):
+                self.undo_inject(group[i])
             
 
 
@@ -620,12 +614,26 @@ class Solver(Board):
                     self.undo_inject(loc)
         return merged_sols, merged_subdiv
                     
+    def mark_group_probs(self,groups,group_probs):
+        for i in range(len(groups)):
+            group = groups[i]
+            length = len(group)
+            for j in range(length):
+                x,y = group[j]
+                self.tiles[x][y].prob_mine_local = group_probs[i]/length
 
     def mark_tile_probs(self,locs,sols):
+        mine_locs = []
+        safe_locs = []
         probs = get_probs(sols)
         for i in range(len(probs)):
             x,y = locs[i]
             self.tiles[x][y].prob_mine_local = probs[i]
+            if probs[i] == 0:
+                safe_locs.append((x,y))
+            elif probs[i] == 1:
+                mine_locs.append((x,y))
+        return safe_locs, mine_locs
     
 
     def update_solutions_with_new_constraints(self,region,updated_region):
@@ -770,6 +778,7 @@ class Solver(Board):
     # assume that solve_board() was called previously and failed
     def solve_endgame(self):
         regions = self.get_regions()
+
         #assert(len(regions) == len(self.regions_list))
         min_flags = 0
         max_flags = 0
@@ -798,6 +807,8 @@ class Solver(Board):
 
         remaining_mines = GSM.mine_count-self.flag_count
         if remaining_mines == 0:
+            #Solver.collected_seeds.append(self.seed)
+            #return nonfrontier_tiles, []
             for x,y in nonfrontier_tiles:
                 self.reveal_tiles(x,y)
             return True
@@ -815,22 +826,48 @@ class Solver(Board):
             region_max[region] = local_max
             min_flags += local_min
             max_flags += local_max
+
+        safe_locs = []
+        mine_locs = []
         if max_flags + len(nonfrontier_tiles) == remaining_mines:
+            #Solver.count += 1
+            #for region in regions:
             for region in self.regions_list:
-                if region not in regions:
-                    continue
+
+            #     if region not in regions:
+            #         continue
                 local_max = region_max[region]
-                valid_sols = [sol for sol in region.sols_bit if sum(sol) == local_max]
-                self.mark_tile_probs(region.locs,valid_sols)
+                valid_sols = [sol for sol in region.group_sols if sum(sol) == local_max]
+                # print('valid_sols:',valid_sols)
+                #valid_sols = [sol for sol in region.sols_bit if sum(sol) == local_max]
+
+                groups = region.groups
+                group_probs,_ = prob.calc_probs_from_grouped_sols(groups,valid_sols)
+                self.mark_group_probs(groups,group_probs)
             self.mark_tile_probs(nonfrontier_tiles,[[1] * len(nonfrontier_tiles)])
         # all non-border tiles are safe, solution uses min amount of mines
         elif min_flags == remaining_mines:
+            #Solver.count += 1
+            # Solver.collected_seeds.append(self.seed)
+            # print('here')
+            # for region in regions:
+                # print(region.locs)
             for region in self.regions_list:
-                if region not in regions:
-                    continue
                 local_min = region_min[region]
-                valid_sols = [sol for sol in region.sols_bit if sum(sol) == local_min]
-                self.mark_tile_probs(region.locs,valid_sols)
+                valid_sols = [sol for sol in region.group_sols if sum(sol) == local_min]
+                groups = region.groups
+                group_probs,_ = prob.calc_probs_from_grouped_sols(groups,valid_sols)
+
+                self.mark_group_probs(groups,group_probs)
+                # if len(region.group_sols) != len(valid_sols):
+                #     Solver.collected_seeds.append(self.seed)
+
+                # valid_sols = [sol for sol in region.group_sols if sum(sol) == local_min]
+                # # valid_sols = [sol for sol in region.sols_bit if sum(sol) == local_min]
+
+                # self.mark_tile_probs(region.locs,valid_sols)
+                # print('valid_sols:',valid_sols)
+
             self.mark_tile_probs(nonfrontier_tiles,[[0] * len(nonfrontier_tiles)])
         prob.update_nonfrontier_tile_probs(self)
         return False
@@ -1175,26 +1212,3 @@ def get_n_closest_coords(coords, target, n):
     closest_coords = [coord for _, coord in distances[:n]]
     
     return closest_coords
-
-
-
-# locs = [(0,0),(1,1),(2,2)]
-
-# r = Region(locs,locs)
-# solutions = [
-#     [0, 1, 1],
-#     [1, 0, 0],
-#     [1, 1, 0],
-#     [0, 0, 0]
-# ]
-# r.set_sols_bit(solutions)
-# sets=r.get_sols_as_sets()
-# print(sets)
-
-# group_scores = {
-#     ((1, 2),): 3,
-#     ((0, 1),): 3,
-#     ((2, 0),): 2,
-# }
-# start_key = max(group_scores.keys(), key=lambda g: (group_scores[g], g))
-# print(start_key)

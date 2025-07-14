@@ -18,7 +18,7 @@ font = pygame.font.SysFont(None, 50)
 tile_font = pygame.font.Font(None, 12)  
 
 
-
+#bruh
 def format_time(seconds):
     seconds = int(seconds)
     if seconds > 999:
@@ -157,10 +157,10 @@ class Game:
                         #test -8425763037098422648, -8433645031250545356,-3837008816949211577
                         #C.handle_board_click(seed=-1443323327528190823)
 
-                        C.handle_board_click(seed=-1569694061328666230)
+                        #C.handle_board_click(seed=-1569694061328666230)
                         #C.handle_board_click(seed=3180935053634563155)
                         #C.handle_board_click(seed=4717504199111745942)
-                        #C.handle_board_click(seed=6694725406751175162)
+                        C.handle_board_click(seed=1633728108409607470)
 
                         #C.handle_board_click()
                     

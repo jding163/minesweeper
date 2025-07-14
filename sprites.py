@@ -70,8 +70,8 @@ class Tile:
         self.num_adj_flags = 0
         self.prob_mine_local = -1
         self.prob_opening = -1
-        self.force=0
         self.neighbors = []
+        self.force = 0
 
         # 0: non-edge non-corner 1: edge 2: corner
         if (self.row == 0 or self.row == GSM.rows-1) and (self.col == 0 or self.col == GSM.cols-1):
@@ -260,13 +260,13 @@ class Board:
                 #print('aaaaaa')
                 random.seed(seed)
                 self.seed = seed
-                print('seed: {}'.format(seed))
+                #print('seed: {}'.format(seed))
             else:
                 genned_seed=random.randint(-sys.maxsize - 1,sys.maxsize)
                 self.seed = genned_seed
 
                 random.seed(genned_seed)
-                print('seed: {}'.format(genned_seed))
+                #print('seed: {}'.format(genned_seed))
             locs = random.sample(possible_locs, GSM.mine_count+1)
 
             if first_click in locs:
