@@ -14,7 +14,7 @@ from line_profiler import profile
 
 
 max_size = sys.maxsize
-min_size = -sys.maxsize - 1
+#min_size = -sys.maxsize - 1
 min_size = 0
 
 
@@ -198,14 +198,14 @@ class Player():
                 if result['won'] == True:
                     won_seeds.append(seeds[i])
             # seeds_to_print = won_seeds
-            seeds_to_print = Solver.collected_seeds
+            # seeds_to_print = Solver.collected_seeds
             # for j in seeds_to_print:
             #     print(j)
                 #print(f"Seed {result['seed']}: {'Won' if result['won'] else 'Lost'} in {result['time']:.2f} seconds")
             #print(Solver.collected_seeds)
-            with open('seeds3.txt', 'w') as f:
-                for item in Solver.collected_seeds:
-                    f.write(f"{item}\n")
+            # with open('seeds3.txt', 'w') as f:
+            #     for item in Solver.collected_seeds:
+            #         f.write(f"{item}\n")
 
         total_games = len(results)
         total_wins = sum(1 for r in results if r['won'])
@@ -250,8 +250,8 @@ def main():
     #b=Solver()
 
     p = Player()
-    p.set_strategy(strat.SafestTileAndLikeliestOpening())
-    #p.set_strategy(strat.SecSafety())
+    #p.set_strategy(strat.SafestTileAndLikeliestOpening())
+    p.set_strategy(strat.SecSafety())
 
     # with open('seeds1.txt', 'r') as f:
     #     seeds_list = [int(line.strip()) for line in f]
@@ -259,8 +259,8 @@ def main():
     # C.set_player(p)
     # C.set_board(b)
     #seed=-1569694061328666230
-    seed=987865
-    seed=5
+    seed=29849475784
+    #seed=5
     # res = p.play_game(seed=seed)
     # print(res)
     w1 = p.play_games(1000,seed=seed,parallel=False)
