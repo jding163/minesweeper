@@ -168,7 +168,7 @@ class Player():
         results = []
         if parallel:
             max_workers = multiprocessing.cpu_count()
-            #max_workers = 4
+            max_workers = 3
             with ProcessPoolExecutor(max_workers=max_workers) as executor:
 
                 futures = {executor.submit(run_game, s,self.strategy): s for s in seeds}
@@ -279,7 +279,7 @@ def main():
     # print("In both:", len(in_both))
     # print("Only in w1:", len(only_in_w1))
     # print("Only in w2:", len(only_in_w2))
-    # print('Best mastery:',calc_mastery(w1,100))
+    print('Best mastery:',calc_mastery(w1,100))
 
 
 

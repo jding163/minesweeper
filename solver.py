@@ -344,7 +344,7 @@ class Solver(Board):
         tile.num_adj_mines = val
         tile.type = NUMBER
         regions = self.get_regions()
-        
+        num_safe = 0
         regions_to_solve = []
         regions_with_sols = []
         for r1 in regions:
@@ -366,10 +366,12 @@ class Solver(Board):
             if len(group_sols) == 0:
                 tile.num_adj_mines = orig_val_at_loc
                 tile.type = UNKNOWN
-                return 0,0
+                return 0,0,0
 
-            _,group_counts = prob.calc_probs_from_grouped_sols(groups,group_sols)
-
+            group_probs,group_counts = prob.calc_probs_from_grouped_sols(groups,group_sols)
+            for i in range(len(group_probs)):
+                if group_probs[i] == 0:
+                    num_safe += len(groups[i])
             
             region.group_sols = group_sols
             region.group_counts = group_counts
@@ -419,7 +421,7 @@ class Solver(Board):
 
         tile.num_adj_mines = orig_val_at_loc
         tile.type = UNKNOWN
-        return total_count,best_prob
+        return total_count,best_prob, num_safe
 
 
         

@@ -5,19 +5,27 @@ import sprites
 from settings import *
 from collections import defaultdict
 
-def find_loc_with_best_sec_safety_over_locs(board,locs):
+class ProgressInfo:
+    def __init__(self, loc,sec_safety, probs, expected_clears,early_exit):
+        self.loc = loc
+        self.sec_safety = sec_safety            # float ∈ [0,1], the weighted safety score
+        self.probs = probs                      # dict[int, tuple[float, float]], {val at loc: (prob, best ss)}
+        self.early_exit = early_exit            # bool, True if pruning happened early
+        self.expected_clears = expected_clears  # dict[int, float], {val at loc: min safe clears}
+
+def find_loc_with_best_progress_over_locs(board,locs):
     if len(locs) == 0:
         return None
     threshold = -1
     best_loc = None
     for loc in locs:
-        sec_safety_so_far, _, finished = calc_sec_safety_at_loc(board,loc,threshold)
-        if finished and sec_safety_so_far > threshold:
-            threshold = sec_safety_so_far
+        info = calc_progress_info_at_loc(board,loc,threshold)
+        if info.early_exit and info.sec_safety > threshold:
+            threshold = info.sec_safety
             best_loc = loc
     return best_loc
 
-def calc_sec_safety_at_loc(board,loc,threshold):
+def calc_progress_info_at_loc(board,loc,threshold,threshold_on=True):
     x,y=loc
     tile = board.tiles[x][y]
     prob_mine = tile.prob_mine_local
@@ -34,24 +42,28 @@ def calc_sec_safety_at_loc(board,loc,threshold):
     sec_safety_so_far = 0.0
     weight_so_far = 0.0
     num_sols = board.total_sols
+    expected_clears = defaultdict(int)
     for i in range(min_flags, max_flags + 1):
-        count, best_prob = board.get_sol_counts_at_loc_for_val(loc, i)
+        count, best_prob,min_num_safe = board.get_sol_counts_at_loc_for_val(loc, i)
+        #print(f'{i}: {num_safe} clears')
         prob = count / num_sols
         val = 1 - best_prob
         probs[i] = (prob, val)
+        expected_clears[i] = min_num_safe
 
         sec_safety_so_far += prob * val
         weight_so_far += prob
 
         # Check whether it's still possible to reach the threshold
         remaining_weight = 1.0-prob_mine - weight_so_far
-        max_possible = sec_safety_so_far + remaining_weight  # assume val=1 for remaining
+        max_possible = sec_safety_so_far + remaining_weight
         # print(f'max possible at val {i}:',max_possible)
-        if max_possible < threshold:
+        if threshold_on and max_possible < threshold:
             # Cannot reach the threshold no matter what remains
-            return sec_safety_so_far, probs, False
+            return ProgressInfo(loc,sec_safety_so_far,probs,expected_clears,False)
 
-    return sec_safety_so_far, probs, True
+    return ProgressInfo(loc,sec_safety_so_far,probs,expected_clears,True)
+
 
 
         
