@@ -168,7 +168,7 @@ class Player():
         results = []
         if parallel:
             max_workers = multiprocessing.cpu_count()
-            max_workers = 3
+            max_workers = 4
             with ProcessPoolExecutor(max_workers=max_workers) as executor:
 
                 futures = {executor.submit(run_game, s,self.strategy): s for s in seeds}
@@ -250,8 +250,8 @@ def main():
     #b=Solver()
 
     p = Player()
-    #p.set_strategy(strat.SafestTileAndLikeliestOpening())
-    p.set_strategy(strat.SecSafety())
+    p.set_strategy(strat.SafestTileAndLikeliestOpening())
+    #p.set_strategy(strat.SecSafety())
 
     # with open('seeds1.txt', 'r') as f:
     #     seeds_list = [int(line.strip()) for line in f]
@@ -263,7 +263,7 @@ def main():
     #seed=5
     # res = p.play_game(seed=seed)
     # print(res)
-    w1 = p.play_games(1000,seed=seed,parallel=True)
+    w1 = p.play_games(100,seed=seed,parallel=False)
     # p.play_games_on_seed(10,-1443323327528190823)
     # p.set_strategy(strat.SafestTileAndForce())
     # w2 = p.play_games(100,seed=seed)

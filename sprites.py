@@ -185,6 +185,7 @@ class Board:
         self.first_click= (0,0)
         self.seed = None
         self.death_click = None
+        self.revealed_tiles = set()
 
     def reset_probs(self):
         for row in self.tiles:
@@ -257,7 +258,6 @@ class Board:
         if not custom_mines:
             possible_locs = [(row, col) for row in range(GSM.rows) for col in range(GSM.cols)]
             if seed is not None:
-                #print('aaaaaa')
                 random.seed(seed)
                 self.seed = seed
                 #print('seed: {}'.format(seed))
@@ -303,6 +303,7 @@ class Board:
         if self.tiles[mx][my].is_revealed() or self.tiles[mx][my].is_flagged():
             return
         self.tiles[mx][my].set_revealed(True)
+        self.revealed_tiles.add((mx,my))
 
         if (mx,my) in self.mines:
             self.tiles[mx][my].set_type(MINE)
@@ -326,6 +327,7 @@ class Board:
         for neighbor in neighbors:
             if neighbor.is_revealed() is False and neighbor.is_flagged() is False:
                 neighbor.set_revealed(True)
+                self.revealed_tiles.add(neighbor.loc)
                 if neighbor in self.mines:
                     neighbor.set_type(MINE)
                     neighbor.set_image(tile_exploded_path)
