@@ -212,8 +212,11 @@ class Solver(Board):
             for col in range(GSM.cols):
                 #tile = self.tiles[row][col]
                 loc = (row,col)
-                if loc in self.unfinished_clues:
-                    neighbors = self.get_neighbor_tiles(loc)
+                tile = self.tiles[row][col]
+                if tile.type == NUMBER:
+                    neighbors = self.get_neighbor_tiles((row,col))
+                #if loc in self.unfinished_clues:
+                    #neighbors = self.get_neighbor_tiles(loc)
                     adj_set = set()
                     for neighbor in neighbors:
                         if neighbor.is_unknown():
