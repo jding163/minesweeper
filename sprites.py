@@ -71,6 +71,7 @@ class Tile:
         self.prob_mine_local = -1
         self.prob_opening = -1
         self.neighbors = []
+
         self.force = 0
 
         # 0: non-edge non-corner 1: edge 2: corner
@@ -186,6 +187,8 @@ class Board:
         self.seed = None
         self.death_click = None
         self.revealed_tiles = set()
+        self.unfinished_clues = set()
+        self.flagged_tiles = set()
 
     def reset_probs(self):
         for row in self.tiles:
@@ -218,11 +221,14 @@ class Board:
                 neighbors = self.get_neighbor_tiles(loc)
                 for n in neighbors:
                    n.num_adj_flags += 1
+                self.flagged_tiles.add(loc)
             else:
                 self.flag_count -=1
                 neighbors = self.get_neighbor_tiles(loc)
                 for n in neighbors:
                     n.num_adj_flags -= 1
+                self.flagged_tiles.discard(loc)
+
     def get_flag_count(self):
         return self.flag_count
     def toggle_flag_at_loc(self,x,y):
@@ -290,7 +296,8 @@ class Board:
     def chord(self,loc):
 
         if self.tiles[loc[0]][loc[1]].get_adj_mines() == self.tiles[loc[0]][loc[1]].get_adj_flags():
-            self.reveal_neighbors([loc[0],loc[1]])
+            self.reveal_neighbors(loc)
+            self.unfinished_clues.remove(loc)
     
     def update_neighbors_with_minecount(self,loc):
         neighbors = self.get_neighbor_tiles(loc)
@@ -315,6 +322,7 @@ class Board:
             self.incr_num_revealed()
             if self.tiles[mx][my].get_adj_mines() > 0:
                 self.tiles[mx][my].set_type(NUMBER)
+                self.unfinished_clues.add((mx,my))
             else:
                 self.tiles[mx][my].set_type(OPENING)
                 self.reveal_neighbors((mx,my))
@@ -328,7 +336,7 @@ class Board:
             if neighbor.is_revealed() is False and neighbor.is_flagged() is False:
                 neighbor.set_revealed(True)
                 self.revealed_tiles.add(neighbor.loc)
-                if neighbor in self.mines:
+                if neighbor.loc in self.mines:
                     neighbor.set_type(MINE)
                     neighbor.set_image(tile_exploded_path)
                     self.reveal_mines()
@@ -339,6 +347,8 @@ class Board:
                         neighbor.set_type(OPENING)
                         self.reveal_neighbors((neighbor.row,neighbor.col))
                     else:
+                        self.unfinished_clues.add(neighbor.loc)
+
                         neighbor.set_type(NUMBER)
 
 

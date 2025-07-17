@@ -159,59 +159,45 @@ class Solver(Board):
 
     # flags neighbors if they are known to be mines
     def flag_neighbors(self,loc):
-        neighbor_mines = self.tiles[loc[0]][loc[1]].get_adj_mines()
-        neighbor_unknowns = 0
+        x,y=loc
+        tile = self.tiles[x][y]
+        target_mines = tile.num_adj_mines
+        curr_flags = tile.num_adj_flags
+        mines_to_find = target_mines - curr_flags
+        unknown_neighbors = []
         neighbors = self.get_neighbor_tiles(loc)
         for neighbor in neighbors:
-            neighbor_flagged = neighbor.is_flagged()
-            neighbor_revealed = neighbor.is_revealed()
-            if neighbor_flagged:
-                neighbor_mines -=1
-            elif not neighbor_revealed:
-                neighbor_unknowns += 1
-        if neighbor_unknowns == neighbor_mines:
-            for neighbor in neighbors:
-                neighbor_revealed = neighbor.is_revealed()
-                neighbor_flagged = neighbor.is_flagged()
-                if not neighbor_revealed and not neighbor_flagged:
-                    self.toggle_flag_at_loc(neighbor.row,neighbor.col)
+            if neighbor.is_unknown():
+                unknown_neighbors.append(neighbor)
+        flags_found = len(unknown_neighbors) == mines_to_find
+        if flags_found:
+            for neighbor in unknown_neighbors:
+                self.toggle_flag_at_loc(neighbor.row,neighbor.col)
+        #return flags_found
+        return [neighbor.loc for neighbor in unknown_neighbors]
     
     def flag_board(self):
-        for row in range(GSM.rows):
-            for col in range(GSM.cols):
-                if self.tiles[row][col].is_revealed():
-                    self.flag_neighbors((row,col))
+        flags_found = False
+        for loc in list(self.unfinished_clues):
+            if self.flag_neighbors(loc):
+                flags_found = True
+        return flags_found
+    
     
     def chord_board(self):
-        for row in range(GSM.rows):
-            for col in range(GSM.cols):
-                if self.tiles[row][col].is_revealed():
-                    self.chord((row,col))
+        for loc in list(self.unfinished_clues):
+            self.chord(loc)
 
     def solve_trivial_and_open(self):
         init_mines = self.flag_count
         init_revealed = self.num_revealed
-        prev_mines = init_mines
-        prev_revealed = init_revealed
-        self.flag_board()
-        self.chord_board()
-        while self.flag_count != prev_mines or self.num_revealed != prev_revealed:
-            self.flag_board()
+
+        flags_found = self.flag_board()
+        if flags_found:
             self.chord_board()
-            prev_revealed = self.num_revealed
-            prev_mines = self.flag_count
-        for row in range(GSM.rows):
-            for col in range(GSM.cols):
-                if self.tiles[row][col].is_revealed():
-                    self.tiles[row][col].prob_mine_local = 0
-                    if self.tiles[row][col].type is OPENING:
-                        self.tiles[row][col].prob_opening = 1
-                    else:
-                        self.tiles[row][col].prob_opening = 0
-                elif self.tiles[row][col].is_flagged():
-                    self.tiles[row][col].prob_mine_local = 0
-                    self.tiles[row][col].prob_opening = 0
-        return not ((init_mines == prev_mines) and (prev_revealed == init_revealed)) # solution found or not
+        new_mines = self.flag_count
+        new_revealed = self.num_revealed
+        return new_revealed != init_revealed or init_mines != new_mines
         
     def get_ccs(self):
         adj_sets = []
@@ -278,7 +264,6 @@ class Solver(Board):
             # Gather the relevant neighboring tiles
             neighbors = self.get_neighbor_tiles((tile.row,tile.col))
 
-            # Count tile types only once
             unknown_count = 0
             mine_count = 0
             for neighbor in neighbors:
@@ -468,18 +453,6 @@ class Solver(Board):
         if index == len(groups): # valid solution found
             sols.append(curr_sol[:])
             return
-            # #if self.verify_solution(region):
-            #     sol = []
-            #     for group in groups:
-            #         num_mines = 0
-            #         for i in range(len(group)):
-            #             x,y = group[i]
-            #             curr = self.tiles[x][y]
-            #             if curr.type is MINE:
-            #                 num_mines +=1
-            #         sol.append(num_mines)
-
-            #     sols.append(sol)
         else:
             group = groups[index]
             for i in range(len(group)):

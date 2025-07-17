@@ -1,133 +1,66 @@
-pygame-ce 2.5.3 (SDL 2.30.12, Python 3.11.8)
-seed: -1569694061328666230
-loc: (8, 7)
-num_sols_at_val: defaultdict(<class 'int'>, {2: 7.694843005791286e+81, 1: 2.690491712300474e+81, 3: 3.6591054373405748e+81, 4: 2.421534312600252e+80})
-total: 14286593586692358970601684347388067331206692916260545879428895169507796191304114600
-vals: {2: 0.5386058586393092, 1: 0.1883228283897294, 3: 0.25612161605471506, 4: 0.01694969691624641}
-loc: (11, 7)
-num_sols_at_val: defaultdict(<class 'int'>, {0: 3.809758289784629e+81, 1: 8.571956152015416e+81, 2: 1.9048791448923145e+81})
-total: 14286593586692358970601684347388067331206692916260545879428895169507796191304114600
-vals: {0: 0.26666666666666666, 1: 0.6, 2: 0.13333333333333333}
-best: (11, 7)
-loc: (12, 13)
-num_sols_at_val: defaultdict(<class 'int'>, {1: 2.0287257792181882e+44})
-total: 202872577921818787257120852560942897549748708
-vals: {1: 1.0000000000000002}
-loc: (13, 13)
-num_sols_at_val: defaultdict(<class 'int'>, {1: 3.930326036117909e+43, 0: 1.6356931756063972e+44})
-total: 202872577921818787257120852560942897549748708
-vals: {1: 0.19373372569024794, 0: 0.8062662743097522}
-best: (13, 13)
-loc: (14, 9)
-num_sols_at_val: defaultdict(<class 'int'>, {2: 7.319992182427173e+41, 1: 1.781543368707806e+42})
-total: 2513542586950523147535550136997035705837637
-vals: {2: 0.2912221269068659, 1: 0.7087778730931341}
-loc: (14, 12)
-num_sols_at_val: defaultdict(<class 'int'>, {1: 2.5135425869505232e+42})
-total: 2513542586950523147535550136997035705837637
-vals: {1: 1.0}
-loc: (16, 8)
-num_sols_at_val: defaultdict(<class 'int'>, {1: 1.781543368707806e+42, 0: 7.319992182427173e+41})
-total: 2513542586950523147535550136997035705837637
-vals: {1: 0.7087778730931341, 0: 0.2912221269068659}
-best: (16, 8)
-loc: (10, 12)
-num_sols_at_val: defaultdict(<class 'int'>, {1: 5.519817704182358e+39, 2: 1.3468951017485916e+39})
-total: 6866712805930949085109433250526052371305
-vals: {1: 0.8038515458830251, 2: 0.196148454116975}
-loc: (11, 13)
-num_sols_at_val: defaultdict(<class 'int'>, {1: 5.505345397104065e+39, 2: 1.3613674088268837e+39})
-total: 6866712805930949085109433250526052371305
-vals: {1: 0.8017439425089925, 2: 0.1982560574910075}
-best: (10, 12)
-{'seed': -1569694061328666230, 'won': True, 'time': 69.47810888290405}
+pygame-ce 2.5.5 (SDL 2.32.6, Python 3.11.8)
+0
+
+--- Statistics Summary ---
+Strategy used: SafestTileAndLikeliestOpening
+Total games: 100
+Total time: 16.274641036987305
+Wins: 39
+Losses: 61
+Winrate: 39.00%
+Average time per game: 0.16 seconds
+Average time per win: 0.22 seconds
+Best mastery: 27
 Wrote profile results to player.py.lprof
 Timer unit: 1e-06 s
 
-Total time: 17.8725 s
-File: /Users/jeremyding/Desktop/projects/minesweeper/probability_test.py
-Function: calc_prob_dist_for_loc at line 183
+Total time: 0.940304 s
+File: /Users/jeremyding/Desktop/projects/minesweeper/solver.py
+Function: solve_trivial_and_open at line 191
 
 Line #      Hits         Time  Per Hit   % Time  Line Contents
 ==============================================================
-   183                                           @profile
-   184                                           def calc_prob_dist_for_loc(board,loc):
-   185         9        103.0     11.4      0.0      print('loc:',loc)
-   186         9        260.0     28.9      0.0      neighbor_locs = [n.loc for n in board.get_neighbor_tiles(loc) if n.is_unknown()]
-   187         9        188.0     20.9      0.0      nonfrontier_neighbor_locs = [n for n in neighbor_locs if n in board.nonfrontier_tiles]
-   188         9         15.0      1.7      0.0      frontier_neighbor_locs = [n for n in neighbor_locs if n not in nonfrontier_neighbor_locs]
-   189         9         41.0      4.6      0.0      if loc not in board.nonfrontier_tiles:
-   190         9          4.0      0.4      0.0          frontier_neighbor_locs.append(loc)
-   191                                           
-   192         9          3.0      0.3      0.0      regions_to_merge = board.regions_list
-   193                                           
-   194         9         16.0      1.8      0.0      vals_dict_frontier = defaultdict(lambda:1)  
-   195         9          6.0      0.7      0.0      adj_flags = board.tiles[loc[0]][loc[1]].num_adj_flags
-   196                                           
-   197         9          7.0      0.8      0.0      if len(regions_to_merge) >= 1:
-   198         9          7.0      0.8      0.0          region = regions_to_merge[0]
-   199                                           
-   200         9          2.0      0.2      0.0          if len(regions_to_merge) > 1:
-   201        18         20.0      1.1      0.0              for i in range(1,len(regions_to_merge)):
-   202         9      46671.0   5185.7      0.3                  region = board.merge_regions(region,regions_to_merge[i])
-   203                                           
-   204         9          4.0      0.4      0.0          groups = region.groups
-   205                                           
-   206         9          3.0      0.3      0.0          sols = region.group_sols
-   207         9          4.0      0.4      0.0          freqs = region.freqs
-   208                                                   # counts = region.group_counts
-   209                                                   # sols_with_counts = zip(sols,counts)
-   210                                                   # neighbor_indices = find_matching_indices(groups,frontier_neighbor_locs)
-   211                                                   # neighbor_indices_with_counts = defaultdict(int)
-   212                                                   # for i in neighbor_indices:
-   213                                                   #     neighbor_indices_with_counts[i] += 1
-   214                                                   
-   215         9   10805799.0    1e+06     60.5          flat_sols = expand_batch(sols,groups)
-   216                                           
-   217         9         82.0      9.1      0.0          flat_groups = sum(groups,[])
-   218                                           
-   219         9         54.0      6.0      0.0          neighbor_indices = [flat_groups.index(l) for l in frontier_neighbor_locs]
-   220                                           
-   221                                           
-   222         9         21.0      2.3      0.0          num_sols_at_val = defaultdict(int)
-   223                                           
-   224        71         65.0      0.9      0.0          for freq in freqs.keys():
-   225        62         92.0      1.5      0.0              if loc in frontier_neighbor_locs:
-   226        62        141.0      2.3      0.0                  loc_index = flat_groups.index(loc)
-   227       124    5063631.0  40835.7     28.3                  matching_sols = [
-   228        62         13.0      0.2      0.0                      sol for sol in flat_sols
-   229                                                               if sol[loc_index] == 0 and sum(sol) == freq
-   230                                                           ]
-   231                                                       else:
-   232                                                           matching_sols = [sol for sol in flat_sols if sum(sol) == freq]
-   233        62        431.0      7.0      0.0              matching_sols_at_val = defaultdict(int)
-   234    961217     256044.0      0.3      1.4              for sol in matching_sols:
-   235    961155    1349354.0      1.4      7.5                  neighbor_sum = sum(sol[i] for i in neighbor_indices)
-   236    961155     343479.0      0.4      1.9                  matching_sols_at_val[neighbor_sum] += 1
-   237                                           
-   238       174        308.0      1.8      0.0              for num_mines,num_sols in matching_sols_at_val.items():
-   239       112        160.0      1.4      0.0                  frac = num_sols/len(matching_sols)
-   240       112        201.0      1.8      0.0                  num_sols_at_freq = board.sols_per_mines_in_frontier[freq]*frac
-   241       112         69.0      0.6      0.0                  num_sols_at_val[num_mines] += num_sols_at_freq
-   242         9        278.0     30.9      0.0          print('num_sols_at_val:',num_sols_at_val)
-   243         9         24.0      2.7      0.0          total_sols = sum(board.sols_per_mines_in_frontier.values())
-   244         9         19.0      2.1      0.0          print('total:',total_sols)
-   245        28         17.0      0.6      0.0          for num_mines,num_sols in num_sols_at_val.items():
-   246        19         13.0      0.7      0.0              global_prob_for_frontier_tiles = num_sols/total_sols
-   247        19         17.0      0.9      0.0              if loc not in frontier_neighbor_locs:
-   248                                                           x1,y1 = loc
-   249                                                           loc_prob = board.tiles[x1][y1].prob_mine_local
-   250                                                           global_prob_for_frontier_tiles *= 1-loc_prob
-   251        19         48.0      2.5      0.0              vals_dict_frontier[num_mines] *= global_prob_for_frontier_tiles
-   252         9          1.0      0.1      0.0      nf = len(nonfrontier_neighbor_locs)
-   253         9          2.0      0.2      0.0      nf_prob = 0
-   254         9         10.0      1.1      0.0      if nf>0:
-   255         6          3.0      0.5      0.0          x,y = nonfrontier_neighbor_locs[0]
-   256         6          6.0      1.0      0.0          nf_prob = board.tiles[x][y].prob_mine_local
-   257         9          2.0      0.2      0.0      x1,y1 = loc
-   258         9         20.0      2.2      0.0      loc_prob = board.tiles[x1][y1].prob_mine_local
-   259         9         43.0      4.8      0.0      vals_dict_frontier = {k:v for k,v in vals_dict_frontier.items() if v > 0}
-   260         9         39.0      4.3      0.0      print('vals:',vals_dict_frontier)
-   261         9       4708.0    523.1      0.0      total_distribution = convolve_mine_distributions(vals_dict_frontier, nf,nf_prob, loc_prob,adj_flags)
-   262         9          1.0      0.1      0.0      return total_distribution
+   191                                               @profile
+   192                                               def solve_trivial_and_open(self):
+   193      3177        676.0      0.2      0.1          init_mines = self.flag_count
+   194      3177        746.0      0.2      0.1          init_revealed = self.num_revealed
+   195                                           
+   196      3177     640538.0    201.6     68.1          flags_found = self.flag_board()
+   197      3177        819.0      0.3      0.1          if flags_found:
+   198      3174     294702.0     92.8     31.3              self.chord_board()
+   199      3177        991.0      0.3      0.1          new_mines = self.flag_count
+   200      3177        670.0      0.2      0.1          new_revealed = self.num_revealed
+   201      3177       1162.0      0.4      0.1          return new_revealed != init_revealed or init_mines != new_mines
+
+Total time: 16.0952 s
+File: player.py
+Function: play_one_step at line 35
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    35                                               @profile
+    36                                               def play_one_step(self,risk=True):
+    37                                           
+    38                                           
+    39                                                   #game_over = not GSM.get_game_state() or (self.board.is_complete() and self.board.verify_win())
+    40      3177       3735.0      1.2      0.0          game_over = not GSM.get_game_state() or self.board.is_complete()
+    41                                           
+    42      3177        813.0      0.3      0.0          if game_over:
+    43                                                       return
+    44      3177     954941.0    300.6      5.9          if self.board.solve_trivial_and_open():
+    45      2355        648.0      0.3      0.0              return
+    46                                           
+    47       822    6720700.0   8176.0     41.8          elif self.board.solve_exhaustive_and_open():
+    48       458        214.0      0.5      0.0              return
+    49       364    1413430.0   3883.0      8.8          elif self.board.solve_endgame_and_open():
+    50        13          5.0      0.4      0.0              return 
+    51                                                   #probs should be marked already
+    52                                                   #game_over = not GSM.get_game_state() or (self.board.is_complete() and self.board.verify_win())
+    53       351        766.0      2.2      0.0          game_over = not GSM.get_game_state() or self.board.is_complete()
+    54                                           
+    55                                           
+    56       351        128.0      0.4      0.0          if risk is True and not game_over:
+    57       351    6970573.0  19859.2     43.3              x,y = self.strategy.find_move(self.board)
+    58                                                       #x,y = prob.find_safest_tile(self.board)
+    59       351      29219.0     83.2      0.2              self.board.reveal_tiles(x,y)
 
