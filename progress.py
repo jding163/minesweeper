@@ -15,8 +15,25 @@ class ProgressInfo:
     best_ss_at_val: dict
     finished: bool
     expected_clears: dict
+# def find_loc_with_best_progress_over_locs(board,locs):
+#     if len(locs) == 0:
+#         return None
+#     threshold = -1
+#     best_loc = None
+#     for loc in locs:
+#         # print(f'loc: {loc}')
+#         sec_safety_so_far, _, finished = calc_progress_info_at_loc(board,loc,threshold)
+#         if finished and sec_safety_so_far > threshold:
+#             threshold = sec_safety_so_far
+#             best_loc = loc
+#         # if finished:
+#         #     print(f'ss: {sec_safety_so_far}')
+#         # print(f'finished: {finished}')
 
-def find_loc_with_best_progress_over_locs(board,locs,expected_clears_weight=0.005):
+
+#     # print(f'best: {best_loc}')
+#     return best_loc
+def find_loc_with_best_progress_over_locs(board,locs,expected_clears_weight=0.00):
     if len(locs) == 0:
         return None
     threshold = -1
@@ -25,15 +42,18 @@ def find_loc_with_best_progress_over_locs(board,locs,expected_clears_weight=0.00
     for loc in locs:
         info = calc_progress_info_at_loc(board,loc,threshold)
 
-        if info.finished and info.sec_safety >= threshold:
-            expected_clear_score = 0
-            for i in range(0,9):
-                expected_clear_score += info.probs_loc_is_val[i] * info.expected_clears[i]
-            final_score = info.sec_safety + expected_clear_score * expected_clears_weight
-            if final_score > best_score:
-                best_score = final_score
+        if info.finished and info.sec_safety > threshold:
                 threshold = info.sec_safety
                 best_loc = loc
+            # expected_clear_score = 0
+            # for i in range(0,9):
+            #     expected_clear_score += info.probs_loc_is_val[i] * info.expected_clears[i]
+            
+            # final_score = info.sec_safety + expected_clear_score * expected_clears_weight
+            # if final_score > best_score:
+            #     best_score = final_score
+            #     threshold = info.sec_safety
+            #     best_loc = loc
     return best_loc
 
 def calc_progress_info_at_loc(board,loc,threshold,threshold_on=True):

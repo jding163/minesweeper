@@ -1,12 +1,1 @@
-pygame-ce 2.5.5 (SDL 2.32.6, Python 3.11.8)
-0
-
---- Statistics Summary ---
-Strategy used: SafestTileAndLikeliestOpening
-Total games: 100
-Total time: 11.494112014770508
-Wins: 45
-Losses: 55
-Winrate: 45.00%
-Average time per game: 0.11 seconds
-Average time per win: 0.17 seconds
+error at 5025243647209801751

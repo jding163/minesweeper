@@ -250,8 +250,8 @@ def main():
     #b=Solver()
 
     p = Player()
-    p.set_strategy(strat.SafestTileAndLikeliestOpening())
-    #p.set_strategy(strat.SecSafety())
+    #p.set_strategy(strat.SafestTileAndLikeliestOpening())
+    p.set_strategy(strat.SecSafety())
 
     # with open('seeds1.txt', 'r') as f:
     #     seeds_list = [int(line.strip()) for line in f]
@@ -263,7 +263,7 @@ def main():
     #seed=5
     # res = p.play_game(seed=seed)
     # print(res)
-    w1 = p.play_games(100,seed=seed,parallel=False)
+    w1 = p.play_games(100,seed=seed,parallel=True)
     # p.play_games_on_seed(10,-1443323327528190823)
     # p.set_strategy(strat.SafestTileAndForce())
     # w2 = p.play_games(100,seed=seed)

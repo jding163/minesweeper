@@ -3,52 +3,88 @@ pygame-ce 2.5.5 (SDL 2.32.6, Python 3.11.8)
 
 --- Statistics Summary ---
 Strategy used: SafestTileAndLikeliestOpening
-Total games: 10
-Total time: 2.3971939086914062
-Wins: 4
-Losses: 6
-Winrate: 40.00%
-Average time per game: 0.24 seconds
-Average time per win: 0.45 seconds
-Best mastery: 4
+Total games: 100
+Total time: 10.826415300369263
+Wins: 39
+Losses: 61
+Winrate: 39.00%
+Average time per game: 0.11 seconds
+Average time per win: 0.16 seconds
+Best mastery: 27
 Wrote profile results to player.py.lprof
 Timer unit: 1e-06 s
 
-Total time: 0.935118 s
-File: /Users/jeremyding/Desktop/projects/minesweeper/solver.py
-Function: solve_trivial_and_open at line 213
+Total time: 4.09469 s
+File: /Users/jeremyding/Desktop/projects/minesweeper/strategy.py
+Function: find_move at line 51
 
 Line #      Hits         Time  Per Hit   % Time  Line Contents
 ==============================================================
-   213                                               @profile
-   214                                               def solve_trivial_and_open(self):
-   215       206         42.0      0.2      0.0          init_mines = self.flag_count
-   216       206         50.0      0.2      0.0          init_revealed = self.num_revealed
-   217       206         46.0      0.2      0.0          prev_mines = init_mines
-   218       206         45.0      0.2      0.0          prev_revealed = init_revealed
-   219       206     310075.0   1505.2     33.2          flags_found = self.flag_board()
-   220       206         81.0      0.4      0.0          if flags_found:
-   221       194     231402.0   1192.8     24.7              self.chord_board()
-   222       334        207.0      0.6      0.0          while self.flag_count != prev_mines or self.num_revealed != prev_revealed:
-   223       128     222148.0   1735.5     23.8              flags_found = self.flag_board()
-   224       128         31.0      0.2      0.0              if flags_found:
-   225       128     170814.0   1334.5     18.3                  self.chord_board()
-   226       128         56.0      0.4      0.0              prev_revealed = self.num_revealed
-   227       128         22.0      0.2      0.0              prev_mines = self.flag_count
-   228                                                   # for row in range(GSM.rows):
-   229                                                   #     for col in range(GSM.cols):
-   230                                                   #         if self.tiles[row][col].is_revealed():
-   231                                                   #             self.tiles[row][col].prob_mine_local = 0
-   232                                                   #             if self.tiles[row][col].type is OPENING:
-   233                                                   #                 self.tiles[row][col].prob_opening = 1
-   234                                                   #             else:
-   235                                                   #                 self.tiles[row][col].prob_opening = 0
-   236                                                   #         elif self.tiles[row][col].is_flagged():
-   237                                                   #             self.tiles[row][col].prob_mine_local = 0
-   238                                                   #             self.tiles[row][col].prob_opening = 0
-   239       206         99.0      0.5      0.0          return not ((init_mines == prev_mines) and (prev_revealed == init_revealed)) # solution found or not
+    51                                               @profile
+    52                                               def find_move(self,board):
+    53       347        120.0      0.3      0.0          min_prob = 1
+    54       347         74.0      0.2      0.0          min_x=-1
+    55       347         96.0      0.3      0.0          min_y=-1
+    56       347         84.0      0.2      0.0          unrevealed_tile_locs = []
+    57      1080        358.0      0.3      0.0          for region in board.regions_list:
+    58      6192       1656.0      0.3      0.0              for loc in region.locs:
+    59      5459       1539.0      0.3      0.0                  unrevealed_tile_locs.append(loc)
+    60      5806       2071.0      0.4      0.1          for loc in unrevealed_tile_locs:
+    61      5459       1625.0      0.3      0.0              x,y = loc
+    62      5459       1608.0      0.3      0.0              tile = board.tiles[x][y]
+    63      5459       1460.0      0.3      0.0              if tile.prob_mine_local < min_prob:
+    64       794        175.0      0.2      0.0                  min_prob = tile.prob_mine_local
+    65       794        160.0      0.2      0.0                  min_x = x
+    66       794        166.0      0.2      0.0                  min_y = y
+    67       347        175.0      0.5      0.0          if len(board.nonfrontier_tiles) == 0:
+    68        28         14.0      0.5      0.0              return min_x,min_y
+    69                                           
+    70       319         73.0      0.2      0.0          candidates = []
+    71                                                   # threshold = 1-((1-min_prob)*0.9)
+    72                                                   # print(threshold)
+    73      5612       1911.0      0.3      0.0          for loc in unrevealed_tile_locs:
+    74      5293       1489.0      0.3      0.0              x,y = loc
+    75      5293       1463.0      0.3      0.0              tile = board.tiles[x][y]
+    76      5293       1479.0      0.3      0.0              if tile.prob_mine_local <= min_prob:
+    77       922        329.0      0.4      0.0                  candidates.append(tile)
+    78                                           
+    79       319        139.0      0.4      0.0          x_nf,y_nf = board.nonfrontier_tiles[0]
+    80       319        104.0      0.3      0.0          nonfrontier_tile = board.tiles[x_nf][y_nf]
+    81       319         77.0      0.2      0.0          nonfrontier_tile_prob = nonfrontier_tile.prob_mine_local
+    82       319         94.0      0.3      0.0          if nonfrontier_tile_prob <= min_prob:
+    83     49674      15831.0      0.3      0.4              for x,y in board.nonfrontier_tiles:
+    84     49547      12986.0      0.3      0.3                  tile = board.tiles[x][y]
+    85     49547      14890.0      0.3      0.4                  candidates.append(tile)
+    86       319        198.0      0.6      0.0          if len(candidates) == 1:
+    87        74         63.0      0.9      0.0              return candidates[0].loc
+    88       245         63.0      0.3      0.0          progress_dists = {}
+    89       245         60.0      0.2      0.0          filtered = []
+    90     50640      16664.0      0.3      0.4          for c in candidates:
+    91     50395      13638.0      0.3      0.3              if c.num_adj_flags == 0:
+    92     50111      14732.0      0.3      0.4                  filtered.append(c)
+    93                                           
+    94       245        102.0      0.4      0.0          if len(filtered) == 1:
+    95        22         17.0      0.8      0.0              return filtered[0].loc
+    96       223         81.0      0.4      0.0          if len(filtered) == 0:
+    97        19          6.0      0.3      0.0              return candidates[0].loc
+    98     50293      18731.0      0.4      0.5          for c in filtered:
+    99     50089    1075077.0     21.5     26.3              if board.is_loc_candidate_for_analysis(c.loc):
+   100                                           
+   101                                                           #print('candidate:',c.loc)
+   102                                                       # progress_dists[c.loc] = prob.calc_prob_dist_for_loc(board,c.loc)
+   103                                                       # print(progress_dists)
+   104      1444    2891194.0   2002.2     70.6                  progress_dists[c.loc] = prob.calc_prob_opening_for_loc(board,c.loc)
+   105       204         53.0      0.3      0.0          best = None
+   106       204         39.0      0.2      0.0          prob_opening_best = -1
+   107      1648        760.0      0.5      0.0          for k,v in progress_dists.items():
+   108                                                       #prob_opening = v[0]
+   109      1444        303.0      0.2      0.0              prob_opening=v
+   110      1444        398.0      0.3      0.0              if prob_opening > prob_opening_best:
+   111       480         88.0      0.2      0.0                  prob_opening_best = prob_opening
+   112       480         86.0      0.2      0.0                  best = k
+   113       204         95.0      0.5      0.0          return best
 
-Total time: 2.38021 s
+Total time: 10.6425 s
 File: player.py
 Function: play_one_step at line 35
 
@@ -59,24 +95,24 @@ Line #      Hits         Time  Per Hit   % Time  Line Contents
     37                                           
     38                                           
     39                                                   #game_over = not GSM.get_game_state() or (self.board.is_complete() and self.board.verify_win())
-    40       206        319.0      1.5      0.0          game_over = not GSM.get_game_state() or self.board.is_complete()
+    40      3193       3964.0      1.2      0.0          game_over = not GSM.get_game_state() or self.board.is_complete()
     41                                           
-    42       206         53.0      0.3      0.0          if game_over:
+    42      3193        752.0      0.2      0.0          if game_over:
     43                                                       return
-    44       206     936982.0   4548.5     39.4          if self.board.solve_trivial_and_open():
-    45       128         38.0      0.3      0.0              return
+    44      3193     993975.0    311.3      9.3          if self.board.solve_trivial_and_open():
+    45      2374        759.0      0.3      0.0              return
     46                                           
-    47        78     606206.0   7771.9     25.5          elif self.board.solve_exhaustive_and_open():
-    48        38         20.0      0.5      0.0              return
-    49        40     102986.0   2574.7      4.3          elif self.board.solve_endgame_and_open():
-    50         1          0.0      0.0      0.0              return 
+    47       819    4347547.0   5308.4     40.9          elif self.board.solve_exhaustive_and_open():
+    48       459        243.0      0.5      0.0              return
+    49       360    1026984.0   2852.7      9.6          elif self.board.solve_endgame_and_open():
+    50        13          6.0      0.5      0.0              return 
     51                                                   #probs should be marked already
     52                                                   #game_over = not GSM.get_game_state() or (self.board.is_complete() and self.board.verify_win())
-    53        39         88.0      2.3      0.0          game_over = not GSM.get_game_state() or self.board.is_complete()
+    53       347        849.0      2.4      0.0          game_over = not GSM.get_game_state() or self.board.is_complete()
     54                                           
     55                                           
-    56        39         19.0      0.5      0.0          if risk is True and not game_over:
-    57        39     730986.0  18743.2     30.7              x,y = self.strategy.find_move(self.board)
+    56       347        159.0      0.5      0.0          if risk is True and not game_over:
+    57       347    4238105.0  12213.6     39.8              x,y = self.strategy.find_move(self.board)
     58                                                       #x,y = prob.find_safest_tile(self.board)
-    59        39       2508.0     64.3      0.1              self.board.reveal_tiles(x,y)
+    59       347      29167.0     84.1      0.3              self.board.reveal_tiles(x,y)
 

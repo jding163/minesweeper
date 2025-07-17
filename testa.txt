@@ -4,35 +4,103 @@ pygame-ce 2.5.5 (SDL 2.32.6, Python 3.11.8)
 --- Statistics Summary ---
 Strategy used: SafestTileAndLikeliestOpening
 Total games: 100
-Total time: 16.274641036987305
+Total time: 11.18785810470581
 Wins: 39
 Losses: 61
 Winrate: 39.00%
-Average time per game: 0.16 seconds
-Average time per win: 0.22 seconds
+Average time per game: 0.11 seconds
+Average time per win: 0.16 seconds
 Best mastery: 27
 Wrote profile results to player.py.lprof
 Timer unit: 1e-06 s
 
-Total time: 0.940304 s
+Total time: 3.07734 s
 File: /Users/jeremyding/Desktop/projects/minesweeper/solver.py
-Function: solve_trivial_and_open at line 191
+Function: get_sol_counts_at_loc_for_val at line 332
 
 Line #      Hits         Time  Per Hit   % Time  Line Contents
 ==============================================================
-   191                                               @profile
-   192                                               def solve_trivial_and_open(self):
-   193      3177        676.0      0.2      0.1          init_mines = self.flag_count
-   194      3177        746.0      0.2      0.1          init_revealed = self.num_revealed
-   195                                           
-   196      3177     640538.0    201.6     68.1          flags_found = self.flag_board()
-   197      3177        819.0      0.3      0.1          if flags_found:
-   198      3174     294702.0     92.8     31.3              self.chord_board()
-   199      3177        991.0      0.3      0.1          new_mines = self.flag_count
-   200      3177        670.0      0.2      0.1          new_revealed = self.num_revealed
-   201      3177       1162.0      0.4      0.1          return new_revealed != init_revealed or init_mines != new_mines
+   332                                               @profile
+   333                                               def get_sol_counts_at_loc_for_val(self,loc,val):
+   334      1444        559.0      0.4      0.0          x,y = loc
+   335      1444        608.0      0.4      0.0          tile = self.tiles[x][y]
+   336      1444        401.0      0.3      0.0          orig_val_at_loc = tile.num_adj_mines
+   337      1444        383.0      0.3      0.0          tile.num_adj_mines = val
+   338      1444        424.0      0.3      0.0          tile.type = NUMBER
+   339      1444        347.0      0.2      0.0          num_safe = 0
+   340      1444        317.0      0.2      0.0          regions_with_sols = []
+   341      1444     366471.0    253.8     11.9          regions_to_solve = self.get_regions()
+   342      3214       1168.0      0.4      0.0          for region in regions_to_solve:
+   343      2479       5836.0      2.4      0.2              region_solved = self.check_for_existing_solutions_in_set(region,self.regions_list)
+   344      2479       1949.0      0.8      0.1              if region_solved is not None and region_solved.is_equal(region):
+   345                                                           regions_with_sols.append(region)
+   346                                                           continue
+   347      2479      87773.0     35.4      2.9              groups = self.group_equivalent_tiles(region)
+   348                                                       #groups = self.order_groups_by_information(groups)
+   349      2479        808.0      0.3      0.0              region.groups = groups
+   350      2479    1729105.0    697.5     56.2              group_sols = self.find_solutions_group(region,groups)
+   351                                                       #board is not solvable
+   352      2479       1108.0      0.4      0.0              if len(group_sols) == 0:
+   353       709        200.0      0.3      0.0                  tile.num_adj_mines = orig_val_at_loc
+   354       709        182.0      0.3      0.0                  tile.type = UNKNOWN
+   355       709        253.0      0.4      0.0                  return 0,0,0
+   356                                           
+   357      1770      27471.0     15.5      0.9              group_probs,group_counts = prob.calc_probs_from_grouped_sols(groups,group_sols)
+   358      7290       3316.0      0.5      0.1              for i in range(len(group_probs)):
+   359      5520       1883.0      0.3      0.1                  if group_probs[i] == 0:
+   360       981        397.0      0.4      0.0                      num_safe += len(groups[i])
+   361                                                       
+   362      1770        607.0      0.3      0.0              region.group_sols = group_sols
+   363      1770        464.0      0.3      0.0              region.group_counts = group_counts
+   364      1770        793.0      0.4      0.0              region.num_sols = sum(group_counts)
+   365      1770       6183.0      3.5      0.2              region.freqs = get_minecount_freqs(region)
+   366      1770        799.0      0.5      0.0              regions_with_sols.append(region)
+   367       735        279.0      0.4      0.0          frontier_tiles = set()
+   368      2105        629.0      0.3      0.0          for r in regions_with_sols:
+   369      8962       2670.0      0.3      0.1              for loc in r.locs:
+   370      7592       2472.0      0.3      0.1                  frontier_tiles.add(loc)
+   371       735        150.0      0.2      0.0          nonfrontier_tiles = []
+   372     22785       7191.0      0.3      0.2          for row in range(GSM.rows):
+   373    374850     132554.0      0.4      4.3              for col in range(GSM.cols):
+   374    352800     312733.0      0.9     10.2                  if self.get_type_at_loc((row,col)) == UNKNOWN and (row,col) not in frontier_tiles:
+   375    302661      99207.0      0.3      3.2                      nonfrontier_tiles.append((row,col))
+   376       735      13246.0     18.0      0.4          sols_per_mines_in_frontier = Solver.get_sol_counts(regions_with_sols,nonfrontier_tiles,self.flag_count)
+   377       735        620.0      0.8      0.0          total_count = sum(sols_per_mines_in_frontier.values())
+   378       735        263.0      0.4      0.0          if len(regions_to_solve) == 0:
+   379                                                       mines_left = len(self.mines) - self.flag_count
+   380                                                       tile.num_adj_mines = orig_val_at_loc
+   381                                                       tile.type = UNKNOWN
+   382                                                       return total_count, mines_left/len(nonfrontier_tiles)
+   383                                           
+   384       735        174.0      0.2      0.0          probs = []
+   385       735        202.0      0.3      0.0          merged_regions = regions_with_sols[0]
+   386      1370        732.0      0.5      0.0          for i in range(1,len(regions_with_sols)):
+   387       635      10205.0     16.1      0.3              merged_regions = merged_regions.merge_regions(regions_with_sols[i])
+   388      2105        651.0      0.3      0.0          for region in regions_with_sols:
+   389      1370        361.0      0.3      0.0              groups = region.groups
+   390      1370        396.0      0.3      0.0              group_probs = []
+   391      6262       2236.0      0.4      0.1              for i in range(len(groups)):
+   392      4892       1243.0      0.3      0.0                  group = groups[i]
+   393      4892     241615.0     49.4      7.9                  group_prob = prob.calc_global_prob_for_group(merged_regions,group,sols_per_mines_in_frontier)
+   394      4892       1880.0      0.4      0.1                  group_probs.append(group_prob)
+   395      1370        966.0      0.7      0.0              min_prob = min(group_probs)
+   396      1370        440.0      0.3      0.0              probs.append(min_prob)
+   397                                           
+   398       735        293.0      0.4      0.0          best_prob = min(probs)
+   399       735        322.0      0.4      0.0          if best_prob > 0:
+   400       262        245.0      0.9      0.0              local_freqs = [region.freqs for region in regions_with_sols]
+   401       262       1186.0      4.5      0.0              global_freqs = prob.convolve_freqs(local_freqs)        
+   402       262        151.0      0.6      0.0              num_sols_total = sum(global_freqs.values())
+   403       262        381.0      1.5      0.0              prob_dist = {mc: num_sols_for_mc / num_sols_total for mc, num_sols_for_mc in global_freqs.items()}
+   404       262        143.0      0.5      0.0              mines_left = len(self.mines) - self.flag_count
+   405       262        704.0      2.7      0.0              prob_for_nonfrontier_tiles = prob.calc_prob_for_nonfrontier_tiles(prob_dist,mines_left,len(self.nonfrontier_tiles))
+   406       262        185.0      0.7      0.0              best_prob = min(prob_for_nonfrontier_tiles,best_prob)
+   407                                           
+   408       735        310.0      0.4      0.0          tile.num_adj_mines = orig_val_at_loc
+   409       735        239.0      0.3      0.0          tile.type = UNKNOWN
+   410       735        265.0      0.4      0.0          return total_count,best_prob, num_safe
 
-Total time: 16.0952 s
+Total time: 11.0101 s
 File: player.py
 Function: play_one_step at line 35
 
@@ -43,24 +111,24 @@ Line #      Hits         Time  Per Hit   % Time  Line Contents
     37                                           
     38                                           
     39                                                   #game_over = not GSM.get_game_state() or (self.board.is_complete() and self.board.verify_win())
-    40      3177       3735.0      1.2      0.0          game_over = not GSM.get_game_state() or self.board.is_complete()
+    40      3193       3705.0      1.2      0.0          game_over = not GSM.get_game_state() or self.board.is_complete()
     41                                           
-    42      3177        813.0      0.3      0.0          if game_over:
+    42      3193        728.0      0.2      0.0          if game_over:
     43                                                       return
-    44      3177     954941.0    300.6      5.9          if self.board.solve_trivial_and_open():
-    45      2355        648.0      0.3      0.0              return
+    44      3193     967277.0    302.9      8.8          if self.board.solve_trivial_and_open():
+    45      2374        789.0      0.3      0.0              return
     46                                           
-    47       822    6720700.0   8176.0     41.8          elif self.board.solve_exhaustive_and_open():
-    48       458        214.0      0.5      0.0              return
-    49       364    1413430.0   3883.0      8.8          elif self.board.solve_endgame_and_open():
-    50        13          5.0      0.4      0.0              return 
+    47       819    4428165.0   5406.8     40.2          elif self.board.solve_exhaustive_and_open():
+    48       459        190.0      0.4      0.0              return
+    49       360    1032550.0   2868.2      9.4          elif self.board.solve_endgame_and_open():
+    50        13          4.0      0.3      0.0              return 
     51                                                   #probs should be marked already
     52                                                   #game_over = not GSM.get_game_state() or (self.board.is_complete() and self.board.verify_win())
-    53       351        766.0      2.2      0.0          game_over = not GSM.get_game_state() or self.board.is_complete()
+    53       347        816.0      2.4      0.0          game_over = not GSM.get_game_state() or self.board.is_complete()
     54                                           
     55                                           
-    56       351        128.0      0.4      0.0          if risk is True and not game_over:
-    57       351    6970573.0  19859.2     43.3              x,y = self.strategy.find_move(self.board)
+    56       347        116.0      0.3      0.0          if risk is True and not game_over:
+    57       347    4546548.0  13102.4     41.3              x,y = self.strategy.find_move(self.board)
     58                                                       #x,y = prob.find_safest_tile(self.board)
-    59       351      29219.0     83.2      0.2              self.board.reveal_tiles(x,y)
+    59       347      29194.0     84.1      0.3              self.board.reveal_tiles(x,y)
 

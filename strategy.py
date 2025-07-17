@@ -2,6 +2,7 @@ import probability as prob
 from game_state_manager import GSM
 import progress as prog
 import time
+from line_profiler import profile
 
 class Strategy:
 
@@ -46,6 +47,7 @@ class SafestTileAndLikeliestOpening(Strategy):
 
     def __str__(self):
         return 'SafestTileAndLikeliestOpening'
+    
     def find_move(self,board):
         min_prob = 1
         min_x=-1
