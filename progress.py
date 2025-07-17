@@ -4,25 +4,36 @@ import copy
 import sprites
 from settings import *
 from collections import defaultdict
+from dataclasses import dataclass
 
+
+@dataclass(kw_only=True)
 class ProgressInfo:
-    def __init__(self, loc,sec_safety, probs, expected_clears,early_exit):
-        self.loc = loc
-        self.sec_safety = sec_safety            # float ∈ [0,1], the weighted safety score
-        self.probs = probs                      # dict[int, tuple[float, float]], {val at loc: (prob, best ss)}
-        self.early_exit = early_exit            # bool, True if pruning happened early
-        self.expected_clears = expected_clears  # dict[int, float], {val at loc: min safe clears}
+    loc: tuple
+    sec_safety: float
+    probs_loc_is_val: dict
+    best_ss_at_val: dict
+    finished: bool
+    expected_clears: dict
 
-def find_loc_with_best_progress_over_locs(board,locs):
+def find_loc_with_best_progress_over_locs(board,locs,expected_clears_weight=0.005):
     if len(locs) == 0:
         return None
     threshold = -1
     best_loc = None
+    best_score = 0
     for loc in locs:
         info = calc_progress_info_at_loc(board,loc,threshold)
-        if info.early_exit and info.sec_safety > threshold:
-            threshold = info.sec_safety
-            best_loc = loc
+
+        if info.finished and info.sec_safety >= threshold:
+            expected_clear_score = 0
+            for i in range(0,9):
+                expected_clear_score += info.probs_loc_is_val[i] * info.expected_clears[i]
+            final_score = info.sec_safety + expected_clear_score * expected_clears_weight
+            if final_score > best_score:
+                best_score = final_score
+                threshold = info.sec_safety
+                best_loc = loc
     return best_loc
 
 def calc_progress_info_at_loc(board,loc,threshold,threshold_on=True):
@@ -38,7 +49,8 @@ def calc_progress_info_at_loc(board,loc,threshold,threshold_on=True):
         elif n.type == UNKNOWN:
             max_flags +=1
     max_flags += min_flags
-    probs = defaultdict(float)
+    probs_loc_is_val = defaultdict(float) # value: prob that loc is value 
+    best_ss_at_val = defaultdict(float) # value: best sec safety at val
     sec_safety_so_far = 0.0
     weight_so_far = 0.0
     num_sols = board.total_sols
@@ -48,7 +60,8 @@ def calc_progress_info_at_loc(board,loc,threshold,threshold_on=True):
         #print(f'{i}: {num_safe} clears')
         prob = count / num_sols
         val = 1 - best_prob
-        probs[i] = (prob, val)
+        probs_loc_is_val[i] = prob
+        best_ss_at_val[i] = val
         expected_clears[i] = min_num_safe
 
         sec_safety_so_far += prob * val
@@ -59,10 +72,17 @@ def calc_progress_info_at_loc(board,loc,threshold,threshold_on=True):
         max_possible = sec_safety_so_far + remaining_weight
         # print(f'max possible at val {i}:',max_possible)
         if threshold_on and max_possible < threshold:
-            # Cannot reach the threshold no matter what remains
-            return ProgressInfo(loc,sec_safety_so_far,probs,expected_clears,False)
+            return ProgressInfo(loc=loc,sec_safety=sec_safety_so_far,probs_loc_is_val=probs_loc_is_val,
+                                expected_clears=expected_clears,best_ss_at_val=best_ss_at_val,
+                                finished=False)
 
-    return ProgressInfo(loc,sec_safety_so_far,probs,expected_clears,True)
+    # expected_clear_score = 0
+    # for i in range(0,9):
+    #     expected_clear_score += probs_loc_is_val[i] * expected_clears[i]
+    # print('loc:', loc)
+    # print('ecs:', expected_clear_score)
+    return ProgressInfo(loc=loc,sec_safety=sec_safety_so_far,probs_loc_is_val=probs_loc_is_val,
+                        expected_clears=expected_clears,best_ss_at_val=best_ss_at_val,finished=True)
 
 
 

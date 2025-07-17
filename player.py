@@ -177,7 +177,7 @@ class Player():
                     try:
                         result = future.result()
                         results.append(result)
-                        print(f"{i}: Seed {result['seed']}: {'Won' if result['won'] else 'Lost'} in {result['time']:.2f} seconds")
+                        #print(f"{i}: Seed {result['seed']}: {'Won' if result['won'] else 'Lost'} in {result['time']:.2f} seconds")
                         if result['won']:
                             won_seeds.append(i)
                         if i % 250 == 0:
@@ -263,7 +263,7 @@ def main():
     #seed=5
     # res = p.play_game(seed=seed)
     # print(res)
-    w1 = p.play_games(1000,seed=seed,parallel=False)
+    w1 = p.play_games(1000,seed=seed,parallel=True)
     # p.play_games_on_seed(10,-1443323327528190823)
     # p.set_strategy(strat.SafestTileAndForce())
     # w2 = p.play_games(100,seed=seed)

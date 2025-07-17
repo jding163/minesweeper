@@ -221,11 +221,11 @@ def handle_keypress_n():
     reset_board()
 def handle_keypress_m():
     #reqs = {(0,0):1,(0,4):1,(2,1):1,(2,3):1}
-    #reqs = {(0,1):1,(0,2):1,(0,3):1}
+    reqs = {(0,0):1,(0,2):1}
     #reqs = {(0,0):3}
-    reqs = {(12,4):1,(16,4):1,(12,8):1,(16,8):1}
-    #first_click=(0,0)
-    first_click = (12,4)
+    #reqs = {(12,4):1,(16,4):1,(12,8):1,(16,8):1}
+    first_click=(0,0)
+    #first_click = (12,4)
     print(player.find_matching_board_state(reqs,first_click=first_click))
 
 
@@ -255,9 +255,9 @@ def handle_keypress_v():
     loc = (mx,my)
     info = prog.calc_progress_info_at_loc(board,loc,0,threshold_on=False)
     print(f'secondary safety at {loc}:',info.sec_safety)
-    print(f'finished: {info.early_exit}')
-    if info.early_exit:
-        print(f'probs at {loc}:',info.probs.items())
+    print(f'finished: {info.finished}')
+    # if info.finished:
+    #     print(f'probs at {loc}:',info.probs.items())
 def handle_keypress_space():
     if my<0:
         return
