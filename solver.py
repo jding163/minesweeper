@@ -8,13 +8,13 @@ import itertools
 import logging
 from line_profiler import profile
 
-# Set up logging
-logging.basicConfig(
-    filename='debug.log',            # File to write to
-    filemode='w',                    # 'w' to overwrite, 'a' to append
-    level=logging.DEBUG,             # Minimum logging level
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
+# # Set up logging
+# logging.basicConfig(
+#     filename='debug.log',            # File to write to
+#     filemode='w',                    # 'w' to overwrite, 'a' to append
+#     level=logging.DEBUG,             # Minimum logging level
+#     format='%(asctime)s - %(levelname)s - %(message)s'
+# )
 
 import time
 import probability as prob
@@ -334,16 +334,33 @@ class Solver(Board):
                 sols_per_mines_in_frontier[num_mines] = num_sols_for_nonfrontier * freq
         
         return sols_per_mines_in_frontier
-    def get_sol_counts_at_loc_for_val(self,loc,val):
-        x,y = loc
-        tile = self.tiles[x][y]
+    
+    def assign_tile_value(self,tile,val):
         orig_val_at_loc = tile.num_adj_mines
         tile.num_adj_mines = val
         tile.type = NUMBER
-        self.unfinished_clues.add(loc)
-        num_safe = 0
+        self.unfinished_clues.add(tile.loc)
+        return orig_val_at_loc
+    
+    def unassign_tile_value(self,tile,orig_val_at_loc):
+        tile.num_adj_mines = orig_val_at_loc
+        tile.type = UNKNOWN
+        self.unfinished_clues.discard(tile.loc)
+    def get_sol_counts_at_loc_for_val(self,loc,val):
+        x,y = loc
+        tile = self.tiles[x][y]
+        orig_val_at_loc = self.assign_tile_value(tile,val)
+
+        # orig_val_at_loc = tile.num_adj_mines
+        # tile.num_adj_mines = val
+        # tile.type = NUMBER
+        # self.unfinished_clues.add(loc)
         regions_with_sols = []
         regions_to_solve = self.get_regions()
+        total_count = 0
+        best_prob = 0
+        num_safe = 0
+        solvable = True
         for region in regions_to_solve:
             region_solved = self.check_for_existing_solutions_in_set(region,self.regions_list)
 
@@ -354,13 +371,15 @@ class Solver(Board):
             #groups = self.order_groups_by_information(groups)
             region.groups = groups
             group_sols = self.find_solutions_group(region,groups)
-            #board is not solvable
+
+            #board config is not solvable
             if len(group_sols) == 0:
                 tile.num_adj_mines = orig_val_at_loc
                 tile.type = UNKNOWN
                 self.unfinished_clues.discard(loc)
 
-                return 0,0,0
+                solvable = False
+                break
 
             group_probs,group_counts = prob.calc_probs_from_grouped_sols(groups,group_sols)
             for i in range(len(group_probs)):
@@ -372,52 +391,48 @@ class Solver(Board):
             region.num_sols = sum(group_counts)
             region.freqs = get_minecount_freqs(region)
             regions_with_sols.append(region)
-        frontier_tiles = set()
-        for r in regions_with_sols:
-            for l in r.locs:
-                frontier_tiles.add(l)
-        nonfrontier_tiles = []
-        for row in range(GSM.rows):
-            for col in range(GSM.cols):
-                if self.get_type_at_loc((row,col)) == UNKNOWN and (row,col) not in frontier_tiles:
-                    nonfrontier_tiles.append((row,col))
-        sols_per_mines_in_frontier = Solver.get_sol_counts(regions_with_sols,nonfrontier_tiles,self.flag_count)
-        total_count = sum(sols_per_mines_in_frontier.values())
-        if len(regions_to_solve) == 0:
-            mines_left = len(self.mines) - self.flag_count
-            tile.num_adj_mines = orig_val_at_loc
-            tile.type = UNKNOWN
-            self.unfinished_clues.discard(loc)
+        if solvable:
+            frontier_tiles = set()
+            for r in regions_with_sols:
+                for l in r.locs:
+                    frontier_tiles.add(l)
+            nonfrontier_tiles = []
+            for row in range(GSM.rows):
+                for col in range(GSM.cols):
+                    if self.get_type_at_loc((row,col)) == UNKNOWN and (row,col) not in frontier_tiles:
+                        nonfrontier_tiles.append((row,col))
+            sols_per_mines_in_frontier = Solver.get_sol_counts(regions_with_sols,nonfrontier_tiles,self.flag_count)
+            total_count = sum(sols_per_mines_in_frontier.values())
+            if len(regions_to_solve) == 0:
+                mines_left = len(self.mines) - self.flag_count
+                best_prob = mines_left/len(nonfrontier_tiles)
 
-            return total_count, mines_left/len(nonfrontier_tiles)
+            else:
+                probs = []
+                merged_regions = regions_with_sols[0]
+                for i in range(1,len(regions_with_sols)):
+                    merged_regions = merged_regions.merge_regions(regions_with_sols[i])
+                for region in regions_with_sols:
+                    groups = region.groups
+                    group_probs = []
+                    for i in range(len(groups)):
+                        group = groups[i]
+                        group_prob = prob.calc_global_prob_for_group(merged_regions,group,sols_per_mines_in_frontier)
+                        group_probs.append(group_prob)
+                    min_prob = min(group_probs)
+                    probs.append(min_prob)
 
-        probs = []
-        merged_regions = regions_with_sols[0]
-        for i in range(1,len(regions_with_sols)):
-            merged_regions = merged_regions.merge_regions(regions_with_sols[i])
-        for region in regions_with_sols:
-            groups = region.groups
-            group_probs = []
-            for i in range(len(groups)):
-                group = groups[i]
-                group_prob = prob.calc_global_prob_for_group(merged_regions,group,sols_per_mines_in_frontier)
-                group_probs.append(group_prob)
-            min_prob = min(group_probs)
-            probs.append(min_prob)
+                best_prob = min(probs)
+                if best_prob > 0:
+                    local_freqs = [region.freqs for region in regions_with_sols]
+                    global_freqs = prob.convolve_freqs(local_freqs)        
+                    num_sols_total = sum(global_freqs.values())
+                    prob_dist = {mc: num_sols_for_mc / num_sols_total for mc, num_sols_for_mc in global_freqs.items()}
+                    mines_left = len(self.mines) - self.flag_count
+                    prob_for_nonfrontier_tiles = prob.calc_prob_for_nonfrontier_tiles(prob_dist,mines_left,len(self.nonfrontier_tiles))
+                    best_prob = min(prob_for_nonfrontier_tiles,best_prob)
 
-        best_prob = min(probs)
-        if best_prob > 0:
-            local_freqs = [region.freqs for region in regions_with_sols]
-            global_freqs = prob.convolve_freqs(local_freqs)        
-            num_sols_total = sum(global_freqs.values())
-            prob_dist = {mc: num_sols_for_mc / num_sols_total for mc, num_sols_for_mc in global_freqs.items()}
-            mines_left = len(self.mines) - self.flag_count
-            prob_for_nonfrontier_tiles = prob.calc_prob_for_nonfrontier_tiles(prob_dist,mines_left,len(self.nonfrontier_tiles))
-            best_prob = min(prob_for_nonfrontier_tiles,best_prob)
-
-        tile.num_adj_mines = orig_val_at_loc
-        tile.type = UNKNOWN
-        self.unfinished_clues.discard(loc)
+        self.unassign_tile_value(tile,orig_val_at_loc)
 
 
         return total_count,best_prob, num_safe

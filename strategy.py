@@ -153,6 +153,7 @@ class SecSafety(Strategy):
                     candidates.append(tile)
         if len(candidates) == 1:
             return candidates[0].loc
+
         candidate_locs = [c.loc for c in candidates]
         best_loc = prog.find_loc_with_best_progress_over_locs(board,candidate_locs)
         return best_loc

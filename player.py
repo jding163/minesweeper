@@ -11,6 +11,11 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 import multiprocessing
 import time
 from line_profiler import profile
+import logging
+from datetime import datetime
+
+
+
 
 
 max_size = sys.maxsize
@@ -21,7 +26,17 @@ min_size = 0
 def run_game(seed,strat):
     player = Player()  
     player.set_strategy(strat)
-    return player.play_game(seed=seed)
+    try:
+        result = player.play_game(seed=seed)
+        result['error'] = False
+        return result
+    except Exception as e:
+        return {
+            'seed': seed,
+            'won': False,
+            'time': -1,
+            'error': str(e)
+        }
 
 class Player():
     def __init__(self):
@@ -43,7 +58,6 @@ class Player():
             return
         if self.board.solve_trivial_and_open():
             return
-
         elif self.board.solve_exhaustive_and_open():
             return
         elif self.board.solve_endgame_and_open():
@@ -59,12 +73,15 @@ class Player():
             self.board.reveal_tiles(x,y)
 
     def autoplay(self,risk=True):
+        start = time.time()
+        
         while True:
             #game_over = not GSM.get_game_state() or (self.board.is_complete() and self.board.verify_win())
             game_over = not GSM.get_game_state() or self.board.is_complete()
             if game_over:
-                break
+                return True
             self.play_one_step(risk=risk)
+
     
     def play_game(self,seed=None):
         #C.handle_keypress_n()  # full reset
@@ -166,47 +183,49 @@ class Player():
         #seeds = seeds[2350:2400]
 
         results = []
+        won_seeds = []
+        error_seeds = []
         if parallel:
             max_workers = multiprocessing.cpu_count()
-            max_workers = 4
+            max_workers = 6
             with ProcessPoolExecutor(max_workers=max_workers) as executor:
 
                 futures = {executor.submit(run_game, s,self.strategy): s for s in seeds}
                 
                 for i, future in enumerate(as_completed(futures)):
-                    try:
-                        result = future.result()
-                        results.append(result)
-                        print(f"{i}: Seed {result['seed']}: {'Won' if result['won'] else 'Lost'} in {result['time']:.2f} seconds")
-                        if result['won']:
-                            won_seeds.append(i)
-                        if i % 250 == 0:
-                            print(i)
-                    except:
-                        with open('t1.txt', 'w') as f:
-                            f.write(f'error at {seeds[i]}')
+                    if i % 250 == 0:
+                        print(i)
+                        logging.info(i)
+                    result = future.result()
+                    results.append(result)
+                    #print(f"{i}: Seed {result['seed']}: {'Won' if result['won'] else 'Lost'} in {result['time']:.2f} seconds")
+                    if result['error']:
+                        logging.error(f'Error at seed {seed}: {e}')
+                    if result['time'] > 30:
+                        logging.info(result)
+                    if result['won']:
+                        won_seeds.append(result['seed'])
+
+
+
             
 
         else:
-            won_seeds = []
+
             for i in range(num_games):
                 print(i)
-                if i % 250 == 0:
-                    print(i)
-                result = self.play_game(seed=seeds[i])
-                results.append(result)
-                if result['won'] == True:
-                    won_seeds.append(seeds[i])
-                #print(result)
-            #seeds_to_print = won_seeds
-            #seeds_to_print = Solver.collected_seeds
-            # for j in seeds_to_print:
-            #     print(j)
-                #print(f"Seed {result['seed']}: {'Won' if result['won'] else 'Lost'} in {result['time']:.2f} seconds")
-            #print(Solver.collected_seeds)
-            # with open('seeds3.txt', 'w') as f:
-            #     for item in Solver.collected_seeds:
-            #         f.write(f"{item}\n")
+                # if i % 250 == 0:
+                #     print(i)
+                try:
+                    print(seeds[i])
+                    result = self.play_game(seed=seeds[i])
+                    results.append(result)
+                    print(result)
+                    if result['won'] == True:
+                        won_seeds.append(seeds[i])
+                except Exception as e:
+                    error_seeds.append(seeds[i])
+
 
         total_games = len(results)
         total_wins = sum(1 for r in results if r['won'])
@@ -245,7 +264,14 @@ def calc_mastery(nums, n):
 
 
 def main():
+    log_filename = datetime.now().strftime("debug_%Y-%m-%d_%H-%M-%S.log")
 
+    logging.basicConfig(
+        filename='debug.log',            # File to write to
+        filemode='w',                    # 'w' to overwrite, 'a' to append
+        level=logging.DEBUG,             # Minimum logging level
+        format='%(asctime)s - %(levelname)s - %(message)s'
+    )
     # b = Solver()
     # b.display = None
     #b=Solver()
@@ -264,7 +290,7 @@ def main():
     #seed=5
     # res = p.play_game(seed=seed)
     # print(res)
-    w1 = p.play_games(10,seed=seed,parallel=False)
+    w1 = p.play_games(10000,seed=seed,parallel=True)
     # p.play_games_on_seed(10,-1443323327528190823)
     # p.set_strategy(strat.SafestTileAndForce())
     # w2 = p.play_games(100,seed=seed)

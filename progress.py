@@ -38,10 +38,9 @@ def find_loc_with_best_progress_over_locs(board,locs,expected_clears_weight=0.00
         return None
     threshold = -1
     best_loc = None
-    best_score = 0
+    best_score = -1
     for loc in locs:
         info = calc_progress_info_at_loc(board,loc,threshold)
-
         if info.finished and info.sec_safety > threshold:
             # threshold = info.sec_safety
             # best_loc = loc
@@ -54,6 +53,7 @@ def find_loc_with_best_progress_over_locs(board,locs,expected_clears_weight=0.00
                 best_score = final_score
                 threshold = info.sec_safety
                 best_loc = loc
+
     return best_loc
 
 def calc_progress_info_at_loc(board,loc,threshold,threshold_on=True):
