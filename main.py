@@ -159,9 +159,9 @@ class Game:
 
                         #C.handle_board_click(seed=-1569694061328666230)
                         #C.handle_board_click(seed=3180935053634563155)
-                        #C.handle_board_click(seed=4717504199111745942)
-                        C.handle_board_click(seed=8577971359318355564)
-                        #C.handle_board_click(seed=-1855236839007521022)
+                        C.handle_board_click(seed=2775467783930717182)
+                        #C.handle_board_click(seed=1859295173717605132)
+                        #C.handle_board_click(seed=-699791660879494258)
 
                         #C.handle_board_click()
                     

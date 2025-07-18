@@ -268,30 +268,30 @@ class Solver(Board):
                 return False
 
         return True
-    
-    def verify_neighbors_of_loc(self,tiles_to_check):
+    def verify_neighbors_of_loc(self, tiles_to_check):
         for tile in tiles_to_check:
-            # Gather the relevant neighboring tiles
-            neighbors = self.get_neighbor_tiles((tile.row,tile.col))
-            target_mines = tile.num_adj_mines
+            loc = (tile.row, tile.col)
+            info = self.constraint_info[loc]
 
-            unknown_count = 0
-            mine_count = 0
-            for neighbor in neighbors:
+            mines = info['static_mines']
+            unknowns = info['static_unknowns']
+
+            for dx, dy in info['dynamic_neighbors']:
+                neighbor = self.tiles[dx][dy]
                 if neighbor.type == MINE:
-                    mine_count += 1
+                    mines += 1
                 elif neighbor.type == UNKNOWN:
-                    unknown_count += 1
-                if mine_count > target_mines:
+                    unknowns += 1
+                if mines > info['target']:  # early exit
                     return False
 
-            # Check for constraint violation
-            if mine_count > target_mines:
+            if mines > info['target']:
                 return False
-            if unknown_count + mine_count < target_mines:
+            if mines + unknowns < info['target']:
                 return False
 
         return True
+
 
     
     def merge_multiple_regions(self, regions):
@@ -431,6 +431,34 @@ class Solver(Board):
     def find_solutions_group(self,region,groups):
         if region.num_locs() == 0:
             return
+        
+
+        self.constraint_info = {}
+
+        for l in region.locs_to_check:
+            tile = self.tiles[l[0]][l[1]]
+            neighbors = tile.neighbors
+
+            static_mines = 0
+            static_unknowns = 0
+            dynamic_neighbors = []
+
+            for nloc in neighbors:
+                if nloc in region.locs:
+                    dynamic_neighbors.append(nloc)
+                else:
+                    neighbor = self.tiles[nloc[0]][nloc[1]]
+                    if neighbor.type == MINE:
+                        static_mines += 1
+                    elif neighbor.type == UNKNOWN:
+                        static_unknowns += 1
+
+            self.constraint_info[l] = {
+                'target': tile.num_adj_mines,
+                'static_mines': static_mines,
+                'static_unknowns': static_unknowns,
+                'dynamic_neighbors': dynamic_neighbors
+            }
         sols = []
         constraint_tracker = {}
         for group in groups:
@@ -480,128 +508,7 @@ class Solver(Board):
                     curr_sol.pop()
             for i in range(len(group)):
                 self.undo_inject(group[i])
-            
-
-
-    def find_solutions(self,region):
-        #print(locs)
-        if region.num_locs() == 0:
-            return
-        sols = []
-
-        loc = region.locs[0]
-
-        # count flagged mines from previous play
-        mine_count = 0 # includes flagged mines and unflagged mines deduced from prior calls to find_solution
-        for row in range(GSM.rows):
-            for col in range(GSM.cols):
-                if self.get_type_at_loc((row,col)) is MINE: 
-                    mine_count += 1 
-
-        if self.get_type_at_loc(loc) is not UNKNOWN:
-            # don't increment mine count even if loc contains a flag; it was already counted 
-            self.find_solutions_helper(region,sols,1,mine_count) 
-        else:
-            self.inject_mine(loc)
-            if self.verify_region(region):
-                self.find_solutions_helper(region,sols,1,mine_count+1)
-            self.inject_num(loc)
-            if self.verify_region(region):
-                self.find_solutions_helper(region,sols,1,mine_count)
-            self.undo_inject(loc)
-        return sols
-
-
-    def find_solutions_helper(self,region,sols,index,mine_count):
-        global paths_explored
-        paths_explored += 1
-        if mine_count > len(self.mines):
-            return
-            
-        if index == region.num_locs(): # valid solution found
-            #if self.verify_solution(region):
-                sol = []
-                for x,y in region.locs:
-                    curr = self.tiles[x][y]
-                    if curr.type is MINE:
-                        sol.append(1)
-                    else:
-                        sol.append(0)
-                sols.append(sol)
-        else:
-            loc = region.locs[index]
-            if self.get_type_at_loc(loc) is MINE:
-                self.find_solutions_helper(region,sols,index+1,mine_count+1)
-            elif self.get_type_at_loc(loc) is NUMBER:
-                self.find_solutions_helper(region,sols,index+1,mine_count)
-                
-            #b = copy.deepcopy(self)
-            #b = timer.timed_deepcopy(self)
-            else:
-                self.inject_mine(loc)
-                if self.verify_region(region):
-                    self.find_solutions_helper(region,sols,index+1,mine_count+1)
-                self.inject_num(loc)
-                if self.verify_region(region):
-                    self.find_solutions_helper(region,sols,index+1,mine_count)
-                self.undo_inject(loc)
-
-    def find_solutions_subdiv(self,region,unsolved_locs=None):
-
-        split = region.num_locs()//5
-        subdivs = subdivide_locs(region.locs,split)
-        subdiv_set = set()
-        for s in subdivs:
-            subdiv_set = set(s) | subdiv_set
-        #print(subdivs)
-        subdivs = [Region(subdiv,region.locs_to_check) for subdiv in subdivs]
-        if unsolved_locs is not None:
-            unsolved_subdivs = subdivide_locs(unsolved_locs,split)
-            unsolved_subdivs = [Region(subdiv,region.locs_to_check) for subdiv in unsolved_subdivs]
-            subdivs = unsolved_subdivs + subdivs
-        sols_to_merge = []
-        for subdiv in subdivs:
-            subdiv.set_sols_bit(self.find_solutions(subdiv))
-            sols_set = subdiv.get_sols_as_sets()
-            sols_to_merge.append(sols_set)
-
-        #print(sols_to_merge)
-        merged_sols,merged_subdiv = self.merge_and_validate(region, sols_to_merge,subdivs)
-        assert set(merged_subdiv.locs) == set(region.locs)
-
-        valid_sols_bit = region.get_sols_as_bits(merged_sols)
-        return valid_sols_bit
-
-    def merge_and_validate(self, region, sols_to_merge, subdivs):
-        if len(sols_to_merge) == 1:
-            return sols_to_merge[0], subdivs[0]
-
-        # Divide
-        mid = len(sols_to_merge) // 2
-        left_sols, left_subdiv = self.merge_and_validate(region, sols_to_merge[:mid], subdivs[:mid])
-        right_sols, right_subdiv = self.merge_and_validate(region, sols_to_merge[mid:], subdivs[mid:])
-        
-        # Merge subdiv regions
-        merged_subdiv = Region(left_subdiv.locs + right_subdiv.locs, region.locs_to_check)
-        
-        # Merge solutions
-        start=time.time()
-        merged_sols = []
-        for lsol in left_sols:
-            for rsol in right_sols:
-                combined = lsol | rsol
-
-                for loc in merged_subdiv.locs:
-                    if loc in combined:
-                        self.inject_mine(loc)
-                    else:
-                        self.inject_num(loc)
-                valid = self.verify_region(merged_subdiv)
-                if valid:
-                    merged_sols.append(combined)
-                for loc in merged_subdiv.locs:
-                    self.undo_inject(loc)
-        return merged_sols, merged_subdiv
+    
                     
     def mark_group_probs(self,groups,group_probs):
         for i in range(len(groups)):
