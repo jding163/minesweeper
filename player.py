@@ -177,7 +177,7 @@ class Player():
                     try:
                         result = future.result()
                         results.append(result)
-                        #print(f"{i}: Seed {result['seed']}: {'Won' if result['won'] else 'Lost'} in {result['time']:.2f} seconds")
+                        print(f"{i}: Seed {result['seed']}: {'Won' if result['won'] else 'Lost'} in {result['time']:.2f} seconds")
                         if result['won']:
                             won_seeds.append(i)
                         if i % 250 == 0:
@@ -190,15 +190,16 @@ class Player():
         else:
             won_seeds = []
             for i in range(num_games):
-                #print(i)
+                print(i)
                 if i % 250 == 0:
                     print(i)
                 result = self.play_game(seed=seeds[i])
                 results.append(result)
                 if result['won'] == True:
                     won_seeds.append(seeds[i])
-            # seeds_to_print = won_seeds
-            # seeds_to_print = Solver.collected_seeds
+                #print(result)
+            #seeds_to_print = won_seeds
+            #seeds_to_print = Solver.collected_seeds
             # for j in seeds_to_print:
             #     print(j)
                 #print(f"Seed {result['seed']}: {'Won' if result['won'] else 'Lost'} in {result['time']:.2f} seconds")

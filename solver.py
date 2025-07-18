@@ -205,25 +205,23 @@ class Solver(Board):
         new_mines = self.flag_count
         new_revealed = self.num_revealed
         return new_revealed != init_revealed or init_mines != new_mines
-    
+    @profile
     def get_ccs(self):
         adj_sets = []
-        for row in range(GSM.rows):
-            for col in range(GSM.cols):
-                #tile = self.tiles[row][col]
-                loc = (row,col)
-                tile = self.tiles[row][col]
-                if tile.type == NUMBER:
-                    neighbors = self.get_neighbor_tiles((row,col))
-                #if loc in self.unfinished_clues:
-                    #neighbors = self.get_neighbor_tiles(loc)
-                    adj_set = set()
-                    for neighbor in neighbors:
-                        if neighbor.is_unknown():
-                            adj_set.add((neighbor.row,neighbor.col))
-                    if len(adj_set) > 0: 
-                        adj_sets.append(adj_set) 
+
+        for loc in self.unfinished_clues:
+            neighbors = self.get_neighbor_tiles(loc)
+            adj_set = set()
+
+            for neighbor in neighbors:
+                if neighbor.is_unknown():
+                    adj_set.add((neighbor.row,neighbor.col))
+            if len(adj_set) > 0: 
+                adj_sets.append(adj_set)
+
         merged = merge_sets(adj_sets)
+        # print('merged:',merged)
+
         return merged
     
     def convert_ccs_to_regions(self,ccs):
@@ -231,6 +229,7 @@ class Solver(Board):
         for cc in ccs:
             cc,locs_to_check = self.optimize_backtrack_order(cc)
             cc = sorted(cc,key=lambda coord: (coord[0], coord[1]))
+            locs_to_check = sorted(locs_to_check,key=lambda coord: (coord[0], coord[1]))
             regions.append(Region(cc,locs_to_check))
         return regions
     
@@ -319,6 +318,7 @@ class Solver(Board):
 
     def get_sol_counts(regions,nonfrontier_tiles,flag_count):
         local_freqs = [region.freqs for region in regions]
+        # print(local_freqs)
         
         global_freqs = prob.convolve_freqs(local_freqs)
         if len(global_freqs) == 0:
@@ -334,18 +334,19 @@ class Solver(Board):
                 sols_per_mines_in_frontier[num_mines] = num_sols_for_nonfrontier * freq
         
         return sols_per_mines_in_frontier
-    @profile
     def get_sol_counts_at_loc_for_val(self,loc,val):
         x,y = loc
         tile = self.tiles[x][y]
         orig_val_at_loc = tile.num_adj_mines
         tile.num_adj_mines = val
         tile.type = NUMBER
+        self.unfinished_clues.add(loc)
         num_safe = 0
         regions_with_sols = []
         regions_to_solve = self.get_regions()
         for region in regions_to_solve:
             region_solved = self.check_for_existing_solutions_in_set(region,self.regions_list)
+
             if region_solved is not None and region_solved.is_equal(region):
                 regions_with_sols.append(region)
                 continue
@@ -357,6 +358,8 @@ class Solver(Board):
             if len(group_sols) == 0:
                 tile.num_adj_mines = orig_val_at_loc
                 tile.type = UNKNOWN
+                self.unfinished_clues.discard(loc)
+
                 return 0,0,0
 
             group_probs,group_counts = prob.calc_probs_from_grouped_sols(groups,group_sols)
@@ -371,8 +374,8 @@ class Solver(Board):
             regions_with_sols.append(region)
         frontier_tiles = set()
         for r in regions_with_sols:
-            for loc in r.locs:
-                frontier_tiles.add(loc)
+            for l in r.locs:
+                frontier_tiles.add(l)
         nonfrontier_tiles = []
         for row in range(GSM.rows):
             for col in range(GSM.cols):
@@ -384,6 +387,8 @@ class Solver(Board):
             mines_left = len(self.mines) - self.flag_count
             tile.num_adj_mines = orig_val_at_loc
             tile.type = UNKNOWN
+            self.unfinished_clues.discard(loc)
+
             return total_count, mines_left/len(nonfrontier_tiles)
 
         probs = []
@@ -412,6 +417,9 @@ class Solver(Board):
 
         tile.num_adj_mines = orig_val_at_loc
         tile.type = UNKNOWN
+        self.unfinished_clues.discard(loc)
+
+
         return total_count,best_prob, num_safe
 
 
@@ -699,7 +707,6 @@ class Solver(Board):
 
         safe_locs, mine_locs=self.solve_exhaustive()
         info_found = self.open_info(safe_locs,mine_locs)
-
         regions = self.get_regions()
         updated = []
 
@@ -713,7 +720,6 @@ class Solver(Board):
             if matching:
                 updated.append(region)
         self.regions_list = updated
-
 
         return info_found
 
@@ -860,6 +866,7 @@ class Solver(Board):
 
         frontier_tiles = set()
         regions = self.get_regions()
+
         for region in regions:
             for loc in region.locs:
                 frontier_tiles.add(loc)
@@ -958,6 +965,7 @@ class Solver(Board):
                         safe_locs.append((x,y))
         else:
             prob.update_nonfrontier_tile_probs(self)
+
         return safe_locs,mine_locs
 
     def solve_endgame_and_open(self):
@@ -972,8 +980,7 @@ class Solver(Board):
                 merged_regions = self.regions_list[0]
                 for i in range(1,len(self.regions_list)):
                     merged_regions = merged_regions.merge_regions(self.regions_list[i])
-                # print(sols_per_mines_in_frontier)
-                # print(self.total_sols)
+
                 for group in merged_regions.groups:
                     global_prob = prob.calc_global_prob_for_group(merged_regions,group,sols_per_mines_in_frontier)
                     for x,y in group:

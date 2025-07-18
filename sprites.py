@@ -297,7 +297,7 @@ class Board:
 
         if self.tiles[loc[0]][loc[1]].get_adj_mines() == self.tiles[loc[0]][loc[1]].get_adj_flags():
             self.reveal_neighbors(loc)
-            self.unfinished_clues.remove(loc)
+            self.unfinished_clues.discard(loc)
     
     def update_neighbors_with_minecount(self,loc):
         neighbors = self.get_neighbor_tiles(loc)

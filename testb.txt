@@ -1,90 +1,74 @@
 pygame-ce 2.5.5 (SDL 2.32.6, Python 3.11.8)
 0
+0
+1
+2
+3
+4
+5
+6
+7
+8
+9
 
 --- Statistics Summary ---
-Strategy used: SafestTileAndLikeliestOpening
-Total games: 100
-Total time: 10.826415300369263
-Wins: 39
-Losses: 61
-Winrate: 39.00%
-Average time per game: 0.11 seconds
-Average time per win: 0.16 seconds
-Best mastery: 27
+Strategy used: SecSafety
+Total games: 10
+Total time: 3.643751382827759
+Wins: 5
+Losses: 5
+Winrate: 50.00%
+Average time per game: 0.36 seconds
+Average time per win: 0.54 seconds
+Best mastery: 4
 Wrote profile results to player.py.lprof
 Timer unit: 1e-06 s
 
-Total time: 4.09469 s
-File: /Users/jeremyding/Desktop/projects/minesweeper/strategy.py
-Function: find_move at line 51
+Total time: 0.143102 s
+File: /Users/jeremyding/Desktop/projects/minesweeper/solver.py
+Function: get_ccs at line 208
 
 Line #      Hits         Time  Per Hit   % Time  Line Contents
 ==============================================================
-    51                                               @profile
-    52                                               def find_move(self,board):
-    53       347        120.0      0.3      0.0          min_prob = 1
-    54       347         74.0      0.2      0.0          min_x=-1
-    55       347         96.0      0.3      0.0          min_y=-1
-    56       347         84.0      0.2      0.0          unrevealed_tile_locs = []
-    57      1080        358.0      0.3      0.0          for region in board.regions_list:
-    58      6192       1656.0      0.3      0.0              for loc in region.locs:
-    59      5459       1539.0      0.3      0.0                  unrevealed_tile_locs.append(loc)
-    60      5806       2071.0      0.4      0.1          for loc in unrevealed_tile_locs:
-    61      5459       1625.0      0.3      0.0              x,y = loc
-    62      5459       1608.0      0.3      0.0              tile = board.tiles[x][y]
-    63      5459       1460.0      0.3      0.0              if tile.prob_mine_local < min_prob:
-    64       794        175.0      0.2      0.0                  min_prob = tile.prob_mine_local
-    65       794        160.0      0.2      0.0                  min_x = x
-    66       794        166.0      0.2      0.0                  min_y = y
-    67       347        175.0      0.5      0.0          if len(board.nonfrontier_tiles) == 0:
-    68        28         14.0      0.5      0.0              return min_x,min_y
-    69                                           
-    70       319         73.0      0.2      0.0          candidates = []
-    71                                                   # threshold = 1-((1-min_prob)*0.9)
-    72                                                   # print(threshold)
-    73      5612       1911.0      0.3      0.0          for loc in unrevealed_tile_locs:
-    74      5293       1489.0      0.3      0.0              x,y = loc
-    75      5293       1463.0      0.3      0.0              tile = board.tiles[x][y]
-    76      5293       1479.0      0.3      0.0              if tile.prob_mine_local <= min_prob:
-    77       922        329.0      0.4      0.0                  candidates.append(tile)
-    78                                           
-    79       319        139.0      0.4      0.0          x_nf,y_nf = board.nonfrontier_tiles[0]
-    80       319        104.0      0.3      0.0          nonfrontier_tile = board.tiles[x_nf][y_nf]
-    81       319         77.0      0.2      0.0          nonfrontier_tile_prob = nonfrontier_tile.prob_mine_local
-    82       319         94.0      0.3      0.0          if nonfrontier_tile_prob <= min_prob:
-    83     49674      15831.0      0.3      0.4              for x,y in board.nonfrontier_tiles:
-    84     49547      12986.0      0.3      0.3                  tile = board.tiles[x][y]
-    85     49547      14890.0      0.3      0.4                  candidates.append(tile)
-    86       319        198.0      0.6      0.0          if len(candidates) == 1:
-    87        74         63.0      0.9      0.0              return candidates[0].loc
-    88       245         63.0      0.3      0.0          progress_dists = {}
-    89       245         60.0      0.2      0.0          filtered = []
-    90     50640      16664.0      0.3      0.4          for c in candidates:
-    91     50395      13638.0      0.3      0.3              if c.num_adj_flags == 0:
-    92     50111      14732.0      0.3      0.4                  filtered.append(c)
-    93                                           
-    94       245        102.0      0.4      0.0          if len(filtered) == 1:
-    95        22         17.0      0.8      0.0              return filtered[0].loc
-    96       223         81.0      0.4      0.0          if len(filtered) == 0:
-    97        19          6.0      0.3      0.0              return candidates[0].loc
-    98     50293      18731.0      0.4      0.5          for c in filtered:
-    99     50089    1075077.0     21.5     26.3              if board.is_loc_candidate_for_analysis(c.loc):
-   100                                           
-   101                                                           #print('candidate:',c.loc)
-   102                                                       # progress_dists[c.loc] = prob.calc_prob_dist_for_loc(board,c.loc)
-   103                                                       # print(progress_dists)
-   104      1444    2891194.0   2002.2     70.6                  progress_dists[c.loc] = prob.calc_prob_opening_for_loc(board,c.loc)
-   105       204         53.0      0.3      0.0          best = None
-   106       204         39.0      0.2      0.0          prob_opening_best = -1
-   107      1648        760.0      0.5      0.0          for k,v in progress_dists.items():
-   108                                                       #prob_opening = v[0]
-   109      1444        303.0      0.2      0.0              prob_opening=v
-   110      1444        398.0      0.3      0.0              if prob_opening > prob_opening_best:
-   111       480         88.0      0.2      0.0                  prob_opening_best = prob_opening
-   112       480         86.0      0.2      0.0                  best = k
-   113       204         95.0      0.5      0.0          return best
+   208                                               @profile
+   209                                               def get_ccs(self):
+   210      1076        436.0      0.4      0.3          adj_sets = []
+   211                                           
+   212     10741       4416.0      0.4      3.1          for loc in self.unfinished_clues:
+   213      9665      28570.0      3.0     20.0              neighbors = self.get_neighbor_tiles(loc)
+   214      9665       2979.0      0.3      2.1              adj_set = set()
+   215                                           
+   216     78191      26872.0      0.3     18.8              for neighbor in neighbors:
+   217     68526      50113.0      0.7     35.0                  if neighbor.is_unknown():
+   218     29699      11613.0      0.4      8.1                      adj_set.add((neighbor.row,neighbor.col))
+   219      9665       3024.0      0.3      2.1              if len(adj_set) > 0: 
+   220      9419       3070.0      0.3      2.1                  adj_sets.append(adj_set)
+   221                                           
+   222                                           
+   223                                                   # for row in range(GSM.rows):
+   224                                                   #     for col in range(GSM.cols):
+   225                                                   #         #tile = self.tiles[row][col]
+   226                                                   #         loc = (row,col)
+   227                                                   #         tile = self.tiles[row][col]
+   228                                                   #         if tile.type == NUMBER:
+   229                                                   #             neighbors = self.get_neighbor_tiles((row,col))
+   230                                                   #         # if loc in self.unfinished_clues:
+   231                                                   #         #     neighbors = self.get_neighbor_tiles(loc)
+   232                                                   #             adj_set = set()
+   233                                                   #             for neighbor in neighbors:
+   234                                                   #                 if neighbor.is_unknown():
+   235                                                   #                     adj_set.add((neighbor.row,neighbor.col))
+   236                                                   #             if len(adj_set) > 0: 
+   237                                                   #                 adj_sets.append(adj_set) 
+   238                                           
+   239                                           
+   240                                           
+   241      1076      11655.0     10.8      8.1          merged = merge_sets(adj_sets)
+   242                                                   # print('merged:',merged)
+   243                                           
+   244      1076        354.0      0.3      0.2          return merged
 
-Total time: 10.6425 s
+Total time: 3.62676 s
 File: player.py
 Function: play_one_step at line 35
 
@@ -95,24 +79,24 @@ Line #      Hits         Time  Per Hit   % Time  Line Contents
     37                                           
     38                                           
     39                                                   #game_over = not GSM.get_game_state() or (self.board.is_complete() and self.board.verify_win())
-    40      3193       3964.0      1.2      0.0          game_over = not GSM.get_game_state() or self.board.is_complete()
+    40       375        423.0      1.1      0.0          game_over = not GSM.get_game_state() or self.board.is_complete()
     41                                           
-    42      3193        752.0      0.2      0.0          if game_over:
+    42       375         86.0      0.2      0.0          if game_over:
     43                                                       return
-    44      3193     993975.0    311.3      9.3          if self.board.solve_trivial_and_open():
-    45      2374        759.0      0.3      0.0              return
+    44       375     107541.0    286.8      3.0          if self.board.solve_trivial_and_open():
+    45       291        105.0      0.4      0.0              return
     46                                           
-    47       819    4347547.0   5308.4     40.9          elif self.board.solve_exhaustive_and_open():
-    48       459        243.0      0.5      0.0              return
-    49       360    1026984.0   2852.7      9.6          elif self.board.solve_endgame_and_open():
-    50        13          6.0      0.5      0.0              return 
+    47        84     385737.0   4592.1     10.6          elif self.board.solve_exhaustive_and_open():
+    48        43         17.0      0.4      0.0              return
+    49        41      55514.0   1354.0      1.5          elif self.board.solve_endgame_and_open():
+    50                                                       return 
     51                                                   #probs should be marked already
     52                                                   #game_over = not GSM.get_game_state() or (self.board.is_complete() and self.board.verify_win())
-    53       347        849.0      2.4      0.0          game_over = not GSM.get_game_state() or self.board.is_complete()
+    53        41         78.0      1.9      0.0          game_over = not GSM.get_game_state() or self.board.is_complete()
     54                                           
     55                                           
-    56       347        159.0      0.5      0.0          if risk is True and not game_over:
-    57       347    4238105.0  12213.6     39.8              x,y = self.strategy.find_move(self.board)
+    56        41         19.0      0.5      0.0          if risk is True and not game_over:
+    57        41    3074887.0  74997.2     84.8              x,y = self.strategy.find_move(self.board)
     58                                                       #x,y = prob.find_safest_tile(self.board)
-    59       347      29167.0     84.1      0.3              self.board.reveal_tiles(x,y)
+    59        41       2348.0     57.3      0.1              self.board.reveal_tiles(x,y)
 

@@ -33,7 +33,7 @@ class ProgressInfo:
 
 #     # print(f'best: {best_loc}')
 #     return best_loc
-def find_loc_with_best_progress_over_locs(board,locs,expected_clears_weight=0.00):
+def find_loc_with_best_progress_over_locs(board,locs,expected_clears_weight=0.005):
     if len(locs) == 0:
         return None
     threshold = -1
@@ -43,17 +43,17 @@ def find_loc_with_best_progress_over_locs(board,locs,expected_clears_weight=0.00
         info = calc_progress_info_at_loc(board,loc,threshold)
 
         if info.finished and info.sec_safety > threshold:
+            # threshold = info.sec_safety
+            # best_loc = loc
+            expected_clear_score = 0
+            for i in range(0,9):
+                expected_clear_score += info.probs_loc_is_val[i] * info.expected_clears[i]
+            
+            final_score = info.sec_safety + expected_clear_score * expected_clears_weight
+            if final_score > best_score:
+                best_score = final_score
                 threshold = info.sec_safety
                 best_loc = loc
-            # expected_clear_score = 0
-            # for i in range(0,9):
-            #     expected_clear_score += info.probs_loc_is_val[i] * info.expected_clears[i]
-            
-            # final_score = info.sec_safety + expected_clear_score * expected_clears_weight
-            # if final_score > best_score:
-            #     best_score = final_score
-            #     threshold = info.sec_safety
-            #     best_loc = loc
     return best_loc
 
 def calc_progress_info_at_loc(board,loc,threshold,threshold_on=True):
