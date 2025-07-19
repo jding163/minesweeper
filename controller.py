@@ -158,7 +158,7 @@ def handle_keypress_e():
     # l = [(cc, sols) for cc, sols in board.ccs_dict.items() if len(cc) != len (sols[0])]
     # print(l)
 
-def handle_keypress_t(seed=None):
+def handle_keypress_t(seed=None,timeout=None):
     #test -8425763037098422648, -8433645031250545356,-3837008816949211577
     if GSM.get_game_state() is False:
         handle_keypress_n()
@@ -172,8 +172,14 @@ def handle_keypress_t(seed=None):
 
     player.set_strategy(strat.SecSafety())
     start = time.time()
+    if timeout is not None:
+        player.board.deadline = start + timeout
+
     #player.set_strategy(strat.SafestTileAndLikeliestOpening())
-    player.autoplay()
+    try:
+        player.autoplay()
+    except Exception as e:
+        print(e)
     print(game_won())
     print(time.time()-start)
 

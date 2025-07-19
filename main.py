@@ -192,7 +192,7 @@ class Game:
                 elif event.key == pygame.K_e:
                     C.handle_keypress_e()
                 elif event.key == pygame.K_t:
-                    C.handle_keypress_t()
+                    C.handle_keypress_t(timeout=60)
 
                     #C.handle_keypress_t()
                 elif event.key == pygame.K_a:

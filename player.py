@@ -14,7 +14,7 @@ from line_profiler import profile
 import logging
 from datetime import datetime
 
-
+from solver import TimeoutException
 
 
 
@@ -23,13 +23,20 @@ max_size = sys.maxsize
 min_size = 0
 
 
-def run_game(seed,strat):
-    player = Player()  
+def run_game(seed,strat,timeout):
+    player = Player(timeout=timeout)  
     player.set_strategy(strat)
+    
     try:
         result = player.play_game(seed=seed)
-        result['error'] = False
         return result
+    except TimeoutException as e:
+        return {
+            'seed': seed,
+            'won': False,
+            'time': -1,
+            'timeout': True
+        }
     except Exception as e:
         return {
             'seed': seed,
@@ -39,8 +46,9 @@ def run_game(seed,strat):
         }
 
 class Player():
-    def __init__(self):
+    def __init__(self,timeout=None):
         self.strategy = strat.SafestTile()
+        self.timeout=timeout
     def set_board(self,board):
         self.board = board
     def set_strategy(self,strat):
@@ -62,10 +70,8 @@ class Player():
             return
         elif self.board.solve_endgame_and_open():
             return 
-        #probs should be marked already
-        #game_over = not GSM.get_game_state() or (self.board.is_complete() and self.board.verify_win())
-        game_over = not GSM.get_game_state() or self.board.is_complete()
 
+        game_over = not GSM.get_game_state() or self.board.is_complete()
 
         if risk is True and not game_over:
             x,y = self.strategy.find_move(self.board)
@@ -73,10 +79,8 @@ class Player():
             self.board.reveal_tiles(x,y)
 
     def autoplay(self,risk=True):
-        start = time.time()
         
         while True:
-            #game_over = not GSM.get_game_state() or (self.board.is_complete() and self.board.verify_win())
             game_over = not GSM.get_game_state() or self.board.is_complete()
             if game_over:
                 return True
@@ -87,6 +91,7 @@ class Player():
         #C.handle_keypress_n()  # full reset
         #GSM.set_game_state(True)
         self.board = Solver(run_pygame=False)
+        self.board.deadline = time.time() + self.timeout
 
         self.board.populate((0,0),seed=seed)
         start_time = time.time()
@@ -171,7 +176,7 @@ class Player():
         print(f"Average time per game: {avg_time:.2f} seconds")
         print(f"Average time per win: {avg_time_win:.2f} seconds")
 
-    def play_games(self,num_games,seed=None,seeds_list=None,parallel=True):
+    def play_games(self,num_games,seed=None,seeds_list=None,parallel=True,timeout=60):
         won_seeds = []
         if seeds_list is not None:
             seeds = seeds_list
@@ -190,7 +195,7 @@ class Player():
             max_workers = 6
             with ProcessPoolExecutor(max_workers=max_workers) as executor:
 
-                futures = {executor.submit(run_game, s,self.strategy): s for s in seeds}
+                futures = {executor.submit(run_game, s,self.strategy,timeout): s for s in seeds}
                 
                 for i, future in enumerate(as_completed(futures)):
                     if i % 250 == 0:
@@ -199,12 +204,13 @@ class Player():
                     result = future.result()
                     results.append(result)
                     #print(f"{i}: Seed {result['seed']}: {'Won' if result['won'] else 'Lost'} in {result['time']:.2f} seconds")
-                    if result['error']:
-                        logging.error(f'Error at seed {seed}: {e}')
-                    if result['time'] > 30:
-                        logging.info(result)
+                    result_seed = result['seed']
+                    if 'error' in result:
+                        logging.error(f'Error at seed {result_seed}')
+                    if 'timeout' in result:
+                        logging.info(f'Timeout at seed {result_seed}')
                     if result['won']:
-                        won_seeds.append(result['seed'])
+                        won_seeds.append(result_seed)
 
 
 
@@ -290,7 +296,7 @@ def main():
     #seed=5
     # res = p.play_game(seed=seed)
     # print(res)
-    w1 = p.play_games(10000,seed=seed,parallel=True)
+    w1 = p.play_games(10000,seed=seed,parallel=True,timeout=60)
     # p.play_games_on_seed(10,-1443323327528190823)
     # p.set_strategy(strat.SafestTileAndForce())
     # w2 = p.play_games(100,seed=seed)

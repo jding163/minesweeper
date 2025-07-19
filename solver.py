@@ -15,7 +15,8 @@ from line_profiler import profile
 #     level=logging.DEBUG,             # Minimum logging level
 #     format='%(asctime)s - %(levelname)s - %(message)s'
 # )
-
+class TimeoutException(Exception):
+    pass
 import time
 import probability as prob
 
@@ -121,6 +122,9 @@ class Solver(Board):
         self.nonfrontier_tiles = []
         self.regions_list = []
         self.region_freqs = []
+        self.abort_flag = False
+        self.deadline=None
+
         #self.populate(first_click)
         #self.reveal_tiles(first_click[0],first_click[1])
     def is_loc_candidate_for_analysis(self,loc):
@@ -438,7 +442,10 @@ class Solver(Board):
         return total_count,best_prob, num_safe
 
 
-        
+    def check_timeout(self):
+        if self.deadline is not None and time.time() > self.deadline:
+            self.abort_flag = True
+            raise TimeoutException("Recursive solver exceeded timeout")
 
 
 
@@ -446,7 +453,8 @@ class Solver(Board):
     def find_solutions_group(self,region,groups):
         if region.num_locs() == 0:
             return
-        
+        self.abort_flag = False
+
 
         self.constraint_info = {}
 
@@ -504,6 +512,7 @@ class Solver(Board):
 
         return sols
     def find_solutions_group_helper(self,region,groups,sols,index,mine_count,constraint_tracker,curr_sol):
+        self.check_timeout()
         if mine_count > len(self.mines):
             return
         if index == len(groups): # valid solution found
