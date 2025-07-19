@@ -13,6 +13,7 @@ import time
 from line_profiler import profile
 import logging
 from datetime import datetime
+import statistics
 
 from solver import TimeoutException
 
@@ -239,6 +240,7 @@ class Player():
         total_time = sum(r['time'] for r in results)
         avg_time = total_time / total_games if total_games > 0 else 0
         avg_time_win = (sum(r['time'] for r in results if r['won']) / total_wins) if total_wins > 0 else 0
+        median_win = statistics.median(r['time'] for r in results if r['won'])
 
         print("\n--- Statistics Summary ---")
         print(f'Strategy used: {self.strategy}')
@@ -249,6 +251,7 @@ class Player():
         print(f"Winrate: {total_wins / total_games:.2%}")
         print(f"Average time per game: {avg_time:.2f} seconds")
         print(f"Average time per win: {avg_time_win:.2f} seconds")
+        print(f"Median win: {median_win:.2f}")
         return won_seeds
     
 # given a list of indices and length n, what is the largest # indices within any given interval of n
@@ -270,7 +273,6 @@ def calc_mastery(nums, n):
 
 
 def main():
-    log_filename = datetime.now().strftime("debug_%Y-%m-%d_%H-%M-%S.log")
 
     logging.basicConfig(
         filename='debug.log',            # File to write to
@@ -296,7 +298,7 @@ def main():
     #seed=5
     # res = p.play_game(seed=seed)
     # print(res)
-    w1 = p.play_games(10000,seed=seed,parallel=True,timeout=60)
+    w1 = p.play_games(10000,seed=seed,parallel=True,timeout=30)
     # p.play_games_on_seed(10,-1443323327528190823)
     # p.set_strategy(strat.SafestTileAndForce())
     # w2 = p.play_games(100,seed=seed)
