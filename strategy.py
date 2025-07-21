@@ -21,26 +21,40 @@ class SafestTile(Strategy):
         #update_nonfrontier_tile_probs(board)
 
         min_prob = 1
-        min_x=0
-        min_y=0
-        priority = 0
+        min_x=-1
+        min_y=-1
+        priority = -1
 
-        for x in range(GSM.rows):
-            for y in range(GSM.cols):
-                tile = board.tiles[x][y]
-                if not tile.is_revealed() and not tile.is_flagged():
-                    # print('{},{}'.format(x,y))
-                    if tile.prob_mine_local < min_prob:
-                        min_prob = tile.prob_mine_local
+        unrevealed_tile_locs = []
+        for region in board.regions_list:
+            for loc in region.locs:
+                unrevealed_tile_locs.append(loc)
+        for x,y in unrevealed_tile_locs:
+            tile = board.tiles[x][y]
+            if tile.prob_mine_local < min_prob:
+                min_prob = tile.prob_mine_local
+                min_x = x
+                min_y = y
+                priority = tile.pos_type
+            elif tile.prob_mine_local == min_prob:
+                if tile.pos_type > priority:
+                    min_x = x
+                    min_y = y
+                    priority = tile.pos_type
+        if len(board.nonfrontier_tiles) > 0:
+            x_nf,y_nf = board.nonfrontier_tiles[0]
+            nonfrontier_tile = board.tiles[x_nf][y_nf]
+            nonfrontier_tile_prob = nonfrontier_tile.prob_mine_local
+            if nonfrontier_tile_prob <= min_prob:
+                for x,y in board.nonfrontier_tiles:
+                    tile = board.tiles[x][y]
+                    if tile.pos_type > priority:
                         min_x = x
                         min_y = y
                         priority = tile.pos_type
-                    elif tile.prob_mine_local == min_prob:
-                        if tile.pos_type > priority:
-                            min_x = x
-                            min_y = y
-                            priority = tile.pos_type
         return min_x,min_y
+
+
 
 # looks for tile with lowest prob of being a mine; as tiebreaker, looks for tile that is most likely to be an opening
 class SafestTileAndLikeliestOpening(Strategy):

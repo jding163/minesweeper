@@ -1,1 +1,20 @@
-error at 2851952445983375465
+pygame-ce 2.5.5 (SDL 2.32.6, Python 3.11.8)
+pygame-ce 2.5.5 (SDL 2.32.6, Python 3.11.8)
+pygame-ce 2.5.5 (SDL 2.32.6, Python 3.11.8)
+pygame-ce 2.5.5 (SDL 2.32.6, Python 3.11.8)
+pygame-ce 2.5.5 (SDL 2.32.6, Python 3.11.8)
+pygame-ce 2.5.5 (SDL 2.32.6, Python 3.11.8)
+pygame-ce 2.5.5 (SDL 2.32.6, Python 3.11.8)
+0
+
+--- Statistics Summary ---
+Strategy used: SecSafety
+Total games: 100
+Total time: 0.6928668022155762
+Wins: 3
+Losses: 97
+Winrate: 3.00%
+Average time per game: -0.94 seconds
+Average time per win: 0.02 seconds
+Median win: 0.01
+Best mastery: 2

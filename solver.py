@@ -454,8 +454,6 @@ class Solver(Board):
         if region.num_locs() == 0:
             return
         self.abort_flag = False
-
-
         self.constraint_info = {}
 
         for l in region.locs_to_check:
@@ -496,6 +494,8 @@ class Solver(Board):
             for col in range(GSM.cols):
                 if self.get_type_at_loc((row,col)) is MINE: 
                     mine_count += 1 
+
+
         index = 0
         group = groups[index]
         for i in range(len(group)):

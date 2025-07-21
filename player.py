@@ -14,7 +14,7 @@ from line_profiler import profile
 import logging
 from datetime import datetime
 import statistics
-
+from solver_test import SolverDP
 from solver import TimeoutException
 
 
@@ -24,12 +24,12 @@ max_size = sys.maxsize
 min_size = 0
 
 
-def run_game(seed,strat,timeout):
+def run_game(seed,strat,timeout,dp):
     player = Player(timeout=timeout)  
     player.set_strategy(strat)
     
     try:
-        result = player.play_game(seed=seed)
+        result = player.play_game(seed=seed,dp=dp)
         return result
     except TimeoutException as e:
         return {
@@ -56,7 +56,8 @@ class Player():
         self.strategy = strat
     def set_game(self,game):
         self.game = game
-    @profile
+
+
     def play_one_step(self,risk=True):
 
 
@@ -88,10 +89,14 @@ class Player():
             self.play_one_step(risk=risk)
 
     
-    def play_game(self,seed=None):
+    def play_game(self,seed=None,dp=False):
         #C.handle_keypress_n()  # full reset
         #GSM.set_game_state(True)
-        self.board = Solver(run_pygame=False)
+        if dp:
+            self.board = SolverDP(run_pygame=False)
+        else:
+            self.board = Solver(run_pygame=False)
+
         self.board.deadline = time.time() + self.timeout
 
         self.board.populate((0,0),seed=seed)
@@ -177,7 +182,7 @@ class Player():
         print(f"Average time per game: {avg_time:.2f} seconds")
         print(f"Average time per win: {avg_time_win:.2f} seconds")
 
-    def play_games(self,num_games,seed=None,seeds_list=None,parallel=True,timeout=60):
+    def play_games(self,num_games,seed=None,seeds_list=None,parallel=True,timeout=60,dp=False):
         won_seeds = []
         if seeds_list is not None:
             seeds = seeds_list
@@ -196,7 +201,7 @@ class Player():
             max_workers = 6
             with ProcessPoolExecutor(max_workers=max_workers) as executor:
 
-                futures = {executor.submit(run_game, s,self.strategy,timeout): s for s in seeds}
+                futures = {executor.submit(run_game, s,self.strategy,timeout,dp): s for s in seeds}
                 
                 for i, future in enumerate(as_completed(futures)):
                     if i % 250 == 0:
@@ -207,7 +212,7 @@ class Player():
                     #print(f"{i}: Seed {result['seed']}: {'Won' if result['won'] else 'Lost'} in {result['time']:.2f} seconds")
                     result_seed = result['seed']
                     if 'error' in result:
-                        logging.error(f'Error at seed {result_seed}')
+                        logging.exception(f'Error at seed {result_seed}')
                     if 'timeout' in result:
                         logging.info(f'Timeout at seed {result_seed}')
                     if result['won']:
@@ -223,15 +228,18 @@ class Player():
                 print(i)
                 # if i % 250 == 0:
                 #     print(i)
-                try:
-                    print(seeds[i])
-                    result = self.play_game(seed=seeds[i])
-                    results.append(result)
-                    print(result)
-                    if result['won'] == True:
-                        won_seeds.append(seeds[i])
-                except Exception as e:
-                    error_seeds.append(seeds[i])
+                print(seeds[i])
+                result = self.play_game(seed=seeds[i],dp=dp)
+                results.append(result)
+                # print(result)
+                if result['won'] == True:
+                    won_seeds.append(seeds[i])
+                result_seed = result['seed']
+                if 'error' in result:
+                    logging.exception(f'Error at seed {result_seed}')
+                if 'timeout' in result:
+                    logging.info(f'Timeout at seed {result_seed}')
+
 
 
         total_games = len(results)
@@ -284,9 +292,10 @@ def main():
     # b.display = None
     #b=Solver()
 
-    p = Player()
+    p = Player(timeout=60)
+    p.set_strategy(strat.SafestTile())
     #p.set_strategy(strat.SafestTileAndLikeliestOpening())
-    p.set_strategy(strat.SecSafety())
+    #p.set_strategy(strat.SecSafety())
 
     # with open('seeds1.txt', 'r') as f:
     #     seeds_list = [int(line.strip()) for line in f]
@@ -298,23 +307,24 @@ def main():
     #seed=5
     # res = p.play_game(seed=seed)
     # print(res)
-    w1 = p.play_games(10000,seed=seed,parallel=True,timeout=30)
-    # p.play_games_on_seed(10,-1443323327528190823)
-    # p.set_strategy(strat.SafestTileAndForce())
-    # w2 = p.play_games(100,seed=seed)
+    w1 = p.play_games(100,seed=seed,parallel=False,timeout=30,dp=False)
 
-    # set1 = set(w1)
-    # set2 = set(w2)
+    w2 = p.play_games(100,seed=seed,parallel=False,timeout=30,dp=True)
 
-    # in_both = list(set1 & set2)       # Intersection
-    # only_in_w1 = list(set1 - set2)    # Elements only in w1
-    # only_in_w2 = list(set2 - set1)    # Elements only in w2
-    # print('w1 wins:', len(w1))
-    # print('w2 wins:', len(w2))
-    # print("In both:", len(in_both))
-    # print("Only in w1:", len(only_in_w1))
-    # print("Only in w2:", len(only_in_w2))
-    print('Best mastery:',calc_mastery(w1,100))
+    set1 = set(w1)
+    set2 = set(w2)
+
+    in_both = list(set1 & set2)       # Intersection
+    only_in_w1 = list(set1 - set2)    # Elements only in w1
+    only_in_w2 = list(set2 - set1)    # Elements only in w2
+    print('w1 wins:', len(w1))
+    print('w2 wins:', len(w2))
+    print("In both:", len(in_both))
+    print("Only in w1:", len(only_in_w1))
+    print("Only in w2:", len(only_in_w2))
+    for item in only_in_w2:
+        print(item)
+    # print('Best mastery:',calc_mastery(w1,100))
 
 
 

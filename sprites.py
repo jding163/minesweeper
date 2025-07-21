@@ -178,7 +178,8 @@ class Board:
                 tile = Tile(row,col,tile_unknown_path,UNKNOWN)
                 tile.neighbors = get_neighbors((row,col))
                 self.tiles[row].append(tile)
-                
+        self.rows = GSM.rows
+        self.cols = GSM.cols
         self.num_revealed = 0
         self.flag_count = 0
         self.complete = False
@@ -189,6 +190,7 @@ class Board:
         self.revealed_tiles = set()
         self.unfinished_clues = set()
         self.flagged_tiles = set()
+        self.minecount = 0
 
     def reset_probs(self):
         for row in self.tiles:
@@ -287,6 +289,8 @@ class Board:
         for loc in self.mines:
             #self.tiles[loc[0]][loc[1]].set_type(MINE)
             self.update_neighbors_with_minecount(loc)
+        self.minecount = len(self.mines)
+
         GSM.set_game_state(True)
 
     def incr_num_revealed(self):

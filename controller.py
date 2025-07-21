@@ -6,6 +6,8 @@ from solver import Solver
 #import probability as prob
 import solver
 import strategy as strat
+from solver_test import SolverDP
+import traceback
 
 import probability as prob
 import progress as prog
@@ -18,6 +20,7 @@ game = None
 player = None
 mx = 0
 my = 0
+default=False
 # def set_board_and_game(b, g):
 #     global board, game
 #     board = b
@@ -44,10 +47,10 @@ def update_mouse_pos(x,y):
     my=y
 
 def reset_board():
-    if not test:
+    if default:
         b = Solver()
     else:
-        b = solver.Solver()
+        b=SolverDP()
     set_board(b)
 
 def draw_board(screen):
@@ -159,7 +162,6 @@ def handle_keypress_e():
     # print(l)
 
 def handle_keypress_t(seed=None,timeout=None):
-    #test -8425763037098422648, -8433645031250545356,-3837008816949211577
     if GSM.get_game_state() is False:
         handle_keypress_n()
     update_mouse_pos(0,0)
@@ -168,9 +170,9 @@ def handle_keypress_t(seed=None,timeout=None):
         handle_board_click()
     else:
         handle_board_click(seed=seed)
-    #player.set_strategy(strat.SafestTile())
-
-    player.set_strategy(strat.SecSafety())
+    player.set_strategy(strat.SafestTile())
+    #player.set_strategy(strat.SecSafety())
+    
     start = time.time()
     if timeout is not None:
         player.board.deadline = start + timeout
@@ -180,6 +182,7 @@ def handle_keypress_t(seed=None,timeout=None):
         player.autoplay()
     except Exception as e:
         print(e)
+        traceback.print_exc()
     print(game_won())
     print(time.time()-start)
 
@@ -193,6 +196,9 @@ def handle_keypress_s():
 def handle_keypress_d():
     player.set_strategy(strat.SecSafety())
     player.play_games(10,seed=5)
+def handle_keypress_f():
+    player.board.find_possibilities()
+
 
 def handle_keypress_u():
     player.set_strategy(strat.SafestTile())
@@ -240,13 +246,11 @@ def handle_keypress_r():
     print(sorted(board.mines,key=lambda coord: (coord[0], coord[1]))
 )
 def handle_keypress_b():
-    for x in range(GSM.rows):
-        for y in range(GSM.cols):
-            tile = board.tiles[x][y]
-            if not tile.is_revealed() and not tile.is_flagged() and not (x,y) in board.nonfrontier_tiles:
-                force = prog.calc_force_at_loc(board,(x,y))
-                tile.force = force
-    Board.display_probs = 3
+    global default, board
+    default = not default
+    reset_board()
+    print(default)
+    print(type(board))
 def handle_keypress_v():
     regions = board.regions_list
     # l1 = (1,1)
