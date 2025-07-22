@@ -139,49 +139,6 @@ class Player():
             return seed
 
 
-    def play_games_on_seed(self,num_games,seed,parallel=True):
-        seeds = [seed] * num_games
-
-        start_time = time.time()
-        results = []
-        if parallel:
-            max_workers = multiprocessing.cpu_count()
-            #max_workers = 4
-            with ProcessPoolExecutor(max_workers=max_workers) as executor:
-
-                futures = {executor.submit(run_game, s,self.strategy): s for s in seeds}
-                
-                for i, future in enumerate(as_completed(futures)):
-                    result = future.result()
-                    results.append(result)
-                    print(f"{i}: Seed {result['seed']}: {'Won' if result['won'] else 'Lost'} in {result['time']:.2f} seconds")
-
-        else:
-
-            for i in range(num_games):
-                print(i)
-
-                result = self.play_game(seed=seeds[i])
-                results.append(result)
-                print(f"Seed {result['seed']}: {'Won' if result['won'] else 'Lost'} in {result['time']:.2f} seconds")
-
-        total_games = len(results)
-        total_wins = sum(1 for r in results if r['won'])
-        total_losses = total_games - total_wins
-        total_time = sum(r['time'] for r in results)
-        avg_time = total_time / total_games if total_games > 0 else 0
-        avg_time_win = (sum(r['time'] for r in results if r['won']) / total_wins) if total_wins > 0 else 0
-
-        print("\n--- Statistics Summary ---")
-        print(f'Strategy used: {self.strategy}')
-        print(f"Total games: {total_games}")
-        print(f"Total time: {time.time()-start_time}")
-        print(f"Wins: {total_wins}")
-        print(f"Losses: {total_losses}")
-        print(f"Winrate: {total_wins / total_games:.2%}")
-        print(f"Average time per game: {avg_time:.2f} seconds")
-        print(f"Average time per win: {avg_time_win:.2f} seconds")
-
     def play_games(self,num_games,seed=None,seeds_list=None,parallel=True,timeout=60,dp=False):
         won_seeds = []
         if seeds_list is not None:
@@ -196,6 +153,8 @@ class Player():
         results = []
         won_seeds = []
         error_seeds = []
+        timeouts = 0
+
         if parallel:
             max_workers = multiprocessing.cpu_count()
             max_workers = 6
@@ -215,6 +174,7 @@ class Player():
                         logging.exception(f'Error at seed {result_seed}')
                     if 'timeout' in result:
                         logging.info(f'Timeout at seed {result_seed}')
+                        timeouts+=1
                     if result['won']:
                         won_seeds.append(result_seed)
 
@@ -223,13 +183,24 @@ class Player():
             
 
         else:
-
+            self.timeout = timeout
             for i in range(num_games):
-                print(i)
-                # if i % 250 == 0:
-                #     print(i)
-                print(seeds[i])
-                result = self.play_game(seed=seeds[i],dp=dp)
+                #print(i)
+                
+                if i % 250 == 0:
+                    print(i)
+                    logging.info(i)
+                seed=seeds[i]
+                try:
+                    result = self.play_game(seed=seed)
+                except TimeoutException as e:
+                    result = {
+                        'seed': seed,
+                        'won': False,
+                        'time': -1,
+                        'timeout': True
+                    }
+                #print(seeds[i])
                 results.append(result)
                 # print(result)
                 if result['won'] == True:
@@ -239,6 +210,7 @@ class Player():
                     logging.exception(f'Error at seed {result_seed}')
                 if 'timeout' in result:
                     logging.info(f'Timeout at seed {result_seed}')
+                    timeouts+=1
 
 
 
@@ -260,6 +232,7 @@ class Player():
         print(f"Average time per game: {avg_time:.2f} seconds")
         print(f"Average time per win: {avg_time_win:.2f} seconds")
         print(f"Median win: {median_win:.2f}")
+        print('timeouts:',timeouts)
         return won_seeds
     
 # given a list of indices and length n, what is the largest # indices within any given interval of n
@@ -293,8 +266,8 @@ def main():
     #b=Solver()
 
     p = Player(timeout=60)
-    p.set_strategy(strat.SafestTile())
-    #p.set_strategy(strat.SafestTileAndLikeliestOpening())
+    #p.set_strategy(strat.SafestTile())
+    p.set_strategy(strat.SafestTileAndLikeliestOpening())
     #p.set_strategy(strat.SecSafety())
 
     # with open('seeds1.txt', 'r') as f:
@@ -302,28 +275,29 @@ def main():
     # p.play_games(len(seeds_list),seeds_list=seeds_list,parallel=False)
     # C.set_player(p)
     # C.set_board(b)
-    #seed=-1569694061328666230
-    seed=29849475784
+    seed=-1569694061328666230
+    #seed=29849475784
     #seed=5
     # res = p.play_game(seed=seed)
     # print(res)
-    w1 = p.play_games(100,seed=seed,parallel=False,timeout=30,dp=False)
+    #w1 = p.play_games(100,seed=seed,parallel=False,timeout=30,dp=False)
+    dp=True
+    w2 = p.play_games(1000,seed=seed,parallel=False,timeout=0.25,dp=True)
+    print(dp)
 
-    w2 = p.play_games(100,seed=seed,parallel=False,timeout=30,dp=True)
+    # set1 = set(w1)
+    # set2 = set(w2)
 
-    set1 = set(w1)
-    set2 = set(w2)
-
-    in_both = list(set1 & set2)       # Intersection
-    only_in_w1 = list(set1 - set2)    # Elements only in w1
-    only_in_w2 = list(set2 - set1)    # Elements only in w2
-    print('w1 wins:', len(w1))
-    print('w2 wins:', len(w2))
-    print("In both:", len(in_both))
-    print("Only in w1:", len(only_in_w1))
-    print("Only in w2:", len(only_in_w2))
-    for item in only_in_w2:
-        print(item)
+    # in_both = list(set1 & set2)       # Intersection
+    # only_in_w1 = list(set1 - set2)    # Elements only in w1
+    # only_in_w2 = list(set2 - set1)    # Elements only in w2
+    # print('w1 wins:', len(w1))
+    # print('w2 wins:', len(w2))
+    # print("In both:", len(in_both))
+    # print("Only in w1:", len(only_in_w1))
+    # print("Only in w2:", len(only_in_w2))
+    # for item in only_in_w2:
+    #     print(item)
     # print('Best mastery:',calc_mastery(w1,100))
 
 

@@ -36,6 +36,8 @@ class Region():
         self.sols_bit = []
         self.num_sols = 0
         self.freqs = {}
+        self.ps = None
+        self.group_ids = set()
     def num_locs(self):
         return len(self.locs)
     def num_solutions(self):
@@ -355,10 +357,6 @@ class Solver(Board):
         tile = self.tiles[x][y]
         orig_val_at_loc = self.assign_tile_value(tile,val)
 
-        # orig_val_at_loc = tile.num_adj_mines
-        # tile.num_adj_mines = val
-        # tile.type = NUMBER
-        # self.unfinished_clues.add(loc)
         regions_with_sols = []
         regions_to_solve = self.get_regions()
         total_count = 0

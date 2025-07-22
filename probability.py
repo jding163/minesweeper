@@ -111,7 +111,6 @@ def expand_batch(batch_sols, groups):
         all_flattened.extend(expanded)
     return all_flattened
 
-
 def calc_prob_opening_for_loc(board,loc):
 
     count,_,_ = board.get_sol_counts_at_loc_for_val(loc,0)

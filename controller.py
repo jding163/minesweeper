@@ -146,8 +146,8 @@ def handle_keypress_q():
 def handle_keypress_w():
     #board.solve_exhaustive(instant_break=True)
     start=time.time()
-    #board.solve_exhaustive()
-    board.solve_exhaustive_and_open()
+    board.solve_exhaustive()
+    #board.solve_exhaustive_and_open()
     Board.display_probs = 1
     print(time.time()-start)
 
@@ -233,7 +233,7 @@ def handle_keypress_n():
     reset_board()
 def handle_keypress_m():
     #reqs = {(0,0):1,(0,4):1,(2,1):1,(2,3):1}
-    reqs = {(0,0):1,(0,2):1}
+    reqs = {(0,0):1,(0,15):1}
     #reqs = {(0,0):3}
     #reqs = {(12,4):1,(16,4):1,(12,8):1,(16,8):1}
     first_click=(0,0)
