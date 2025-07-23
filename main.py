@@ -161,7 +161,7 @@ class Game:
                         #C.handle_board_click(seed=3180935053634563155)
                         #C.handle_board_click(seed=569029668483675204)
                         #C.handle_board_click(seed=1859295173717605132)
-                        C.handle_board_click(seed=3971574163105848221)
+                        C.handle_board_click(seed=2952632461156066079)
 
                         #C.handle_board_click()
                     
@@ -220,6 +220,8 @@ class Game:
                     C.handle_keypress_b()
                 elif event.key == pygame.K_v:
                     C.handle_keypress_v()
+                elif event.key == pygame.K_c:
+                    C.handle_keypress_c(8395227948706629321)
                 elif event.key == pygame.K_k:
                     C.handle_keypress_k()
                     print(f'test: {C.test}')

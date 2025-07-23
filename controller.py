@@ -146,8 +146,8 @@ def handle_keypress_q():
 def handle_keypress_w():
     #board.solve_exhaustive(instant_break=True)
     start=time.time()
-    board.solve_exhaustive()
-    #board.solve_exhaustive_and_open()
+    #board.solve_exhaustive()
+    board.solve_exhaustive_and_open()
     Board.display_probs = 1
     print(time.time()-start)
 
@@ -251,6 +251,9 @@ def handle_keypress_b():
     reset_board()
     print(default)
     print(type(board))
+def handle_keypress_c(seed,dp=True):
+    result = player.play_game(seed=seed,dp=dp)
+    print(result)
 def handle_keypress_v():
     regions = board.regions_list
     # l1 = (1,1)

@@ -150,13 +150,16 @@ def convolve_freqs_helper(freqs, index, total_mines, total_count, total_freqs):
 
 def calc_prob_for_nonfrontier_tiles(prob_dist, mines_left, num_nonfrontier_tiles):
     total_prob = 0
-
-    for mines_in_border, prob in prob_dist.items():
-        mines_out_border = mines_left - mines_in_border
-        if 0 <= mines_out_border <= num_nonfrontier_tiles:
-            safe_prob = (num_nonfrontier_tiles - mines_out_border) / num_nonfrontier_tiles
-            total_prob += prob * safe_prob
-    return 1-total_prob
+    if len(prob_dist) == 0:
+        total_prob = mines_left/num_nonfrontier_tiles
+    else:
+        for mines_in_border, prob in prob_dist.items():
+            mines_out_border = mines_left - mines_in_border
+            if 0 <= mines_out_border <= num_nonfrontier_tiles:
+                safe_prob = (num_nonfrontier_tiles - mines_out_border) / num_nonfrontier_tiles
+                total_prob += prob * safe_prob
+        total_prob = 1- total_prob
+    return total_prob
 
 
 # idea: in order for (x,y) to be an opening, all of its neighbors as well as (x,y) must be safe

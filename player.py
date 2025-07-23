@@ -96,8 +96,8 @@ class Player():
             self.board = SolverDP(run_pygame=False)
         else:
             self.board = Solver(run_pygame=False)
-
-        self.board.deadline = time.time() + self.timeout
+        if self.timeout is not None:
+            self.board.deadline = time.time() + self.timeout
 
         self.board.populate((0,0),seed=seed)
         start_time = time.time()
@@ -154,7 +154,6 @@ class Player():
         won_seeds = []
         error_seeds = []
         timeouts = 0
-
         if parallel:
             max_workers = multiprocessing.cpu_count()
             max_workers = 6
@@ -191,6 +190,7 @@ class Player():
                     print(i)
                     logging.info(i)
                 seed=seeds[i]
+                #logging.info(f'starting game {i}: {seed}')
                 try:
                     result = self.play_game(seed=seed,dp=dp)
                 except TimeoutException as e:
@@ -200,13 +200,24 @@ class Player():
                         'time': -1,
                         'timeout': True
                     }
-                #print(seeds[i])
+                except Exception as e:
+                    result = {
+                        'seed': seed,
+                        'won': False,
+                        'time': -1,
+                        'error': str(e)
+                    }
+                #logging.info(f'finished game {i}: {seed}')
+
+                # print(i)
+                # print(seeds[i])
                 results.append(result)
                 # print(result)
                 if result['won'] == True:
                     won_seeds.append(seeds[i])
                 result_seed = result['seed']
                 if 'error' in result:
+                    print('error occurred; look at debug.log')
                     logging.exception(f'Error at seed {result_seed}')
                 if 'timeout' in result:
                     logging.info(f'Timeout at seed {result_seed}')
@@ -282,7 +293,7 @@ def main():
     # print(res)
     #w1 = p.play_games(100,seed=seed,parallel=False,timeout=30,dp=False)
     dp=True
-    w2 = p.play_games(100,seed=seed,parallel=False,timeout=60,dp=True)
+    w2 = p.play_games(2000,seed=seed,parallel=False,timeout=30,dp=True)
     print(dp)
 
     # set1 = set(w1)
