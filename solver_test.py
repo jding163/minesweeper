@@ -54,13 +54,16 @@ class SolverDP(Solver):
         for region in regions:
             key = (frozenset(region.locs), frozenset(region.locs_to_check))
             if 1==0 and key in existing_region_map:
-                new_regions_list.append(existing_region_map[key])
+                existing_region = existing_region_map[key]
+                new_regions_list.append(existing_region)
             else:
                 groups = self.group_equivalent_tiles(region)
                 #groups = self.order_groups_by_information(groups)
                 region.groups = groups
                 new_regions_list.append(region)
         self.regions_list = new_regions_list
+
+
 
 
     def find_groupings(self):
@@ -75,8 +78,7 @@ class SolverDP(Solver):
         for i in range(len(unfinished_clues_list)):
             clue = unfinished_clues_list[i]
             clue_index_dict[clue] = i
-
-        groups_dict = {}
+        groups_list = []
         for i in range(len(all_groups)):
             group = all_groups[i]
             x,y = group[0]
@@ -84,36 +86,61 @@ class SolverDP(Solver):
             clue_neighbors = [n for n in neighbors if n in unfinished_clues_list]
 
             clue_indices_for_group = [clue_index_dict[n] for n in clue_neighbors]
-                
-            groups_dict[i] = GroupInfo(tile_locs=group,clue_indices=clue_indices_for_group)
-        groups_dict = dict(sorted(groups_dict.items()))
-        return groups_dict, unfinished_clues_list,clue_index_dict
+            groups_list.append(GroupInfo(tile_locs=group,clue_indices=clue_indices_for_group))
+            # groups_list[i] = GroupInfo(tile_locs=group,clue_indices=clue_indices_for_group)
+        #groups_list = dict(sorted(groups_listgroups_list()))
+        return groups_list, unfinished_clues_list,clue_index_dict
+
+    # def reformat_possibilities_in_existing_region(self,region,groups_list):
+    #     ps = region.ps
+    #     rep_loc = region.locs[0]
+    #     updated_ps = [0] * len(groups_list)
+    #     old_ids = region.group_ids
+    #     old_to_new_id_map = {}
+        #for old_id in old_ids:
+
+
 
     def find_possibilities(self):
         self.update_regions_list()
         if len(self.regions_list) == 0:
             return {}
 
-        #groups_dict: dict(group id: GroupInfo(tile_locs,clue_indices))
+        #groups_list: dict(group id: GroupInfo(tile_locs,clue_indices))
         #unfinished_clues_list: list of locs of clues to be used
         #clue_index_dict: dict(loc of clue: index of clue in unfinished_clues_list)
-        groups_dict, unfinished_clues_list, clue_index_dict = self.find_groupings()
+        groups_list, unfinished_clues_list, clue_index_dict = self.find_groupings()
 
         for region in self.regions_list:
+            group_ids_for_region = []
+            for group_index,group_info in enumerate(groups_list):
+                rep_loc = group_info.tile_locs[0]
+                if rep_loc in region.locs:
+                    group_ids_for_region.append(group_index)
+            region.group_ids = group_ids_for_region
             if region.ps == None:
-                ps = self.find_possibilities_for_region(region,groups_dict, unfinished_clues_list, clue_index_dict)
+                ps = self.find_possibilities_for_region(region,groups_list, unfinished_clues_list, clue_index_dict)
                 region.ps = ps
-        return groups_dict
+        return groups_list
 
 
-    def find_possibilities_for_region(self,region,groups_dict, unfinished_clues_list, clue_index_dict):
-        #groups_dict: dict(group id: GroupInfo(tile_locs,clue_indices))
+    def find_possibilities_for_region(self,region,groups_list, unfinished_clues_list, clue_index_dict):
+        #groups_list: dict(group id: GroupInfo(tile_locs,clue_indices))
         #unfinished_clues_list: list of locs of clues to be used
         #clue_index_dict: dict(loc of clue: index of clue in unfinished_clues_list)
 
 
         #groups_by_clue: dict(index of clue in unfinished_clues_list: adjacent group ids)
-        groups_by_clue = get_groupings_by_clue(groups_dict, unfinished_clues_list, clue_index_dict)
+        groups_by_clue = get_groupings_by_clue(groups_list, unfinished_clues_list, clue_index_dict)
+
+        #update region group ids:
+        group_ids_in_region = []
+        for group_key, group_info in groups_list:
+            rep_loc = group_info.tile_locs[0]
+            if rep_loc in region.locs:
+                group_ids_in_region.append(group_key)
+        region.group_ids = group_ids_in_region
+
         region_tiles = set(region.locs)
         relevant_clues = set()
 
@@ -124,15 +151,15 @@ class SolverDP(Solver):
         relevant_clues = list(relevant_clues)
 
         used_clues = [False] * len(unfinished_clues_list)
-        used_groups = [False] * len(groups_dict)
+        used_groups = [False] * len(groups_list)
         num_used_clues = 0
         
         # possibility fields:
         # total_mines (default:0)
         # num_cases (default:1)
         # mines_per_group: list where the ith element represents how many mines are in the group at 
-        #                  groups_dict[i]
-        ps = [Possibility(mines_per_group=[0] * len(groups_dict))]
+        #                  groups_list[i]
+        ps = [Possibility(mines_per_group=[0] * len(groups_list))]
 
         # mines_added_per_clue: list where the ith element represents how many mines need to be added to
         # satisfy the clue at unfinished_clues_list[i]
@@ -143,13 +170,13 @@ class SolverDP(Solver):
                 mines_added_per_clue[clue_index] = clue.num_adj_mines-clue.num_adj_flags
         while (num_used_clues < len(relevant_clues)):
             best_clue = -1
-            best_clue_boundary = len(groups_dict) + 1
+            best_clue_boundary = len(groups_list) + 1
             for clue_index in relevant_clues:
                 if used_clues[clue_index]:
                     continue
                 used_clues[clue_index] = True
-                boundary = get_boundary(groups_dict,used_clues)
-                supergroups = get_boundary_supergroups(groups_dict,used_clues,boundary)
+                boundary = get_boundary(groups_list,used_clues)
+                supergroups = get_boundary_supergroups(groups_list,used_clues,boundary)
                 used_clues[clue_index] = False
                 boundary_change = len(supergroups)
                 if boundary_change < best_clue_boundary:
@@ -158,8 +185,8 @@ class SolverDP(Solver):
         
             used_clues[best_clue] = True
             num_used_clues += 1
-            boundary = get_boundary(groups_dict,used_clues)
-            supergroups = get_boundary_supergroups(groups_dict,used_clues,boundary)
+            boundary = get_boundary(groups_list,used_clues)
+            supergroups = get_boundary_supergroups(groups_list,used_clues,boundary)
 
             groups_to_use = []
             for group_id in groups_by_clue[best_clue]:
@@ -177,7 +204,7 @@ class SolverDP(Solver):
                     mines_in_used_groups += p.mines_per_group[group_id]
                 mines_to_add -= mines_in_used_groups
 
-                extend_possibility(p,mines_to_add,groups_to_use,new_ps,len(groups_to_use)-1,groups_dict)
+                extend_possibility(p,mines_to_add,groups_to_use,new_ps,len(groups_to_use)-1,groups_list)
             ps = new_ps
         return ps
     
@@ -192,7 +219,7 @@ class SolverDP(Solver):
         ]
         return merged_possibilities
 
-    def calc_prob_at_loc(self,loc,groups_dict,nonfrontier_locs,total_sols_dict,num_local_sols_at_count,ps_with_num_mines):
+    def calc_prob_at_loc(self,loc,groups_list,nonfrontier_locs,total_sols_dict,num_local_sols_at_count,ps_with_num_mines):
         x,y=loc
         tile = self.tiles[x][y]
         if not tile.is_unknown():
@@ -211,7 +238,7 @@ class SolverDP(Solver):
         
         group_id = -1
         group_size = -1
-        for id,info in groups_dict.items():
+        for id,info in enumerate(groups_list):
             if loc in info.tile_locs:
                 group_size = len(info.tile_locs)
                 group_id = id
@@ -230,7 +257,7 @@ class SolverDP(Solver):
         prob_loc_is_mine = avg_mines_in_group/group_size
         return prob_loc_is_mine
 
-    def calc_probs_for_board(self,groups_dict):
+    def calc_probs_for_board(self,groups_list):
         ps = self.merge_all_possibilities()
         frontier_locs = set()
         for region in self.regions_list:
@@ -258,10 +285,10 @@ class SolverDP(Solver):
             total_sols_dict[num_mines] = total_sols_at_num_mines
         safe_locs = []
         mine_locs = []
-        for group_info in groups_dict.values():
+        for group_info in groups_list.values():
             group_locs = group_info.tile_locs
             rep_loc = group_locs[0]
-            prob_at_loc = self.calc_prob_at_loc(rep_loc,groups_dict,nonfrontier_locs,total_sols_dict,num_local_sols_at_count,ps_with_num_mines)
+            prob_at_loc = self.calc_prob_at_loc(rep_loc,groups_list,nonfrontier_locs,total_sols_dict,num_local_sols_at_count,ps_with_num_mines)
             for loc in group_locs:
                 tile = self.tiles[loc[0]][loc[1]]
                 tile.prob_mine_local = prob_at_loc
@@ -276,7 +303,7 @@ class SolverDP(Solver):
             for nf_l in nonfrontier_locs:
                 nf_loc = nf_l
                 break
-            prob_at_loc = self.calc_prob_at_loc(nf_loc,groups_dict,nonfrontier_locs,total_sols_dict,num_local_sols_at_count,ps_with_num_mines)
+            prob_at_loc = self.calc_prob_at_loc(nf_loc,groups_list,nonfrontier_locs,total_sols_dict,num_local_sols_at_count,ps_with_num_mines)
             for loc in nonfrontier_locs:
                 tile = self.tiles[loc[0]][loc[1]]
                 tile.prob_mine_local = prob_at_loc
@@ -288,15 +315,15 @@ class SolverDP(Solver):
         return safe_locs,mine_locs
     
     def solve_exhaustive(self):
-        groups_dict = self.find_possibilities()
-        if len(groups_dict) == 0 and self.minecount-self.flag_count==0:
+        groups_list = self.find_possibilities()
+        if len(groups_list) == 0 and self.minecount-self.flag_count==0:
             safe_locs = []
             for x,y in self.nonfrontier_tiles:
                 tile = self.tiles[x][y]
                 tile.prob_mine_local = 0
                 safe_locs.append((x,y))
             return safe_locs,[]
-        safe_locs, mine_locs = self.search_possibilities(groups_dict)
+        safe_locs, mine_locs = self.search_possibilities(groups_list)
         if len(safe_locs) > 0:
             for x,y in safe_locs:
                 tile = self.tiles[x][y]
@@ -305,13 +332,13 @@ class SolverDP(Solver):
                 tile = self.tiles[x][y]
                 tile.prob_mine_local = 1
         else:
-            safe_locs, mine_locs= self.calc_probs_for_board(groups_dict) 
+            safe_locs, mine_locs= self.calc_probs_for_board(groups_list) 
 
         return safe_locs,mine_locs
     def solve_endgame_and_open(self):
         return False
     
-    def search_possibilities(self,groups_dict):
+    def search_possibilities(self,groups_list):
         safe_locs = []
         mine_locs = []
         for region in self.regions_list:
@@ -320,7 +347,7 @@ class SolverDP(Solver):
             for p in ps:
                 sols.append(p.mines_per_group)
             group_indices = []
-            for group_index, group_info in groups_dict.items():
+            for group_index, group_info in enumerate(groups_list):
                 if group_info.tile_locs[0] in region.locs:
                     group_indices.append(group_index)
             group_counts = list(map(list, zip(*sols)))
@@ -330,7 +357,7 @@ class SolverDP(Solver):
 
                 group_count = group_counts[group_index]
                 avg_mines_in_group = sum(group_count)/len(group_count)
-                group_info = groups_dict[group_index]
+                group_info = groups_list[group_index]
                 if avg_mines_in_group == 0:
                     for loc in group_info.tile_locs:
                         safe_locs.append(loc)
@@ -353,7 +380,7 @@ def sum_arrays(arr1,arr2):
 # total_mines (default:0)
 # num_cases (default:1)
 # mines_per_group: list where the ith element represents how many mines are in the group at 
-#                  groups_dict[i]
+#                  groups_list[i]
 def merge_possibilities(ps_to_merge):
 
     merged_total_mines = 0
@@ -366,14 +393,14 @@ def merge_possibilities(ps_to_merge):
     return Possibility(mines_per_group=merged_mines_per_group,total_mines=merged_total_mines,num_cases=merged_num_cases)
 
 
-def extend_possibility(p, mines_to_add, groups_to_use, new_ps, n, groups_dict):
+def extend_possibility(p, mines_to_add, groups_to_use, new_ps, n, groups_list):
 
     if n < 0:
         if mines_to_add == 0:
             new_ps.append(p)
     else:
         group_to_use = groups_to_use[n]
-        group_len = len(groups_dict[group_to_use].tile_locs)
+        group_len = len(groups_list[group_to_use].tile_locs)
         if n == 0:
             if mines_to_add >= 0 and mines_to_add <= group_len:
                 new_total_mines = p.total_mines + mines_to_add
@@ -398,17 +425,17 @@ def extend_possibility(p, mines_to_add, groups_to_use, new_ps, n, groups_dict):
                 new_mines_per_group[group_to_use] = used_mines
                 new_p = Possibility(mines_per_group=new_mines_per_group,total_mines=new_total_mines,
                                     num_cases=new_num_cases)
-                extend_possibility(new_p,mines_to_add-used_mines,groups_to_use,new_ps,n-1,groups_dict)
+                extend_possibility(new_p,mines_to_add-used_mines,groups_to_use,new_ps,n-1,groups_list)
 
 
-def get_groupings_by_clue(groups_dict, unfinished_clues_list, clue_index_dict):
+def get_groupings_by_clue(groups_list, unfinished_clues_list, clue_index_dict):
     # Initialize an empty list of groups for each clue index
     groupings_by_clue = {
         clue_index_dict[clue_loc]: [] for clue_loc in unfinished_clues_list
     }
 
     # Fill in the groupings by clue
-    for group_id, group_info in groups_dict.items():
+    for group_id, group_info in enumerate(groups_list):
         for clue_index in group_info.clue_indices:
             groupings_by_clue[clue_index].append(group_id)
 
