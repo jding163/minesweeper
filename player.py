@@ -192,7 +192,7 @@ class Player():
                     logging.info(i)
                 seed=seeds[i]
                 try:
-                    result = self.play_game(seed=seed)
+                    result = self.play_game(seed=seed,dp=dp)
                 except TimeoutException as e:
                     result = {
                         'seed': seed,
