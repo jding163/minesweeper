@@ -10,7 +10,7 @@ from player import Player
 import solver
 from solver import Solver
 import multiprocessing
-from solver_test import SolverDP
+from solver_dp import SolverDP
 
 pygame.init()
 clock = pygame.time.Clock()
@@ -160,7 +160,7 @@ class Game:
                         #C.handle_board_click(seed=-1569694061328666230)
                         #C.handle_board_click(seed=3180935053634563155)
                         #C.handle_board_click(seed=569029668483675204)
-                        C.handle_board_click(seed=6704758814241928838)
+                        C.handle_board_click(seed=570174179038972232)
                         #C.handle_board_click(seed=2952632461156066079)
 
                         #C.handle_board_click()
@@ -192,7 +192,7 @@ class Game:
                 elif event.key == pygame.K_e:
                     C.handle_keypress_e()
                 elif event.key == pygame.K_t:
-                    C.handle_keypress_t(timeout=60)
+                    C.handle_keypress_t(timeout=600)
 
                     #C.handle_keypress_t()
                 elif event.key == pygame.K_a:

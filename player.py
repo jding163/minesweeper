@@ -14,7 +14,7 @@ from line_profiler import profile
 import logging
 from datetime import datetime
 import statistics
-from solver_test import SolverDP
+from solver_dp import SolverDP
 from solver import TimeoutException
 
 
