@@ -15,24 +15,7 @@ class ProgressInfo:
     best_ss_at_val: dict
     finished: bool
     expected_clears: dict
-# def find_loc_with_best_progress_over_locs(board,locs):
-#     if len(locs) == 0:
-#         return None
-#     threshold = -1
-#     best_loc = None
-#     for loc in locs:
-#         # print(f'loc: {loc}')
-#         sec_safety_so_far, _, finished = calc_progress_info_at_loc(board,loc,threshold)
-#         if finished and sec_safety_so_far > threshold:
-#             threshold = sec_safety_so_far
-#             best_loc = loc
-#         # if finished:
-#         #     print(f'ss: {sec_safety_so_far}')
-#         # print(f'finished: {finished}')
 
-
-#     # print(f'best: {best_loc}')
-#     return best_loc
 def find_loc_with_best_progress_over_locs(board,locs,expected_clears_weight=0.005):
     if len(locs) == 0:
         return None

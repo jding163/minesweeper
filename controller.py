@@ -170,14 +170,14 @@ def handle_keypress_t(seed=None,timeout=None):
         handle_board_click()
     else:
         handle_board_click(seed=seed)
-    player.set_strategy(strat.SafestTile())
+    #player.set_strategy(strat.SafestTile())
     #player.set_strategy(strat.SecSafety())
     
     start = time.time()
     if timeout is not None:
         player.board.deadline = start + timeout
 
-    #player.set_strategy(strat.SafestTileAndLikeliestOpening())
+    player.set_strategy(strat.SafestTileAndLikeliestOpening())
     try:
         player.autoplay()
     except Exception as e:
@@ -225,7 +225,8 @@ def handle_keypress_o():
         for y in range(GSM.cols):
             tile = board.tiles[x][y]
             if not tile.is_revealed() and not tile.is_flagged():
-                prob.calc_local_prob_of_opening_at_loc(board,(x,y))
+                tile.prob_opening = prob.calc_prob_opening_for_loc(board,(x,y))
+                #prob.calc_local_prob_of_opening_at_loc(board,(x,y))
     Board.display_probs = 2
 
 def handle_keypress_n():

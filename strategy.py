@@ -88,14 +88,18 @@ class SafestTileAndLikeliestOpening(Strategy):
             tile = board.tiles[x][y]
             if tile.prob_mine_local <= min_prob:
                 candidates.append(tile)
+  
 
         x_nf,y_nf = board.nonfrontier_tiles[0]
         nonfrontier_tile = board.tiles[x_nf][y_nf]
         nonfrontier_tile_prob = nonfrontier_tile.prob_mine_local
-        if nonfrontier_tile_prob <= min_prob:
+        eps = 0.000001
+        if nonfrontier_tile_prob <= min_prob + eps:
             for x,y in board.nonfrontier_tiles:
+
                 tile = board.tiles[x][y]
                 candidates.append(tile)
+
         if len(candidates) == 1:
             return candidates[0].loc
         progress_dists = {}

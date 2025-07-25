@@ -277,8 +277,8 @@ def main():
     #b=Solver()
 
     p = Player(timeout=60)
-    p.set_strategy(strat.SafestTile())
-    #p.set_strategy(strat.SafestTileAndLikeliestOpening())
+    #p.set_strategy(strat.SafestTile())
+    p.set_strategy(strat.SafestTileAndLikeliestOpening())
     #p.set_strategy(strat.SecSafety())
 
     # with open('seeds1.txt', 'r') as f:
@@ -291,24 +291,28 @@ def main():
     #seed=5
     # res = p.play_game(seed=seed)
     # print(res)
-    #w1 = p.play_games(100,seed=seed,parallel=False,timeout=30,dp=False)
+    dp=False
+    w1 = p.play_games(1000,seed=seed,parallel=False,timeout=30,dp=dp)
     dp=True
-    w2 = p.play_games(2000,seed=seed,parallel=False,timeout=30,dp=True)
-    print(dp)
+    w2 = p.play_games(1000,seed=seed,parallel=False,timeout=30,dp=dp)
 
-    # set1 = set(w1)
-    # set2 = set(w2)
+    set1 = set(w1)
+    set2 = set(w2)
 
-    # in_both = list(set1 & set2)       # Intersection
-    # only_in_w1 = list(set1 - set2)    # Elements only in w1
-    # only_in_w2 = list(set2 - set1)    # Elements only in w2
-    # print('w1 wins:', len(w1))
-    # print('w2 wins:', len(w2))
-    # print("In both:", len(in_both))
-    # print("Only in w1:", len(only_in_w1))
-    # print("Only in w2:", len(only_in_w2))
-    # for item in only_in_w2:
-    #     print(item)
+    in_both = list(set1 & set2)       # Intersection
+    only_in_w1 = list(set1 - set2)    # Elements only in w1
+    only_in_w2 = list(set2 - set1)    # Elements only in w2
+    print('w1 wins:', len(w1))
+    print('w2 wins:', len(w2))
+    print("In both:", len(in_both))
+    print("Only in w1:", len(only_in_w1))
+    print("Only in w2:", len(only_in_w2))
+    print('w1:')
+    for item in only_in_w1:
+        print(item)
+    print('w2:')
+    for item in only_in_w2:
+        print(item)
     # print('Best mastery:',calc_mastery(w1,100))
 
 
