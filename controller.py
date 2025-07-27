@@ -152,10 +152,7 @@ def handle_keypress_w():
     print(time.time()-start)
 
 def handle_keypress_e():
-    board.solve_endgame_and_open()
-    #board.solve_endgame()
-
-    Board.display_probs = 1
+    pass
 
     #prob.update_nonfrontier_tile_probs(board)
     # l = [(cc, sols) for cc, sols in board.ccs_dict.items() if len(cc) != len (sols[0])]
@@ -256,16 +253,6 @@ def handle_keypress_c(seed,dp=True):
     result = player.play_game(seed=seed,dp=dp)
     print(result)
 def handle_keypress_v():
-    regions = board.regions_list
-    # l1 = (1,1)
-    # l2=(1,4)
-    # l1 = (0,9)
-    # l2 = (3,9)
-    # r1_index = board.get_region_index_with_loc(l1)
-    # r2_index = board.get_region_index_with_loc(l2)
-    # r1 = regions[r1_index]
-    # r2 = regions[r2_index]
-    # board.merge_regions(r1,r2)
     loc = (mx,my)
     info = prog.calc_progress_info_at_loc(board,loc,0,threshold_on=False)
     print(f'secondary safety at {loc}:',info.sec_safety)

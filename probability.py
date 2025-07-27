@@ -37,10 +37,6 @@ def calc_probs_from_grouped_sols(groups,sols,return_probs=True):
 
 
 def calc_global_prob_for_group(merged_regions,group,sols_per_mines_in_frontier):
-    # merged_regions = regions[0]
-    # for i in range(1,len(regions)):
-    #     merged_regions = merged_regions.merge_regions(regions[i])
-    #merged_regions = board.merge_multiple_regions(regions)
     sols = merged_regions.group_sols
     counts = merged_regions.group_counts
     freqs = merged_regions.freqs

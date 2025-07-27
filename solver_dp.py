@@ -74,8 +74,7 @@ class SolverDP(Solver):
 
             clue_indices_for_group = [clue_index_dict[n] for n in clue_neighbors]
             groups_list.append(GroupInfo(tile_locs=group,clue_indices=clue_indices_for_group))
-            # groups_list[i] = GroupInfo(tile_locs=group,clue_indices=clue_indices_for_group)
-        #groups_list = dict(sorted(groups_listgroups_list()))
+
         return groups_list, unfinished_clues_list,clue_index_dict
 
     def reformat_possibilities_in_existing_region(self, region, tile_to_group_index):
@@ -405,10 +404,6 @@ class SolverDP(Solver):
             num_safe = len(safe_locs)
         self.unassign_tile_value(tile,orig_val_at_loc)
         return total_count,best_prob, num_safe
-
-
-    def solve_endgame_and_open(self):
-        return False
     
     def search_possibilities(self,regions,groups_list):
         safe_locs = []

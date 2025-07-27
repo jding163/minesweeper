@@ -70,8 +70,6 @@ class Player():
             return
         elif self.board.solve_exhaustive_and_open():
             return
-        elif self.board.solve_endgame_and_open():
-            return 
 
         game_over = not GSM.get_game_state() or self.board.is_complete()
 
@@ -170,7 +168,9 @@ class Player():
                     #print(f"{i}: Seed {result['seed']}: {'Won' if result['won'] else 'Lost'} in {result['time']:.2f} seconds")
                     result_seed = result['seed']
                     if 'error' in result:
-                        logging.exception(f'Error at seed {result_seed}')
+                        err_msg = result_seed['error']
+                        logging.error(f'Error at seed {result_seed}')
+                        logging.info(err_msg)
                     if 'timeout' in result:
                         logging.info(f'Timeout at seed {result_seed}')
                         timeouts+=1
@@ -217,8 +217,9 @@ class Player():
                     won_seeds.append(seeds[i])
                 result_seed = result['seed']
                 if 'error' in result:
-                    print('error occurred; look at debug.log')
-                    logging.exception(f'Error at seed {result_seed}')
+                    err_msg = result['error']
+                    logging.error(f'Error at seed {result_seed}')
+                    logging.info(err_msg)
                 if 'timeout' in result:
                     logging.info(f'Timeout at seed {result_seed}')
                     timeouts+=1
@@ -293,26 +294,26 @@ def main():
     # print(res)
     dp=False
     w1 = p.play_games(1000,seed=seed,parallel=False,timeout=30,dp=dp)
-    dp=True
-    w2 = p.play_games(1000,seed=seed,parallel=False,timeout=30,dp=dp)
+    # dp=True
+    # w2 = p.play_games(1000,seed=seed,parallel=False,timeout=30,dp=dp)
 
-    set1 = set(w1)
-    set2 = set(w2)
+    # set1 = set(w1)
+    # set2 = set(w2)
 
-    in_both = list(set1 & set2)       # Intersection
-    only_in_w1 = list(set1 - set2)    # Elements only in w1
-    only_in_w2 = list(set2 - set1)    # Elements only in w2
-    print('w1 wins:', len(w1))
-    print('w2 wins:', len(w2))
-    print("In both:", len(in_both))
-    print("Only in w1:", len(only_in_w1))
-    print("Only in w2:", len(only_in_w2))
-    print('w1:')
-    for item in only_in_w1:
-        print(item)
-    print('w2:')
-    for item in only_in_w2:
-        print(item)
+    # in_both = list(set1 & set2)       # Intersection
+    # only_in_w1 = list(set1 - set2)    # Elements only in w1
+    # only_in_w2 = list(set2 - set1)    # Elements only in w2
+    # print('w1 wins:', len(w1))
+    # print('w2 wins:', len(w2))
+    # print("In both:", len(in_both))
+    # print("Only in w1:", len(only_in_w1))
+    # print("Only in w2:", len(only_in_w2))
+    # print('w1:')
+    # for item in only_in_w1:
+    #     print(item)
+    # print('w2:')
+    # for item in only_in_w2:
+    #     print(item)
     # print('Best mastery:',calc_mastery(w1,100))
 
 
