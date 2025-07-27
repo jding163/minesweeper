@@ -10,10 +10,12 @@ import copy
 class GroupInfo():
     tile_locs: list[tuple[int, int]]
     clue_indices: list[int]
+    is_ff: bool = False
 
     def __str__(self):
         return (f"GroupInfo(tile_locs={self.tile_locs}, "
-                f"clue_indices={self.clue_indices},")
+                f"clue_indices={self.clue_indices},"
+                f'is_ff={self.is_ff}')
 
 @dataclass
 class Possibility():
@@ -88,11 +90,10 @@ class SolverDP(Solver):
         new_ps = []
         total_groups = len(tile_to_group_index)
 
-        for p in ps:
+        for p in ps: 
             updated_mines_per_group = [0] * total_groups
             for i in range(region.num_groups):
                 updated_mines_per_group[new_start_index + i] = p.mines_per_group[old_start_index + i]
-            # Create a new Possibility (assuming it's a dataclass and can be copied like this)
             new_p = dataclasses.replace(p, mines_per_group=updated_mines_per_group)
             new_ps.append(new_p)
 
