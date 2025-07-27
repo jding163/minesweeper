@@ -10,7 +10,6 @@ from player import Player
 import solver
 from solver import Solver
 import multiprocessing
-from solver_dp import SolverDP
 
 pygame.init()
 clock = pygame.time.Clock()
@@ -230,8 +229,7 @@ class Game:
 def main():
     Tile.set_font(tile_font)
 
-    #b=Solver()
-    b=SolverDP()
+    b=Solver()
     p = Player()
     C.set_player(p)
     C.set_board(b)

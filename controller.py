@@ -6,7 +6,6 @@ from solver import Solver
 #import probability as prob
 import solver
 import strategy as strat
-from solver_dp import SolverDP
 import traceback
 
 import probability as prob
@@ -47,10 +46,8 @@ def update_mouse_pos(x,y):
     my=y
 
 def reset_board():
-    if default:
-        b = Solver()
-    else:
-        b=SolverDP()
+    b = Solver()
+
     set_board(b)
 
 def draw_board(screen):
@@ -249,8 +246,8 @@ def handle_keypress_b():
     reset_board()
     print(default)
     print(type(board))
-def handle_keypress_c(seed,dp=True):
-    result = player.play_game(seed=seed,dp=dp)
+def handle_keypress_c(seed):
+    result = player.play_game(seed=seed)
     print(result)
 def handle_keypress_v():
     loc = (mx,my)

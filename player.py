@@ -4,17 +4,13 @@ import time
 from game_state_manager import GSM
 import sys
 import random
-import probability as prob
-import pygame
 import strategy as strat
 from concurrent.futures import ProcessPoolExecutor, as_completed
 import multiprocessing
 import time
 from line_profiler import profile
 import logging
-from datetime import datetime
 import statistics
-from solver_dp import SolverDP
 from solver import TimeoutException
 
 
@@ -24,12 +20,12 @@ max_size = sys.maxsize
 min_size = 0
 
 
-def run_game(seed,strat,timeout,dp):
+def run_game(seed,strat,timeout):
     player = Player(timeout=timeout)  
     player.set_strategy(strat)
     
     try:
-        result = player.play_game(seed=seed,dp=dp)
+        result = player.play_game(seed=seed)
         return result
     except TimeoutException as e:
         return {
@@ -87,13 +83,10 @@ class Player():
             self.play_one_step(risk=risk)
 
     
-    def play_game(self,seed=None,dp=False):
+    def play_game(self,seed=None):
         #C.handle_keypress_n()  # full reset
         #GSM.set_game_state(True)
-        if dp:
-            self.board = SolverDP(run_pygame=False)
-        else:
-            self.board = Solver(run_pygame=False)
+        self.board = Solver(run_pygame=False)
         if self.timeout is not None:
             self.board.deadline = time.time() + self.timeout
 
@@ -137,7 +130,7 @@ class Player():
             return seed
 
 
-    def play_games(self,num_games,seed=None,seeds_list=None,parallel=True,timeout=60,dp=False):
+    def play_games(self,num_games,seed=None,seeds_list=None,parallel=True,timeout=60):
         won_seeds = []
         if seeds_list is not None:
             seeds = seeds_list
@@ -157,7 +150,7 @@ class Player():
             max_workers = 6
             with ProcessPoolExecutor(max_workers=max_workers) as executor:
 
-                futures = {executor.submit(run_game, s,self.strategy,timeout,dp): s for s in seeds}
+                futures = {executor.submit(run_game, s,self.strategy,timeout): s for s in seeds}
                 
                 for i, future in enumerate(as_completed(futures)):
                     if i % 250 == 0:
@@ -192,7 +185,7 @@ class Player():
                 seed=seeds[i]
                 #logging.info(f'starting game {i}: {seed}')
                 try:
-                    result = self.play_game(seed=seed,dp=dp)
+                    result = self.play_game(seed=seed)
                 except TimeoutException as e:
                     result = {
                         'seed': seed,
@@ -292,10 +285,8 @@ def main():
     #seed=5
     # res = p.play_game(seed=seed)
     # print(res)
-    dp=False
-    w1 = p.play_games(1000,seed=seed,parallel=False,timeout=30,dp=dp)
-    # dp=True
-    # w2 = p.play_games(1000,seed=seed,parallel=False,timeout=30,dp=dp)
+    w1 = p.play_games(1000,seed=seed,parallel=False,timeout=30)
+
 
     # set1 = set(w1)
     # set2 = set(w2)
