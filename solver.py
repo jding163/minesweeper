@@ -50,6 +50,7 @@ class Region():
         self.groups = []
         self.ps = None
         self.group_ids = set()
+        self.ic = False
 
 
 
@@ -63,6 +64,7 @@ class Solver(Board):
         self.abort_flag = False
         self.deadline=None
         self.collected = False
+        self.ic_regions = []
 
         #self.populate(first_click)
         #self.reveal_tiles(first_click[0],first_click[1])
@@ -209,7 +211,7 @@ class Solver(Board):
         best_prob = 1
         num_safe = 0
         solvable = True
-        groups_list = self.find_possibilities(regions_to_solve)
+        groups_list,_ = self.find_possibilities(regions_to_solve)
         for region in regions_to_solve:
             if len(region.ps) == 0:
                 solvable = False
@@ -258,6 +260,7 @@ class Solver(Board):
                 #groups = self.order_groups_by_information(groups)
                 region.groups = groups
                 new_regions_list.append(region)
+        new_regions_list = sorted(new_regions_list, key=lambda r: len(r.groups))
         return new_regions_list
 
 
@@ -306,8 +309,8 @@ class Solver(Board):
         return new_start_index, new_ps
     def find_possibilities(self,regions_to_solve):
         if len(regions_to_solve) == 0:
-            return {}
-
+            return {},[]
+        ic_regions = []
         #groups_list: dict(group id: GroupInfo(tile_locs,clue_indices))
         #unfinished_clues_list: list of locs of clues to be used
         #clue_index_dict: dict(loc of clue: index of clue in unfinished_clues_list)
@@ -330,13 +333,15 @@ class Solver(Board):
                 region.num_groups = num_groups
                 ps = self.find_possibilities_for_region(region,groups_list, unfinished_clues_list, clue_index_dict)
                 region.ps = ps
-
             else:
                 new_start_index, new_ps = self.reformat_possibilities_in_existing_region(region,tile_to_group_index)
                 region.first_group_index = new_start_index
                 region.ps = new_ps
+            if ffd.is_region_info_complete(self,region):
+                ic_regions.append(region)
 
-        return groups_list
+
+        return groups_list,ic_regions
 
 
     def find_possibilities_for_region(self,region,groups_list, unfinished_clues_list, clue_index_dict):
@@ -534,7 +539,8 @@ class Solver(Board):
         return safe_locs,mine_locs,safest_prob,total_sols
     def solve_exhaustive(self):
         self.regions_list = self.get_updated_regions_list()
-        groups_list = self.find_possibilities(self.regions_list)
+        groups_list,ic_regions = self.find_possibilities(self.regions_list)
+        self.ic_regions = ic_regions
         mines_left = self.minecount-self.flag_count
         nonfrontier_locs = set()
         frontier_locs = set()
@@ -578,7 +584,6 @@ class Solver(Board):
         info_found = self.open_info(safe_locs,mine_locs)
         regions = self.get_regions()
         updated = []
-
         for region in self.regions_list:
             
             matching = False
@@ -588,6 +593,7 @@ class Solver(Board):
                     break
             if matching:
                 updated.append(region)
+
         self.regions_list = updated
         # if not self.collected:
         #     ic_regions = ffd.find_info_complete_regions(self)
@@ -604,6 +610,8 @@ class Solver(Board):
         for region in regions:
             sols = []
             ps=region.ps
+            if ps == None:
+                continue
             for p in ps:
                 sols.append(p.mines_per_group)
             group_indices = []

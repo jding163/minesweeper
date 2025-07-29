@@ -207,7 +207,7 @@ class Player():
                 # print(i)
                 # print(seeds[i])
                 results.append(result)
-                # print(result)
+                #print(result)
                 if result['won'] == True:
                     won_seeds.append(seeds[i])
                 result_seed = result['seed']
@@ -240,10 +240,10 @@ class Player():
         print(f"Average time per win: {avg_time_win:.2f} seconds")
         print(f"Median win: {median_win:.2f}")
         print('timeouts:',timeouts)
-        with open("seeds.txt", "w") as file:
-            # Iterate through a sequence (e.g., a range of numbers, a list)
-            for seed in Solver.collected_seeds:
-                file.write(f'{seed}\n')
+        # with open("seeds.txt", "w") as file:
+        #     # Iterate through a sequence (e.g., a range of numbers, a list)
+        #     for seed in Solver.collected_seeds:
+        #         file.write(f'{seed}\n')
 
         return won_seeds
     
@@ -293,6 +293,9 @@ def main():
     # res = p.play_game(seed=seed)
     # print(res)
     w1 = p.play_games(100,seed=seed,parallel=False,timeout=30)
+    w1 = sorted(w1)
+    for w in w1:
+        print(w)
 
 
     # set1 = set(w1)
