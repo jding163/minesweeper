@@ -3,6 +3,8 @@ from game_state_manager import GSM
 import progress as prog
 import time
 from line_profiler import profile
+import solver
+import fifty_fifty_detection as ffd
 
 class Strategy:
 
@@ -77,6 +79,7 @@ class SafestTileAndLikeliestOpening(Strategy):
                 min_prob = tile.prob_mine_local
                 min_x = x
                 min_y = y
+
         if len(board.nonfrontier_tiles) == 0:
             return min_x,min_y
 
@@ -94,6 +97,7 @@ class SafestTileAndLikeliestOpening(Strategy):
         nonfrontier_tile = board.tiles[x_nf][y_nf]
         nonfrontier_tile_prob = nonfrontier_tile.prob_mine_local
         eps = 0.000001
+
         if nonfrontier_tile_prob <= min_prob + eps:
             for x,y in board.nonfrontier_tiles:
 
@@ -102,7 +106,7 @@ class SafestTileAndLikeliestOpening(Strategy):
 
         if len(candidates) == 1:
             return candidates[0].loc
-        progress_dists = {}
+        candidates = sorted(candidates, key=lambda c: (c.loc[0], c.loc[1]))        
         filtered = []
         for c in candidates:
             if c.num_adj_flags == 0:
@@ -112,17 +116,14 @@ class SafestTileAndLikeliestOpening(Strategy):
             return filtered[0].loc
         if len(filtered) == 0:
             return candidates[0].loc
+        progress_dists = {}
+
         for c in filtered:
             if board.is_loc_candidate_for_analysis(c.loc):
-
-                #print('candidate:',c.loc)
-            # progress_dists[c.loc] = prob.calc_prob_dist_for_loc(board,c.loc)
-            # print(progress_dists)
                 progress_dists[c.loc] = prob.calc_prob_opening_for_loc(board,c.loc)
         best = None
         prob_opening_best = -1
         for k,v in progress_dists.items():
-            #prob_opening = v[0]
             prob_opening=v
             if prob_opening > prob_opening_best:
                 prob_opening_best = prob_opening
@@ -173,6 +174,7 @@ class SecSafety(Strategy):
             return candidates[0].loc
 
         candidate_locs = [c.loc for c in candidates]
+        candidate_locs = sorted(candidate_locs,key=lambda k: [k[0], k[1]])
         best_loc = prog.find_loc_with_best_progress_over_locs(board,candidate_locs)
         return best_loc
  

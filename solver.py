@@ -4,7 +4,7 @@ import math
 import dataclasses
 from itertools import product
 import copy
-
+import fifty_fifty_detection as ffd
 from dataclasses import dataclass
 
 
@@ -48,7 +48,6 @@ class Region():
         self.locs = list(locs)
         self.locs_to_check = locs_to_check
         self.groups = []
-        self.freqs = {}
         self.ps = None
         self.group_ids = set()
 
@@ -63,6 +62,7 @@ class Solver(Board):
         self.regions_list = []
         self.abort_flag = False
         self.deadline=None
+        self.collected = False
 
         #self.populate(first_click)
         #self.reveal_tiles(first_click[0],first_click[1])
@@ -589,6 +589,12 @@ class Solver(Board):
             if matching:
                 updated.append(region)
         self.regions_list = updated
+        # if not self.collected:
+        #     ic_regions = ffd.find_info_complete_regions(self)
+        #     if len(ic_regions) > 0:
+        #         Solver.collected_seeds.append(self.seed)
+        #         self.collected = True
+
 
         return info_found
 

@@ -71,7 +71,9 @@ class Player():
 
         if risk is True and not game_over:
             x,y = self.strategy.find_move(self.board)
-            #x,y = prob.find_safest_tile(self.board)
+            if not self.board.collected and self.board.tiles[x][y].prob_mine_local == 0.5:
+                self.board.collected = True
+                Solver.collected_seeds.append(self.board.seed)
             self.board.reveal_tiles(x,y)
 
     def autoplay(self,risk=True):
@@ -238,6 +240,11 @@ class Player():
         print(f"Average time per win: {avg_time_win:.2f} seconds")
         print(f"Median win: {median_win:.2f}")
         print('timeouts:',timeouts)
+        with open("seeds.txt", "w") as file:
+            # Iterate through a sequence (e.g., a range of numbers, a list)
+            for seed in Solver.collected_seeds:
+                file.write(f'{seed}\n')
+
         return won_seeds
     
 # given a list of indices and length n, what is the largest # indices within any given interval of n
@@ -272,8 +279,8 @@ def main():
 
     p = Player(timeout=60)
     #p.set_strategy(strat.SafestTile())
-    p.set_strategy(strat.SafestTileAndLikeliestOpening())
-    #p.set_strategy(strat.SecSafety())
+    #p.set_strategy(strat.SafestTileAndLikeliestOpening())
+    p.set_strategy(strat.SecSafety())
 
     # with open('seeds1.txt', 'r') as f:
     #     seeds_list = [int(line.strip()) for line in f]
@@ -285,7 +292,7 @@ def main():
     #seed=5
     # res = p.play_game(seed=seed)
     # print(res)
-    w1 = p.play_games(1000,seed=seed,parallel=False,timeout=30)
+    w1 = p.play_games(100,seed=seed,parallel=False,timeout=30)
 
 
     # set1 = set(w1)
