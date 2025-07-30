@@ -52,11 +52,22 @@ class Player():
         self.strategy = strat
     def set_game(self,game):
         self.game = game
+    
+    def find_safest_among_locs(self,locs):
+        min_prob = 1
+        min_x=-1
+        min_y=-1
+        for x,y in locs:
+            tile = self.board.tiles[x][y]
+            if tile.prob_mine_local < min_prob:
+                min_prob = tile.prob_mine_local
+                min_x = x
+                min_y = y
+        return min_x,min_y
 
 
+    @profile
     def play_one_step(self,risk=True):
-
-
         #game_over = not GSM.get_game_state() or (self.board.is_complete() and self.board.verify_win())
         game_over = not GSM.get_game_state() or self.board.is_complete()
 
@@ -70,10 +81,28 @@ class Player():
         game_over = not GSM.get_game_state() or self.board.is_complete()
 
         if risk is True and not game_over:
-            x,y = self.strategy.find_move(self.board)
-            if not self.board.collected and self.board.tiles[x][y].prob_mine_local == 0.5:
-                self.board.collected = True
-                Solver.collected_seeds.append(self.board.seed)
+            if len(self.board.ff_groups) > 0:
+                ff_groups = sorted(self.board.ff_groups, key=lambda sublist: (sublist[0][0], sublist[0][1]))
+                print(ff_groups)
+                x,y = ff_groups[0][0]
+            elif len(self.board.ic_regions) > 0:
+                isolated_locs = []
+                for region in self.board.ic_regions:
+                    for loc in region.locs:
+                        isolated_locs.append(loc)
+                isolated_locs = sorted(isolated_locs,key=lambda k: [k[0], k[1]])
+                x,y = self.find_safest_among_locs(isolated_locs)
+            # if len(self.board.ic_regions) > 0:
+            #     isolated_locs = []
+            #     for region in self.board.ic_regions:
+            #         for loc in region.locs:
+            #             isolated_locs.append(loc)
+            #     isolated_locs = sorted(isolated_locs,key=lambda k: [k[0], k[1]])
+            #     x,y = self.find_safest_among_locs(isolated_locs)
+            else:
+                x,y = self.strategy.find_move(self.board)
+            # x,y = self.strategy.find_move(self.board)
+
             self.board.reveal_tiles(x,y)
 
     def autoplay(self,risk=True):
@@ -148,7 +177,7 @@ class Player():
         error_seeds = []
         timeouts = 0
         if parallel:
-            max_workers = multiprocessing.cpu_count()
+            #max_workers = multiprocessing.cpu_count()
             max_workers = 6
             with ProcessPoolExecutor(max_workers=max_workers) as executor:
 
@@ -207,7 +236,6 @@ class Player():
                 # print(i)
                 # print(seeds[i])
                 results.append(result)
-                #print(result)
                 if result['won'] == True:
                     won_seeds.append(seeds[i])
                 result_seed = result['seed']
@@ -240,12 +268,13 @@ class Player():
         print(f"Average time per win: {avg_time_win:.2f} seconds")
         print(f"Median win: {median_win:.2f}")
         print('timeouts:',timeouts)
+
+
         # with open("seeds.txt", "w") as file:
-        #     # Iterate through a sequence (e.g., a range of numbers, a list)
         #     for seed in Solver.collected_seeds:
         #         file.write(f'{seed}\n')
 
-        return won_seeds
+        return results
     
 # given a list of indices and length n, what is the largest # indices within any given interval of n
 # n < len(wins)
@@ -287,13 +316,12 @@ def main():
     # p.play_games(len(seeds_list),seeds_list=seeds_list,parallel=False)
     # C.set_player(p)
     # C.set_board(b)
-    #seed=-1569694061328666230
-    seed=29849475784
+    seed=-2358090889626878
+    #seed=29849475784
     #seed=5
     # res = p.play_game(seed=seed)
     # print(res)
-    w1 = p.play_games(100,seed=seed,parallel=False,timeout=30)
-    w1 = sorted(w1)
+    w1 = p.play_games(3000,seed=seed,parallel=True,timeout=30)
     for w in w1:
         print(w)
 

@@ -65,6 +65,7 @@ class Solver(Board):
         self.deadline=None
         self.collected = False
         self.ic_regions = []
+        self.global_ps = []
 
         #self.populate(first_click)
         #self.reveal_tiles(first_click[0],first_click[1])
@@ -151,9 +152,10 @@ class Solver(Board):
         new_revealed = self.num_revealed
         return new_revealed != init_revealed or init_mines != new_mines
     
+
+
     def get_ccs(self):
         adj_sets = []
-
         for loc in self.unfinished_clues:
             neighbors = self.get_neighbor_tiles(loc)
             adj_set = set()
@@ -163,10 +165,7 @@ class Solver(Board):
                     adj_set.add((neighbor.row,neighbor.col))
             if len(adj_set) > 0: 
                 adj_sets.append(adj_set)
-
         merged = merge_sets(adj_sets)
-        # print('merged:',merged)
-
         return merged
     
     def convert_ccs_to_regions(self,ccs):
@@ -211,7 +210,7 @@ class Solver(Board):
         best_prob = 1
         num_safe = 0
         solvable = True
-        groups_list,_ = self.find_possibilities(regions_to_solve)
+        groups_list= self.find_possibilities(regions_to_solve)
         for region in regions_to_solve:
             if len(region.ps) == 0:
                 solvable = False
@@ -228,7 +227,7 @@ class Solver(Board):
                     if (r,c) not in frontier_locs and self.tiles[r][c].is_unknown():
                         nonfrontier_locs.add((r,c))
 
-            safe_locs, _,best_prob,total_count= self.calc_probs_for_board(regions_to_solve,groups_list,nonfrontier_locs) 
+            safe_locs, _,best_prob,total_count= self.calc_probs_for_board(regions_to_solve,groups_list,nonfrontier_locs,update_self=False) 
             num_safe = len(safe_locs)
         self.unassign_tile_value(tile,orig_val_at_loc)
         return total_count,best_prob, num_safe
@@ -287,6 +286,7 @@ class Solver(Board):
             groups_list.append(GroupInfo(tile_locs=group,clue_indices=clue_indices_for_group))
 
         return groups_list, unfinished_clues_list,clue_index_dict
+
     def reformat_possibilities_in_existing_region(self, region, tile_to_group_index):
         ps = region.ps
         rep_loc = region.groups[0][0]
@@ -308,40 +308,36 @@ class Solver(Board):
 
         return new_start_index, new_ps
     def find_possibilities(self,regions_to_solve):
-        if len(regions_to_solve) == 0:
-            return {},[]
-        ic_regions = []
-        #groups_list: dict(group id: GroupInfo(tile_locs,clue_indices))
-        #unfinished_clues_list: list of locs of clues to be used
-        #clue_index_dict: dict(loc of clue: index of clue in unfinished_clues_list)
-        groups_list, unfinished_clues_list, clue_index_dict = self.find_groupings(regions_to_solve)
-        tile_to_group_index = {}
-        for i, group_info in enumerate(groups_list):
-            tile_to_group_index[group_info.tile_locs[0]] = i
-        for region in regions_to_solve:
+        groups_list = {}
+        if len(regions_to_solve) > 0:
 
-            if region.ps == None:
-                first_group_index = -1
-                num_groups = 0
-                for group_index,group_info in enumerate(groups_list):
-                    rep_loc = group_info.tile_locs[0]
-                    if rep_loc in region.locs:
-                        if first_group_index == -1:
-                            first_group_index = group_index
-                        num_groups += 1
-                region.first_group_index = first_group_index
-                region.num_groups = num_groups
-                ps = self.find_possibilities_for_region(region,groups_list, unfinished_clues_list, clue_index_dict)
-                region.ps = ps
-            else:
-                new_start_index, new_ps = self.reformat_possibilities_in_existing_region(region,tile_to_group_index)
-                region.first_group_index = new_start_index
-                region.ps = new_ps
-            if ffd.is_region_info_complete(self,region):
-                ic_regions.append(region)
+            #groups_list: dict(group id: GroupInfo(tile_locs,clue_indices))
+            #unfinished_clues_list: list of locs of clues to be used
+            #clue_index_dict: dict(loc of clue: index of clue in unfinished_clues_list)
+            groups_list, unfinished_clues_list, clue_index_dict = self.find_groupings(regions_to_solve)
+            tile_to_group_index = {}
+            for i, group_info in enumerate(groups_list):
+                tile_to_group_index[group_info.tile_locs[0]] = i
+            for region in regions_to_solve:
 
-
-        return groups_list,ic_regions
+                if region.ps == None:
+                    first_group_index = -1
+                    num_groups = 0
+                    for group_index,group_info in enumerate(groups_list):
+                        rep_loc = group_info.tile_locs[0]
+                        if rep_loc in region.locs:
+                            if first_group_index == -1:
+                                first_group_index = group_index
+                            num_groups += 1
+                    region.first_group_index = first_group_index
+                    region.num_groups = num_groups
+                    ps = self.find_possibilities_for_region(region,groups_list, unfinished_clues_list, clue_index_dict)
+                    region.ps = ps
+                else:
+                    new_start_index, new_ps = self.reformat_possibilities_in_existing_region(region,tile_to_group_index)
+                    region.first_group_index = new_start_index
+                    region.ps = new_ps
+        return groups_list
 
 
     def find_possibilities_for_region(self,region,groups_list, unfinished_clues_list, clue_index_dict):
@@ -477,7 +473,7 @@ class Solver(Board):
             avg_mines_in_group += (num_sols_at_num_mines/total_sols) * avg_mines_in_group_at_num_mines
         prob_loc_is_mine = avg_mines_in_group/group_size
         return prob_loc_is_mine
-    def calc_probs_for_board(self,regions,groups_list,nonfrontier_locs):
+    def calc_probs_for_board(self,regions,groups_list,nonfrontier_locs,update_self=True):
         safe_locs = []
         mine_locs = []
         total_sols_dict = defaultdict(int)
@@ -485,16 +481,18 @@ class Solver(Board):
         ps_with_num_mines = defaultdict(list)
         mines_left = self.minecount-self.flag_count
 
+
         safest_prob = 1
         if len(regions)>0:
-            
             ps = self.merge_all_possibilities(regions)
+            ps = [p for p in ps if p.total_mines <= mines_left]
 
+            if update_self:
+                self.global_ps = ps
             for p in ps:
-                if p.total_mines <= mines_left:
-                    num_local_sols_at_count[p.total_mines] += p.num_cases
+                num_local_sols_at_count[p.total_mines] += p.num_cases
 
-                    ps_with_num_mines[p.total_mines].append(p)
+                ps_with_num_mines[p.total_mines].append(p)
             total_sols = 0
 
             for num_mines in ps_with_num_mines.keys():
@@ -539,8 +537,19 @@ class Solver(Board):
         return safe_locs,mine_locs,safest_prob,total_sols
     def solve_exhaustive(self):
         self.regions_list = self.get_updated_regions_list()
-        groups_list,ic_regions = self.find_possibilities(self.regions_list)
+        groups_list= self.find_possibilities(self.regions_list)
+        ff_groups = []
+        ic_regions = []
+        for region in self.regions_list:
+            ff_groups_in_region = ffd.is_two_tile_ff_in_region(self,region)
+            if ffd.is_two_tile_ff_in_region(self,region):
+                for ff_group in ff_groups_in_region:
+                    ff_groups.append(ff_group)
+            if ffd.is_region_info_complete(self,region):
+                ic_regions.append(region)
         self.ic_regions = ic_regions
+        self.ff_groups = ff_groups
+        self.groups_list = groups_list
         mines_left = self.minecount-self.flag_count
         nonfrontier_locs = set()
         frontier_locs = set()
@@ -578,7 +587,6 @@ class Solver(Board):
 
 
     def solve_exhaustive_and_open(self):
-        #print(self.flag_count)
 
         safe_locs, mine_locs=self.solve_exhaustive()
         info_found = self.open_info(safe_locs,mine_locs)

@@ -1,0 +1,27 @@
+Mismatched trials between t1 and t2
+Each entry includes t1, t2, and a reason
+
+Reason: Won mismatch
+t1: {'seed': 797891135496739093, 'won': False, 'time': 0.7179436683654785}
+t2: {'seed': 797891135496739093, 'won': True, 'time': 0.5407090187072754}
+
+Reason: Won mismatch
+t1: {'seed': 1864692818610713146, 'won': False, 'time': 0.008750200271606445}
+t2: {'seed': 1864692818610713146, 'won': True, 'time': 0.02568507194519043}
+
+Reason: Won mismatch
+t1: {'seed': 2367417112949281288, 'won': True, 'time': 0.016838788986206055}
+t2: {'seed': 2367417112949281288, 'won': False, 'time': 0.024698972702026367}
+
+Reason: Won mismatch
+t1: {'seed': 5738161048788777570, 'won': True, 'time': 0.3256189823150635}
+t2: {'seed': 5738161048788777570, 'won': False, 'time': 0.037348270416259766}
+
+Reason: Won mismatch
+t1: {'seed': 7626904071740237955, 'won': True, 'time': 0.15978121757507324}
+t2: {'seed': 7626904071740237955, 'won': False, 'time': 0.12621212005615234}
+
+Reason: Won mismatch
+t1: {'seed': 9009590240846704239, 'won': True, 'time': 0.4281010627746582}
+t2: {'seed': 9009590240846704239, 'won': False, 'time': 0.40888094902038574}
+

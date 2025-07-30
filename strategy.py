@@ -139,17 +139,11 @@ class SecSafety(Strategy):
         min_x = -1
         min_y = -1
         unrevealed_tile_locs = []
-        isolated_edge_exists = False
 
-        if len(board.ic_regions) > 0:
-            isolated_edge_exists = True
-            for region in board.ic_regions:
-                for loc in region.locs:
-                    unrevealed_tile_locs.append(loc)
-        else:
-            for region in board.regions_list:
-                for loc in region.locs:
-                    unrevealed_tile_locs.append(loc)
+        for region in board.regions_list:
+            for loc in region.locs:
+                unrevealed_tile_locs.append(loc)
+
         for x,y in unrevealed_tile_locs:
             tile = board.tiles[x][y]
             if tile.prob_mine_local < min_prob:
@@ -160,35 +154,28 @@ class SecSafety(Strategy):
             return min_x,min_y
         
         candidates = []
-        if isolated_edge_exists:
-            eps = 0
-        else:
-            eps = (1-min_prob)/12
+        eps = (1-min_prob)/12
         #eps=0
         for loc in unrevealed_tile_locs:
             x,y = loc
             tile = board.tiles[x][y]
             if tile.prob_mine_local <= min_prob + eps:
                 candidates.append(tile)
-        if not isolated_edge_exists:
-            x_nf,y_nf = board.nonfrontier_tiles[0]
-            nonfrontier_tile = board.tiles[x_nf][y_nf]
-            nonfrontier_tile_prob = nonfrontier_tile.prob_mine_local
-            if nonfrontier_tile_prob <= min_prob + eps:
-                for x,y in board.nonfrontier_tiles:
-                    if board.is_loc_candidate_for_analysis((x,y)):
-                        tile = board.tiles[x][y]
-                        candidates.append(tile)
+        x_nf,y_nf = board.nonfrontier_tiles[0]
+        nonfrontier_tile = board.tiles[x_nf][y_nf]
+        nonfrontier_tile_prob = nonfrontier_tile.prob_mine_local
+        if nonfrontier_tile_prob <= min_prob + eps:
+            for x,y in board.nonfrontier_tiles:
+                if board.is_loc_candidate_for_analysis((x,y)):
+                    tile = board.tiles[x][y]
+                    candidates.append(tile)
 
         if len(candidates) == 1:
             return candidates[0].loc
 
         candidate_locs = [c.loc for c in candidates]
         candidate_locs = sorted(candidate_locs,key=lambda k: [k[0], k[1]])
-        if isolated_edge_exists:
-            best_loc = candidate_locs[0]
-        else:
-            best_loc = prog.find_loc_with_best_progress_over_locs(board,candidate_locs)
+        best_loc = prog.find_loc_with_best_progress_over_locs(board,candidate_locs)
         return best_loc
  
             
