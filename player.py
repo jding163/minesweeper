@@ -92,13 +92,6 @@ class Player():
                         isolated_locs.append(loc)
                 isolated_locs = sorted(isolated_locs,key=lambda k: [k[0], k[1]])
                 x,y = self.find_safest_among_locs(isolated_locs)
-            # if len(self.board.ic_regions) > 0:
-            #     isolated_locs = []
-            #     for region in self.board.ic_regions:
-            #         for loc in region.locs:
-            #             isolated_locs.append(loc)
-            #     isolated_locs = sorted(isolated_locs,key=lambda k: [k[0], k[1]])
-            #     x,y = self.find_safest_among_locs(isolated_locs)
             else:
                 x,y = self.strategy.find_move(self.board)
             # x,y = self.strategy.find_move(self.board)
