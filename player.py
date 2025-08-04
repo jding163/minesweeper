@@ -15,6 +15,7 @@ from solver import TimeoutException
 
 
 
+
 max_size = sys.maxsize
 #min_size = -sys.maxsize - 1
 min_size = 0
@@ -26,21 +27,22 @@ def run_game(seed,strat,timeout):
     
     try:
         result = player.play_game(seed=seed)
-        return result
     except TimeoutException as e:
-        return {
+        result= {
             'seed': seed,
             'won': False,
-            'time': -1,
+            'time': timeout,
             'timeout': True
         }
     except Exception as e:
-        return {
+        result= {
             'seed': seed,
             'won': False,
             'time': -1,
             'error': str(e)
         }
+    result['collect'] = player.board.collected
+    return result
 
 class Player():
     def __init__(self,timeout=None):
@@ -83,7 +85,6 @@ class Player():
         if risk is True and not game_over:
             if len(self.board.ff_groups) > 0:
                 ff_groups = sorted(self.board.ff_groups, key=lambda sublist: (sublist[0][0], sublist[0][1]))
-                print(ff_groups)
                 x,y = ff_groups[0][0]
             elif len(self.board.ic_regions) > 0:
                 isolated_locs = []
@@ -168,6 +169,7 @@ class Player():
         results = []
         won_seeds = []
         error_seeds = []
+        collected_seeds = []
         timeouts = 0
         if parallel:
             #max_workers = multiprocessing.cpu_count()
@@ -193,7 +195,8 @@ class Player():
                         timeouts+=1
                     if result['won']:
                         won_seeds.append(result_seed)
-
+                    if result['collect']:
+                        collected_seeds.append(result_seed)
 
 
             
@@ -214,7 +217,7 @@ class Player():
                     result = {
                         'seed': seed,
                         'won': False,
-                        'time': -1,
+                        'time': timeout,
                         'timeout': True
                     }
                 except Exception as e:
@@ -266,6 +269,9 @@ class Player():
         # with open("seeds.txt", "w") as file:
         #     for seed in Solver.collected_seeds:
         #         file.write(f'{seed}\n')
+        with open("seeds.txt", "w") as file:
+            for seed in collected_seeds:
+                file.write(f'{seed}\n')
 
         return results
     
@@ -309,14 +315,14 @@ def main():
     # p.play_games(len(seeds_list),seeds_list=seeds_list,parallel=False)
     # C.set_player(p)
     # C.set_board(b)
-    seed=-2358090889626878
+    seed=-222204841234
     #seed=29849475784
     #seed=5
     # res = p.play_game(seed=seed)
     # print(res)
-    w1 = p.play_games(3000,seed=seed,parallel=True,timeout=30)
-    for w in w1:
-        print(w)
+    w1 = p.play_games(50000,seed=seed,parallel=True,timeout=15)
+    # for w in w1:
+    #     print(w)
 
 
     # set1 = set(w1)

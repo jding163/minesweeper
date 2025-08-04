@@ -23,7 +23,9 @@ def find_loc_with_best_progress_over_locs(board,locs,expected_clears_weight=0.00
     best_loc = None
     best_score = -1
     for loc in locs:
+
         info = calc_progress_info_at_loc(board,loc,threshold)
+
         if info.finished and info.sec_safety > threshold:
             # threshold = info.sec_safety
             # best_loc = loc
@@ -32,6 +34,8 @@ def find_loc_with_best_progress_over_locs(board,locs,expected_clears_weight=0.00
                 expected_clear_score += info.probs_loc_is_val[i] * info.expected_clears[i]
             
             final_score = info.sec_safety + expected_clear_score * expected_clears_weight
+
+
             if final_score > best_score:
                 best_score = final_score
                 threshold = info.sec_safety
@@ -43,6 +47,7 @@ def calc_progress_info_at_loc(board,loc,threshold,threshold_on=True):
     x,y=loc
     tile = board.tiles[x][y]
     prob_mine = tile.prob_mine_local
+
     min_flags = 0
     max_flags = 0
     neighbors = board.get_neighbor_tiles(loc)
@@ -72,8 +77,9 @@ def calc_progress_info_at_loc(board,loc,threshold,threshold_on=True):
 
         # Check whether it's still possible to reach the threshold
         remaining_weight = 1.0-prob_mine - weight_so_far
+        #print('remaining_weight:',remaining_weight)
         max_possible = sec_safety_so_far + remaining_weight
-        # print(f'max possible at val {i}:',max_possible)
+        #print(f'max possible at val {i}:',max_possible)
         if threshold_on and max_possible < threshold:
             return ProgressInfo(loc=loc,sec_safety=sec_safety_so_far,probs_loc_is_val=probs_loc_is_val,
                                 expected_clears=expected_clears,best_ss_at_val=best_ss_at_val,

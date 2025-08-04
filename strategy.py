@@ -172,7 +172,9 @@ class SecSafety(Strategy):
 
         if len(candidates) == 1:
             return candidates[0].loc
-
+        # for c in candidates:
+        #     print(c.loc)
+        #     print(c.prob_mine_local)
         candidate_locs = [c.loc for c in candidates]
         candidate_locs = sorted(candidate_locs,key=lambda k: [k[0], k[1]])
         best_loc = prog.find_loc_with_best_progress_over_locs(board,candidate_locs)

@@ -506,8 +506,9 @@ class Solver(Board):
                 rep_loc = group_locs[0]
                 prob_at_loc = self.calc_prob_at_loc(rep_loc,groups_list,nonfrontier_locs,total_sols,total_sols_dict,num_local_sols_at_count,ps_with_num_mines)
                 for loc in group_locs:
-                    tile = self.tiles[loc[0]][loc[1]]
-                    tile.prob_mine_local = prob_at_loc
+                    if update_self:
+                        tile = self.tiles[loc[0]][loc[1]]
+                        tile.prob_mine_local = prob_at_loc
                     if prob_at_loc == 0:
                         safe_locs.append(loc)
                     elif prob_at_loc == 1:
@@ -524,8 +525,9 @@ class Solver(Board):
                 break
             prob_at_loc = self.calc_prob_at_loc(nf_loc,groups_list,nonfrontier_locs,total_sols,total_sols_dict,num_local_sols_at_count,ps_with_num_mines)
             for loc in nonfrontier_locs:
-                tile = self.tiles[loc[0]][loc[1]]
-                tile.prob_mine_local = prob_at_loc
+                if update_self:
+                    tile = self.tiles[loc[0]][loc[1]]
+                    tile.prob_mine_local = prob_at_loc
 
 
                 if prob_at_loc == 0:
@@ -571,6 +573,10 @@ class Solver(Board):
                 tile.prob_mine_local = 0
                 safe_locs.append((x,y))
             return safe_locs,[]
+        if len(groups_list) == 0 and len(nonfrontier_locs) <= 5 and len(nonfrontier_locs) > 2:
+            if not self.collected:
+                #Solver.collected_seeds.append(self.seed)
+                self.collected = True
         safe_locs, mine_locs = self.search_possibilities(self.regions_list,groups_list)
         if len(safe_locs) > 0:
             for x,y in safe_locs:
