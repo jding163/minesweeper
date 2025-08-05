@@ -20,6 +20,13 @@ class TimeoutException(Exception):
 import time
 import probability as prob
 
+@dataclass 
+class SolverHeuristics():
+    total_count: int
+    best_prob: float 
+    num_safe: int
+    has_ff: bool
+
 @dataclass
 class GroupInfo():
     tile_locs: list[tuple[int, int]]
@@ -230,7 +237,7 @@ class Solver(Board):
             safe_locs, _,best_prob,total_count= self.calc_probs_for_board(regions_to_solve,groups_list,nonfrontier_locs,update_self=False) 
             num_safe = len(safe_locs)
         self.unassign_tile_value(tile,orig_val_at_loc)
-        return total_count,best_prob, num_safe
+        return SolverHeuristics(total_count=total_count,best_prob=best_prob, num_safe=num_safe,has_ff=False)
 
 
     def check_timeout(self):
@@ -609,11 +616,7 @@ class Solver(Board):
                 updated.append(region)
 
         self.regions_list = updated
-        # if not self.collected:
-        #     ic_regions = ffd.find_info_complete_regions(self)
-        #     if len(ic_regions) > 0:
-        #         Solver.collected_seeds.append(self.seed)
-        #         self.collected = True
+
 
 
         return info_found

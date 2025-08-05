@@ -107,11 +107,17 @@ def expand_batch(batch_sols, groups):
         all_flattened.extend(expanded)
     return all_flattened
 
+# @dataclass 
+# class SolverHeuristics():
+#     total_count: int
+#     best_prob: float 
+#     num_safe: int
+#     has_ff: bool
 def calc_prob_opening_for_loc(board,loc):
 
-    count,_,_ = board.get_sol_counts_at_loc_for_val(loc,0)
+    info = board.get_sol_counts_at_loc_for_val(loc,0)
     num_sols = board.total_sols
-    return count/num_sols
+    return info.total_count/num_sols
 
 def find_matching_indices(locs, targets):
     if not isinstance(targets,list):

@@ -92,7 +92,15 @@ class Player():
                     for loc in region.locs:
                         isolated_locs.append(loc)
                 isolated_locs = sorted(isolated_locs,key=lambda k: [k[0], k[1]])
-                x,y = self.find_safest_among_locs(isolated_locs)
+                x,y = self.strategy.find_move_from_locs(self.board,isolated_locs)
+
+                # x,y = self.find_safest_among_locs(isolated_locs)
+                # x1,y1 = self.strategy.find_move_from_locs(self.board,isolated_locs)
+                # if (x,y) != (x1,y1):
+                #     self.board.collected = True
+                #     print('safest:',(x,y))
+                #     print('progress:',(x1,y1))
+
             else:
                 x,y = self.strategy.find_move(self.board)
             # x,y = self.strategy.find_move(self.board)
@@ -187,7 +195,7 @@ class Player():
                     #print(f"{i}: Seed {result['seed']}: {'Won' if result['won'] else 'Lost'} in {result['time']:.2f} seconds")
                     result_seed = result['seed']
                     if 'error' in result:
-                        err_msg = result_seed['error']
+                        err_msg = result['error']
                         logging.error(f'Error at seed {result_seed}')
                         logging.info(err_msg)
                     if 'timeout' in result:
@@ -320,7 +328,7 @@ def main():
     #seed=5
     # res = p.play_game(seed=seed)
     # print(res)
-    w1 = p.play_games(50000,seed=seed,parallel=True,timeout=15)
+    w1 = p.play_games(1000,seed=seed,parallel=True,timeout=30)
     # for w in w1:
     #     print(w)
 

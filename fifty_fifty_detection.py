@@ -14,16 +14,16 @@ def is_region_info_complete(board,region):
     if not all_totals_match:
         return False
 
-    # check if region is isolated
-    iso = True
+    # check if region is contained (none of its tiles are adjecent to unrevealed info outside of the region)
+    contained = True
     for loc in region.locs:
         for neighbor in board.get_neighbor_tiles(loc):
             if neighbor.is_unknown() and neighbor.loc not in region.locs:
-                iso = False
+                contained = False
                 break
-        if not iso:
+        if not contained:
             break
-    if iso:
+    if contained:
         return True
     return False
 
@@ -61,8 +61,3 @@ def is_two_tile_ff_in_region(board,region):
     return ff_groups
 
 
-
-
-def are_neighbor_sets_equivalent(loc0, loc1, neighbors0, neighbors1):
-    if len(neighbors0) != len(neighbors1):
-        return False

@@ -63,8 +63,17 @@ def calc_progress_info_at_loc(board,loc,threshold,threshold_on=True):
     weight_so_far = 0.0
     num_sols = board.total_sols
     expected_clears = defaultdict(int)
+    # @dataclass 
+    # class SolverHeuristics():
+    #     total_count: int
+    #     best_prob: float 
+    #     num_safe: int
+    #     has_ff: bool
     for i in range(min_flags, max_flags + 1):
-        count, best_prob,min_num_safe = board.get_sol_counts_at_loc_for_val(loc, i)
+        info = board.get_sol_counts_at_loc_for_val(loc, i)
+        count= info.total_count
+        best_prob = info.best_prob
+        min_num_safe = info.num_safe
         #print(f'{i}: {num_safe} clears')
         prob = count / num_sols
         val = 1 - best_prob
@@ -85,11 +94,6 @@ def calc_progress_info_at_loc(board,loc,threshold,threshold_on=True):
                                 expected_clears=expected_clears,best_ss_at_val=best_ss_at_val,
                                 finished=False)
 
-    # expected_clear_score = 0
-    # for i in range(0,9):
-    #     expected_clear_score += probs_loc_is_val[i] * expected_clears[i]
-    # print('loc:', loc)
-    # print('ecs:', expected_clear_score)
     return ProgressInfo(loc=loc,sec_safety=sec_safety_so_far,probs_loc_is_val=probs_loc_is_val,
                         expected_clears=expected_clears,best_ss_at_val=best_ss_at_val,finished=True)
 

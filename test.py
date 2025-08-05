@@ -4,7 +4,8 @@ from itertools import combinations, product
 from scipy import stats
 from collections import defaultdict
 from functools import reduce
-
+import sys
+import math
 from math import comb
 
 def remove_coordinates(coords, sols, coords_to_remove):
@@ -220,5 +221,7 @@ def convolve_multiple(distributions):
     for d in sorted_dists[1:]:
         merged = convolve_counts(merged, d)
     return merged
-d = [{0: 1, 1: 2}, {0: 1}, {1: 1}, {0: 2, 1: 1}]
-print(convolve_multiple(d))
+# d = [{0: 1, 1: 2}, {0: 1}, {1: 1}, {0: 2, 1: 1}]
+# print(convolve_multiple(d))
+print(math.pow(2,32))
+print(sys.maxsize)
