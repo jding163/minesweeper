@@ -32,13 +32,20 @@ def are_neighbors(a, b):
 
 def is_two_tile_ff_in_region(board,region):
     ff_groups = []
+    # a loc has ff influence if that loc being a mine would create a two-tile 50/50
+    # give slight preference to these tiles, because if you die to them, you would necessarily have had
+    # to also win a 50/50 had you survived by doing another move
+    ff_influence_locs = []
     for i in range(len(region.groups)):
         group = region.groups[i]
         if len(group) == 2:
+
+            group_index = region.first_group_index + i
+            is_ff = all(p.mines_per_group[group_index] == 1 for p in region.ps)
+            if not is_ff:
+                continue
             loc0 = group[0]
             loc1 = group[1]
-
-            
             loc0_neighbors = board.get_neighbor_tiles(loc0)
             unknown_loc0_neighbor_locs = set(n.loc for n in loc0_neighbors if n.is_unknown())
             loc1_neighbors = board.get_neighbor_tiles(loc1)
@@ -47,17 +54,17 @@ def is_two_tile_ff_in_region(board,region):
             if loc0 in unknown_loc1_neighbor_locs:
                 unknown_loc0_neighbor_locs.add(loc0)
                 unknown_loc1_neighbor_locs.add(loc1)
-            is_ff = (unknown_loc0_neighbor_locs == unknown_loc1_neighbor_locs)
-            if not is_ff:
-                continue
-            group_index = region.first_group_index + i
-            is_ff = all(p.mines_per_group[group_index] == 1 for p in region.ps)
-
-            #is_ff = all(p.mines_per_group[group_index] == 1 for p in board.global_ps)
-
+            diff_elems = unknown_loc0_neighbor_locs ^ unknown_loc1_neighbor_locs
+            is_ff = (len(diff_elems) == 0)
             if is_ff:
                 ff_groups.append(group)
+            else:
+                is_at_risk_of_ff = (len(diff_elems) == 1)
+                if is_at_risk_of_ff:
+                    ff_influence_locs.append(next(iter(diff_elems)))
+
+
             
-    return ff_groups
+    return ff_groups,ff_influence_locs
 
 

@@ -333,6 +333,7 @@ class SolverDP(Solver):
     def solve_exhaustive(self):
         self.regions_list = self.get_updated_regions_list()
         groups_list = self.find_possibilities(self.regions_list)
+        self.groups_list = groups_list
         mines_left = self.minecount-self.flag_count
         nonfrontier_locs = set()
         frontier_locs = set()

@@ -12,7 +12,7 @@ from line_profiler import profile
 import logging
 import statistics
 from solver import TimeoutException
-
+import fifty_fifty_detection as ffd
 
 
 
@@ -74,11 +74,11 @@ class Player():
         game_over = not GSM.get_game_state() or self.board.is_complete()
 
         if game_over:
-            return
+            return False
         if self.board.solve_trivial_and_open():
-            return
+            return True
         elif self.board.solve_exhaustive_and_open():
-            return
+            return True
 
         game_over = not GSM.get_game_state() or self.board.is_complete()
 
@@ -106,6 +106,8 @@ class Player():
             # x,y = self.strategy.find_move(self.board)
 
             self.board.reveal_tiles(x,y)
+            return True
+        return False
 
     def autoplay(self,risk=True):
         
@@ -113,7 +115,9 @@ class Player():
             game_over = not GSM.get_game_state() or self.board.is_complete()
             if game_over:
                 return True
-            self.play_one_step(risk=risk)
+            move_made = self.play_one_step(risk=risk)
+            if not move_made:
+                break
 
     
     def play_game(self,seed=None):
@@ -205,10 +209,6 @@ class Player():
                         won_seeds.append(result_seed)
                     if result['collect']:
                         collected_seeds.append(result_seed)
-
-
-            
-
         else:
             self.timeout = timeout
             for i in range(num_games):
@@ -218,7 +218,7 @@ class Player():
                     print(i)
                     logging.info(i)
                 seed=seeds[i]
-                #logging.info(f'starting game {i}: {seed}')
+                logging.info(f'starting game {i}: {seed}')
                 try:
                     result = self.play_game(seed=seed)
                 except TimeoutException as e:
@@ -239,6 +239,8 @@ class Player():
 
                 # print(i)
                 # print(seeds[i])
+                result['collect'] = self.board.collected
+
                 results.append(result)
                 if result['won'] == True:
                     won_seeds.append(seeds[i])
@@ -250,13 +252,16 @@ class Player():
                 if 'timeout' in result:
                     logging.info(f'Timeout at seed {result_seed}')
                     timeouts+=1
+                if result['collect']:
+                    collected_seeds.append(result_seed)
 
 
-
-        total_games = len(results)
         total_wins = sum(1 for r in results if r['won'])
-        total_losses = total_games - total_wins
-        total_time = sum(r['time'] for r in results)
+        total_errors = sum(1 for r in results if 'error' in r)
+        total_games = len(results)
+
+        total_losses = total_games - total_wins - total_errors
+        total_time = sum(r['time'] for r in results if 'error' not in r)
         avg_time = total_time / total_games if total_games > 0 else 0
         avg_time_win = (sum(r['time'] for r in results if r['won']) / total_wins) if total_wins > 0 else 0
         median_win = statistics.median(r['time'] for r in results if r['won'])
@@ -267,6 +272,7 @@ class Player():
         print(f"Total time: {time.time()-start_time}")
         print(f"Wins: {total_wins}")
         print(f"Losses: {total_losses}")
+        print(f"Errors: {total_errors}")
         print(f"Winrate: {total_wins / total_games:.2%}")
         print(f"Average time per game: {avg_time:.2f} seconds")
         print(f"Average time per win: {avg_time_win:.2f} seconds")
@@ -275,7 +281,7 @@ class Player():
 
 
         # with open("seeds.txt", "w") as file:
-        #     for seed in Solver.collected_seeds:
+        #     for seed in won_seeds:
         #         file.write(f'{seed}\n')
         with open("seeds.txt", "w") as file:
             for seed in collected_seeds:
@@ -323,12 +329,13 @@ def main():
     # p.play_games(len(seeds_list),seeds_list=seeds_list,parallel=False)
     # C.set_player(p)
     # C.set_board(b)
-    seed=-222204841234
+    seed=-7778276623403
+    #seed=-222204841234
     #seed=29849475784
     #seed=5
     # res = p.play_game(seed=seed)
     # print(res)
-    w1 = p.play_games(1000,seed=seed,parallel=True,timeout=30)
+    w1 = p.play_games(100,seed=seed,parallel=True,timeout=30)
     # for w in w1:
     #     print(w)
 

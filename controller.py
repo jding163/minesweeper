@@ -7,7 +7,7 @@ from solver import Solver
 import solver
 import strategy as strat
 import traceback
-
+import config_sim as cs
 import probability as prob
 import progress as prog
 #import player as P
@@ -173,7 +173,7 @@ def handle_keypress_t(seed=None,timeout=None):
 
     #player.set_strategy(strat.SafestTileAndLikeliestOpening())
     try:
-        player.autoplay()
+        player.autoplay(risk=False)
     except Exception as e:
         print(e)
         traceback.print_exc()
@@ -241,11 +241,8 @@ def handle_keypress_r():
     print(sorted(board.mines,key=lambda coord: (coord[0], coord[1]))
 )
 def handle_keypress_b():
-    global default, board
-    default = not default
-    reset_board()
-    print(default)
-    print(type(board))
+    samples = cs.sample_mines_per_group_x_times(board,500000)
+    cs.verify_sampling_distribution_from_samples(board,samples)
 def handle_keypress_c(seed):
     result = player.play_game(seed=seed)
     print(result)

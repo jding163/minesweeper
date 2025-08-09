@@ -226,23 +226,35 @@ class SecSafety(Strategy):
         if len(board.nonfrontier_tiles) == 0:
             return min_x,min_y
         
-        candidates = []
+        candidates = set()
         eps = (1-min_prob)/12
-        #eps=0
-        for loc in unrevealed_tile_locs:
-            x,y = loc
+        eps_ffi = 2*eps
+        eps_threshold = min_prob+eps
+        for x,y in unrevealed_tile_locs:
             tile = board.tiles[x][y]
-            if tile.prob_mine_local <= min_prob + eps:
-                candidates.append(tile)
+            tile_prob = tile.prob_mine_local
+
+            if tile_prob <= eps_threshold:
+                candidates.add(tile)
         x_nf,y_nf = board.nonfrontier_tiles[0]
         nonfrontier_tile = board.tiles[x_nf][y_nf]
         nonfrontier_tile_prob = nonfrontier_tile.prob_mine_local
-        if nonfrontier_tile_prob <= min_prob + eps:
+        if nonfrontier_tile_prob <= eps_threshold:
             for x,y in board.nonfrontier_tiles:
                 if board.is_loc_candidate_for_analysis((x,y)):
                     tile = board.tiles[x][y]
-                    candidates.append(tile)
+                    candidates.add(tile)
+        ffi_threshold = min_prob+eps_ffi
+        for x,y in board.ff_influence_locs:
+            tile = board.tiles[x][y]
+            tile_prob = tile.prob_mine_local
 
+            if tile_prob <= ffi_threshold:
+                candidates.add(tile)
+
+
+
+        candidates=list(candidates)
         if len(candidates) == 1:
             return candidates[0].loc
         # for c in candidates:
@@ -250,7 +262,17 @@ class SecSafety(Strategy):
         #     print(c.prob_mine_local)
         candidate_locs = [c.loc for c in candidates]
         candidate_locs = sorted(candidate_locs,key=lambda k: [k[0], k[1]])
+        # if not board.collected and len(board.ff_influence_locs) > 0:
+        #     for l in board.ff_influence_locs:
+        #         print(l)
+        #     board.collected=True
         best_loc = prog.find_loc_with_best_progress_over_locs(board,candidate_locs)
+        # if not board.collected:
+        #     best_loc1 = prog.find_loc_with_best_progress_over_locs(board,candidate_locs,ff_influence_weight=1)
+        #     if best_loc != best_loc1:
+        #         board.collected=True
+        #         print(best_loc)
+        #         print(best_loc1)
         return best_loc
 
     def find_move_from_locs(self, board,locs):
@@ -274,7 +296,10 @@ class SecSafety(Strategy):
         for loc in locs:
             x,y = loc
             tile = board.tiles[x][y]
-            if tile.prob_mine_local <= min_prob + eps:
+            score = tile.prob_mine_local
+            # if loc in board.ff_influence_locs:
+            #     score /= 1.02
+            if score <= min_prob + eps:
                 candidates.append(tile)
 
         if len(candidates) == 1:
@@ -283,6 +308,9 @@ class SecSafety(Strategy):
         candidate_locs = [c.loc for c in candidates]
         candidate_locs = sorted(candidate_locs,key=lambda k: [k[0], k[1]])
         best_loc = prog.find_loc_with_best_progress_over_locs(board,candidate_locs)
+        # best_loc = prog.find_loc_with_best_progress_over_locs(board,candidate_locs)
+
+
         return best_loc
  
  

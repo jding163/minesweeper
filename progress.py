@@ -16,17 +16,29 @@ class ProgressInfo:
     finished: bool
     expected_clears: dict
 
-def find_loc_with_best_progress_over_locs(board,locs,expected_clears_weight=0.005):
+def find_loc_with_best_progress_over_locs(board,locs,expected_clears_weight=0.005,ff_influence_weight=1.2):
     if len(locs) == 0:
         return None
     threshold = -1
     best_loc = None
     best_score = -1
+    ff_influence_loc_info = dict()
     for loc in locs:
+        if loc in board.ff_influence_locs:
+            info = calc_progress_info_at_loc(board,loc,threshold/ff_influence_weight)
+        else:
+            info = calc_progress_info_at_loc(board,loc,threshold)
 
-        info = calc_progress_info_at_loc(board,loc,threshold)
-
-        if info.finished and info.sec_safety > threshold:
+        score = info.sec_safety
+        if loc in board.ff_influence_locs:
+            ff_influence_loc_info[loc] = info
+        # if loc in board.ff_influence_locs:
+        #     init_score_worse = (score <= threshold)
+        #     score *= ff_influence_weight
+        #     post_score_better = (score > threshold)
+        #     if not board.collected and (init_score_worse and post_score_better):
+        #         board.collected=True
+        if info.finished and score > threshold:
             # threshold = info.sec_safety
             # best_loc = loc
             expected_clear_score = 0
@@ -40,7 +52,25 @@ def find_loc_with_best_progress_over_locs(board,locs,expected_clears_weight=0.00
                 best_score = final_score
                 threshold = info.sec_safety
                 best_loc = loc
-
+    if best_loc not in board.ff_influence_locs:
+        old_best = best_score
+        old_best_loc = best_loc
+        for loc,info in ff_influence_loc_info.items():
+            expected_clear_score = 0
+            for i in range(0,9):
+                expected_clear_score += info.probs_loc_is_val[i] * info.expected_clears[i]
+            init_score = info.sec_safety + expected_clear_score * expected_clears_weight
+            final_score = init_score * ff_influence_weight
+            if final_score > best_score:
+                best_score = final_score
+                threshold = info.sec_safety
+                best_loc = loc
+        # if not board.collected and best_loc in board.ff_influence_locs and old_best > best_score/ff_influence_weight and old_best < best_score:
+        #     # print(old_best_loc)
+        #     # print(old_best)
+        #     # print(best_loc)
+        #     # print(best_score)
+        #     board.collected=True
     return best_loc
 
 def calc_progress_info_at_loc(board,loc,threshold,threshold_on=True):

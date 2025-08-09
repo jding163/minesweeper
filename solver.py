@@ -72,6 +72,8 @@ class Solver(Board):
         self.deadline=None
         self.collected = False
         self.ic_regions = []
+        self.ff_groups = []
+        self.ff_influence_locs = []
         self.global_ps = []
 
         #self.populate(first_click)
@@ -216,7 +218,9 @@ class Solver(Board):
         total_count = 0
         best_prob = 1
         num_safe = 0
+        has_ff = False
         solvable = True
+
         groups_list= self.find_possibilities(regions_to_solve)
         for region in regions_to_solve:
             if len(region.ps) == 0:
@@ -236,8 +240,13 @@ class Solver(Board):
 
             safe_locs, _,best_prob,total_count= self.calc_probs_for_board(regions_to_solve,groups_list,nonfrontier_locs,update_self=False) 
             num_safe = len(safe_locs)
+            # for region in regions_to_solve:
+            #     ff_groups_in_region = ffd.is_two_tile_ff_in_region(self,region)
+            #     if ff_groups_in_region:
+            #         has_ff = True
+            #         break
         self.unassign_tile_value(tile,orig_val_at_loc)
-        return SolverHeuristics(total_count=total_count,best_prob=best_prob, num_safe=num_safe,has_ff=False)
+        return SolverHeuristics(total_count=total_count,best_prob=best_prob, num_safe=num_safe,has_ff=has_ff)
 
 
     def check_timeout(self):
@@ -506,6 +515,9 @@ class Solver(Board):
                 total_sols_at_num_mines = num_local_sols_at_count[num_mines] * math.comb(len(nonfrontier_locs),mines_left-num_mines)
                 total_sols_dict[num_mines] = total_sols_at_num_mines
                 total_sols += total_sols_at_num_mines
+            if update_self:
+                self.total_sols = total_sols
+                self.total_sols_dict = total_sols_dict
             if total_sols == 0:
                 return [],[],1,0
             for group_info in groups_list:
@@ -523,6 +535,9 @@ class Solver(Board):
                 safest_prob = min(safest_prob,prob_at_loc)
         else:
             total_sols = math.comb(len(nonfrontier_locs),mines_left)
+            if update_self:
+                self.total_sols = total_sols
+                self.total_sols_dict = {mines_left:total_sols}
 
         if len(nonfrontier_locs) > 0:
             
@@ -549,15 +564,18 @@ class Solver(Board):
         groups_list= self.find_possibilities(self.regions_list)
         ff_groups = []
         ic_regions = []
+        ff_influence_locs = []
         for region in self.regions_list:
-            ff_groups_in_region = ffd.is_two_tile_ff_in_region(self,region)
-            if ffd.is_two_tile_ff_in_region(self,region):
-                for ff_group in ff_groups_in_region:
-                    ff_groups.append(ff_group)
+            ff_groups_in_region,ff_influence_locs_in_region = ffd.is_two_tile_ff_in_region(self,region)
+            for ff_group in ff_groups_in_region:
+                ff_groups.append(ff_group)
+            for loc in ff_influence_locs_in_region:
+                ff_influence_locs.append(loc)
             if ffd.is_region_info_complete(self,region):
                 ic_regions.append(region)
         self.ic_regions = ic_regions
         self.ff_groups = ff_groups
+        self.ff_influence_locs = ff_influence_locs
         self.groups_list = groups_list
         mines_left = self.minecount-self.flag_count
         nonfrontier_locs = set()
@@ -580,10 +598,10 @@ class Solver(Board):
                 tile.prob_mine_local = 0
                 safe_locs.append((x,y))
             return safe_locs,[]
-        if len(groups_list) == 0 and len(nonfrontier_locs) <= 5 and len(nonfrontier_locs) > 2:
-            if not self.collected:
-                #Solver.collected_seeds.append(self.seed)
-                self.collected = True
+        # if len(groups_list) == 0 and len(nonfrontier_locs) <= 5 and len(nonfrontier_locs) > 2:
+        #     if not self.collected:
+        #         #Solver.collected_seeds.append(self.seed)
+        #         self.collected = True
         safe_locs, mine_locs = self.search_possibilities(self.regions_list,groups_list)
         if len(safe_locs) > 0:
             for x,y in safe_locs:
