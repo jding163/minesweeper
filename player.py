@@ -68,7 +68,6 @@ class Player():
         return min_x,min_y
 
 
-    @profile
     def play_one_step(self,risk=True):
         #game_over = not GSM.get_game_state() or (self.board.is_complete() and self.board.verify_win())
         game_over = not GSM.get_game_state() or self.board.is_complete()
@@ -105,7 +104,7 @@ class Player():
                 x,y = self.strategy.find_move(self.board)
             # x,y = self.strategy.find_move(self.board)
 
-            self.board.reveal_tiles(x,y)
+            self.board.reveal_tiles((x,y))
             return True
         return False
 
@@ -130,7 +129,7 @@ class Player():
         self.board.populate((0,0),seed=seed)
         start_time = time.time()
 
-        self.board.reveal_tiles(0,0)
+        self.board.reveal_tiles((0,0))
         self.autoplay()
 
 
@@ -335,7 +334,7 @@ def main():
     #seed=5
     # res = p.play_game(seed=seed)
     # print(res)
-    w1 = p.play_games(100,seed=seed,parallel=True,timeout=30)
+    w1 = p.play_games(25,seed=seed,parallel=False,timeout=30)
     # for w in w1:
     #     print(w)
 

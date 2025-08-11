@@ -1,6 +1,50 @@
 import random
 from collections import Counter, defaultdict
 import time
+import copy
+from solver import Solver
+from line_profiler import profile
+
+@profile
+def gen_board_from_sample(board,sample):
+    groups_list = board.groups_list
+    # new_mines = []
+    # for loc in board.flagged_tiles:
+    #     new_mines.append(loc)
+    new_mines = list(board.flagged_tiles)
+    mpg = sample.mines_per_group
+    for i, group in enumerate(groups_list):
+        num_mines = mpg[i]
+        mine_locs = random.sample(group.tile_locs, num_mines)
+        new_mines.extend(mine_locs)
+
+        # for loc in mine_locs:
+        #     new_mines.append(loc)
+
+    mines_left = len(board.mines) - len(new_mines)
+    nonfrontier_mines = random.sample(board.nonfrontier_tiles,mines_left)
+    new_mines.extend(nonfrontier_mines)
+
+    # for loc in nonfrontier_mines:
+    #     new_mines.append(loc)
+    start = time.time()
+
+    new_board = Solver(run_pygame=False,empty=True)
+    new_board.clone_board(board)
+    new_board.mines = new_mines
+    new_board.copy_solver_info(board)
+
+
+    elapsed = time.time()-start
+    new_board.mines = new_mines
+
+    return elapsed
+        
+
+    
+
+    
+
 
 def sample_mines_per_group(ps_by_mine_count,mc_keys,mc_weights):
     mc = random.choices(mc_keys,weights=mc_weights,k=1)[0]
@@ -34,18 +78,6 @@ def sample_mines_per_group_x_times(board,x):
 from collections import Counter, defaultdict
 
 def verify_sampling_distribution_from_samples(board, samples):
-    """
-    Verify sampling distribution from a pre-generated list of Possibility samples.
-    
-    Args:
-    - global_ps: dict {mine_count: list of Possibility objects}
-    - total_sols_dict: dict {mine_count: total weighted solutions count}
-    - samples: list of sampled Possibility objects
-    
-    Returns:
-    - mine_count_stats: dict with empirical, expected probabilities and errors per mine count
-    - possibility_stats: dict of dicts keyed by mine_count, with possibility keys and empirical/expected probs
-    """
     total_sols_dict = board.total_sols_dict
     global_ps = board.global_ps
     ps_by_mine_count = defaultdict(list)

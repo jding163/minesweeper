@@ -63,21 +63,40 @@ class Region():
 
 class Solver(Board):
     collected_seeds = []
-    def __init__(self,first_click=(0,0),run_pygame=True):
-        super().__init__(run_pygame=run_pygame)
-        self.first_click = first_click
-        self.nonfrontier_tiles = []
-        self.regions_list = []
-        self.abort_flag = False
-        self.deadline=None
-        self.collected = False
-        self.ic_regions = []
-        self.ff_groups = []
-        self.ff_influence_locs = []
-        self.global_ps = []
+    def __init__(self,first_click=(0,0),run_pygame=True,empty=False):
+        super().__init__(run_pygame=run_pygame,empty=empty)
+        if not empty:
+            self.first_click = first_click
+            self.nonfrontier_tiles = []
+            self.regions_list = []
+            self.abort_flag = False
+            self.deadline=None
+            self.collected = False
+            self.ic_regions = []
+            self.ff_groups = []
+            self.ff_influence_locs = []
+            self.global_ps = []
+            self.total_sols = 0
+            self.total_sols_dict = {}
 
         #self.populate(first_click)
         #self.reveal_tiles(first_click[0],first_click[1])
+    def copy_solver_info(self, board):
+        self.nonfrontier_tiles = board.nonfrontier_tiles
+        self.regions_list = [copy.copy(region) for region in board.regions_list]
+        self.abort_flag = board.abort_flag
+        self.deadline = board.deadline
+        self.collected=board.collected
+        self.ic_regions=board.ic_regions
+        self.ff_groups=board.ff_groups
+        self.ff_influence_locs=board.ff_influence_locs
+        self.global_ps=board.global_ps
+        self.total_sols=board.total_sols
+        self.total_sols_dict=board.total_sols_dict
+
+        
+
+
     def is_loc_candidate_for_analysis(self,loc):
         if loc not in self.nonfrontier_tiles:
             return True
@@ -134,7 +153,7 @@ class Solver(Board):
         flags_found = len(unknown_neighbors) == mines_to_find
         if flags_found:
             for neighbor in unknown_neighbors:
-                self.toggle_flag_at_loc(neighbor.row,neighbor.col)
+                self.toggle_flag_at_loc((neighbor.row,neighbor.col))
         #return flags_found
         return [neighbor.loc for neighbor in unknown_neighbors]
     
@@ -214,7 +233,7 @@ class Solver(Board):
             if region.ps == None:
                 regions_to_solve.append(region)
             else:
-                regions_to_solve.append(copy.deepcopy(region))
+                regions_to_solve.append(copy.copy(region))
         total_count = 0
         best_prob = 1
         num_safe = 0
@@ -696,10 +715,10 @@ class Solver(Board):
         return order, locs_to_check
 
     def open_info(self,safe_locs,mine_locs):
-        for x,y in safe_locs:
-            self.reveal_tiles(x,y)
-        for x,y in mine_locs:
-            self.toggle_flag_at_loc(x,y)
+        for loc in safe_locs:
+            self.reveal_tiles(loc)
+        for loc in mine_locs:
+            self.toggle_flag_at_loc(loc)
         return len(safe_locs) > 0 or len(mine_locs) > 0
 
 def merge_sets(sets):

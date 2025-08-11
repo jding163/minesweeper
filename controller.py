@@ -124,13 +124,13 @@ def handle_board_click(mines=False,seed=None):
     if board.tiles[mx][my].is_revealed():
         board.chord((mx,my))
 
-    board.reveal_tiles(mx,my)
+    board.reveal_tiles((mx,my))
 
 def handle_board_right_click():
     if my<0:
         return
     if not game.first_click:
-        board.toggle_flag_at_loc(mx,my)  
+        board.toggle_flag_at_loc((mx,my))
 
 
 def handle_keypress_p():
@@ -241,8 +241,15 @@ def handle_keypress_r():
     print(sorted(board.mines,key=lambda coord: (coord[0], coord[1]))
 )
 def handle_keypress_b():
-    samples = cs.sample_mines_per_group_x_times(board,500000)
-    cs.verify_sampling_distribution_from_samples(board,samples)
+    samples = cs.sample_mines_per_group_x_times(board,20000)
+    # cs.verify_sampling_distribution_from_samples(board,samples)
+    cum_time=0
+    start = time.time()
+    for sample in samples:
+        cum_time+=cs.gen_board_from_sample(board,sample)
+    print('total time:',time.time()-start)
+    print('time to copy:',cum_time)
+    
 def handle_keypress_c(seed):
     result = player.play_game(seed=seed)
     print(result)

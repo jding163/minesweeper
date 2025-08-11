@@ -1,120 +1,117 @@
 pygame-ce 2.5.5 (SDL 2.32.6, Python 3.11.8)
-pygame-ce 2.5.5 (SDL 2.32.6, Python 3.11.8)
-pygame-ce 2.5.5 (SDL 2.32.6, Python 3.11.8)
-pygame-ce 2.5.5 (SDL 2.32.6, Python 3.11.8)
-pygame-ce 2.5.5 (SDL 2.32.6, Python 3.11.8)
-pygame-ce 2.5.5 (SDL 2.32.6, Python 3.11.8)
-pygame-ce 2.5.5 (SDL 2.32.6, Python 3.11.8)
 0
-250
-500
-750
-1000
-1250
-1500
-1750
-2000
-2250
-2500
-2750
-3000
-3250
-3500
-3750
-4000
-4250
-4500
-4750
-5000
-5250
-5500
-5750
-6000
-6250
-6500
-6750
-7000
-7250
-7500
-7750
-8000
-8250
-8500
-8750
-9000
-9250
-9500
-9750
-10000
-10250
-10500
-10750
-11000
-11250
-11500
-11750
-12000
-12250
-12500
-12750
-13000
-13250
-13500
-13750
-14000
-14250
-14500
-14750
-15000
-15250
-15500
-15750
-16000
-16250
-16500
-16750
-17000
-17250
-17500
-17750
-18000
-18250
-18500
-18750
-19000
-19250
-19500
-19750
-20000
-20250
-20500
-20750
-21000
-21250
-21500
-21750
-22000
-22250
-22500
-22750
-23000
-23250
-23500
-23750
-24000
-24250
-24500
-24750
 
 --- Statistics Summary ---
 Strategy used: SecSafety
-Total games: 25000
-Total time: 636.6752059459686
-Wins: 9946
-Losses: 15054
+Total games: 25
+Total time: 10.762998104095459
+Wins: 10
+Losses: 15
 Errors: 0
-Winrate: 39.78%
-Average time per game: 0.15 seconds
-Average time per win: 0.17 seconds
-Median win: 0.07
-timeouts: 1
+Winrate: 40.00%
+Average time per game: 0.43 seconds
+Average time per win: 0.69 seconds
+Median win: 0.34
+timeouts: 0
+Wrote profile results to player.py.lprof
+Timer unit: 1e-06 s
+
+Total time: 8.43897 s
+File: /Users/jeremyding/Desktop/projects/minesweeper/solver.py
+Function: get_sol_counts_at_loc_for_val at line 224
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   224                                               @profile
+   225                                               # return total_count,best_prob, num_safe
+   226                                               def get_sol_counts_at_loc_for_val(self,loc,val):
+   227      1891        622.0      0.3      0.0          x,y = loc
+   228      1891        725.0      0.4      0.0          tile = self.tiles[x][y]
+   229      1891       2345.0      1.2      0.0          orig_val_at_loc = self.assign_tile_value(tile,val)
+   230      1891     720990.0    381.3      8.5          regions = self.get_updated_regions_list()
+   231      1891        570.0      0.3      0.0          regions_to_solve = []
+   232      5244       2307.0      0.4      0.0          for region in regions:
+   233      3353       1214.0      0.4      0.0              if region.ps == None:
+   234      1916        719.0      0.4      0.0                  regions_to_solve.append(region)
+   235                                                       else:
+   236      1437       9948.0      6.9      0.1                  regions_to_solve.append(copy.copy(region))
+   237      1891        475.0      0.3      0.0          total_count = 0
+   238      1891        471.0      0.2      0.0          best_prob = 1
+   239      1891        406.0      0.2      0.0          num_safe = 0
+   240      1891        402.0      0.2      0.0          has_ff = False
+   241      1891        416.0      0.2      0.0          solvable = True
+   242                                           
+   243      1891    4736542.0   2504.8     56.1          groups_list= self.find_possibilities(regions_to_solve)
+   244      4674       1688.0      0.4      0.0          for region in regions_to_solve:
+   245      3290       1301.0      0.4      0.0              if len(region.ps) == 0:
+   246       507        137.0      0.3      0.0                  solvable = False
+   247       507        137.0      0.3      0.0                  break
+   248      1891        600.0      0.3      0.0          if solvable:
+   249      1384        437.0      0.3      0.0              nonfrontier_locs = set()
+   250      1384        400.0      0.3      0.0              frontier_locs = set()
+   251      3878       1288.0      0.3      0.0              for region in regions_to_solve:
+   252     29512       8346.0      0.3      0.1                  for l in region.locs:
+   253     27018       8725.0      0.3      0.1                      frontier_locs.add(l)
+   254      1384        478.0      0.3      0.0              nonfrontier_locs = set()
+   255     42904      13682.0      0.3      0.2              for r in range(self.rows):
+   256    705840     260902.0      0.4      3.1                  for c in range(self.cols):
+   257    664320     590923.0      0.9      7.0                      if (r,c) not in frontier_locs and self.tiles[r][c].is_unknown():
+   258    343097     128919.0      0.4      1.5                          nonfrontier_locs.add((r,c))
+   259                                           
+   260      1384    1937038.0   1399.6     23.0              safe_locs, _,best_prob,total_count= self.calc_probs_for_board(regions_to_solve,groups_list,nonfrontier_locs,update_self=False) 
+   261      1384        656.0      0.5      0.0              num_safe = len(safe_locs)
+   262                                                       # for region in regions_to_solve:
+   263                                                       #     ff_groups_in_region = ffd.is_two_tile_ff_in_region(self,region)
+   264                                                       #     if ff_groups_in_region:
+   265                                                       #         has_ff = True
+   266                                                       #         break
+   267      1891       2363.0      1.2      0.0          self.unassign_tile_value(tile,orig_val_at_loc)
+   268      1891       2802.0      1.5      0.0          return SolverHeuristics(total_count=total_count,best_prob=best_prob, num_safe=num_safe,has_ff=has_ff)
+
+Total time: 10.7029 s
+File: player.py
+Function: play_one_step at line 71
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    71                                               @profile
+    72                                               def play_one_step(self,risk=True):
+    73                                                   #game_over = not GSM.get_game_state() or (self.board.is_complete() and self.board.verify_win())
+    74       830        948.0      1.1      0.0          game_over = not GSM.get_game_state() or self.board.is_complete()
+    75                                           
+    76       830        206.0      0.2      0.0          if game_over:
+    77                                                       return False
+    78       830     240794.0    290.1      2.2          if self.board.solve_trivial_and_open():
+    79       612        193.0      0.3      0.0              return True
+    80       218    1148190.0   5266.9     10.7          elif self.board.solve_exhaustive_and_open():
+    81       132         54.0      0.4      0.0              return True
+    82                                           
+    83        86        154.0      1.8      0.0          game_over = not GSM.get_game_state() or self.board.is_complete()
+    84                                           
+    85        86         37.0      0.4      0.0          if risk is True and not game_over:
+    86        86         36.0      0.4      0.0              if len(self.board.ff_groups) > 0:
+    87        10         16.0      1.6      0.0                  ff_groups = sorted(self.board.ff_groups, key=lambda sublist: (sublist[0][0], sublist[0][1]))
+    88        10          2.0      0.2      0.0                  x,y = ff_groups[0][0]
+    89        76         31.0      0.4      0.0              elif len(self.board.ic_regions) > 0:
+    90         2          0.0      0.0      0.0                  isolated_locs = []
+    91         4          0.0      0.0      0.0                  for region in self.board.ic_regions:
+    92        15          7.0      0.5      0.0                      for loc in region.locs:
+    93        13          5.0      0.4      0.0                          isolated_locs.append(loc)
+    94         2          8.0      4.0      0.0                  isolated_locs = sorted(isolated_locs,key=lambda k: [k[0], k[1]])
+    95         2         14.0      7.0      0.0                  x,y = self.strategy.find_move_from_locs(self.board,isolated_locs)
+    96                                           
+    97                                                           # x,y = self.find_safest_among_locs(isolated_locs)
+    98                                                           # x1,y1 = self.strategy.find_move_from_locs(self.board,isolated_locs)
+    99                                                           # if (x,y) != (x1,y1):
+   100                                                           #     self.board.collected = True
+   101                                                           #     print('safest:',(x,y))
+   102                                                           #     print('progress:',(x1,y1))
+   103                                           
+   104                                                       else:
+   105        74    9306423.0 125762.5     87.0                  x,y = self.strategy.find_move(self.board)
+   106                                                       # x,y = self.strategy.find_move(self.board)
+   107                                           
+   108        86       5769.0     67.1      0.1              self.board.reveal_tiles((x,y))
+   109        86         27.0      0.3      0.0              return True
+   110                                                   return False
+

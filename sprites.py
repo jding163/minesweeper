@@ -72,7 +72,6 @@ class Tile:
         self.prob_opening = -1
         self.neighbors = []
 
-        self.force = 0
 
         # 0: non-edge non-corner 1: edge 2: corner
         if (self.row == 0 or self.row == GSM.rows-1) and (self.col == 0 or self.col == GSM.cols-1):
@@ -153,11 +152,6 @@ class Tile:
                 text_rect = prob_text.get_rect(center=(self.x + TILESIZE // 2, self.y + TILESIZE // 2))
                 display.blit(prob_text, text_rect)
         elif display_probs == 3:
-            if self.force != -1 and not self.revealed and not self.flagged:
-                prob_text = Tile.font.render(f"{self.force}", True, (0, 0, 0))  # Black text
-                text_rect = prob_text.get_rect(center=(self.x + TILESIZE // 2, self.y + TILESIZE // 2))
-                display.blit(prob_text, text_rect)
-        elif display_probs == 4:
             loc_text = Tile.font.render(f"{self.loc}", True, (0, 0, 0))  # Black text
             text_rect = loc_text.get_rect(center=(self.x + TILESIZE // 2, self.y + TILESIZE // 2))
             display.blit(loc_text, text_rect)
@@ -168,34 +162,52 @@ class Tile:
 class Board:
     seed = None
     display_probs = 0 #0,1,2
-    def __init__(self,run_pygame=True):
+    def __init__(self,run_pygame=True,empty=False):
         if run_pygame:
             self.display = pygame.Surface((GSM.rows * TILESIZE, GSM.cols * TILESIZE))
+        if not empty:
+            self.tiles = []
+            for row in range(GSM.rows):
+                self.tiles.append([])
+                for col in range(GSM.cols):
+                    tile = Tile(row,col,tile_unknown_path,UNKNOWN)
+                    tile.neighbors = get_neighbors((row,col))
+                    self.tiles[row].append(tile)
+            self.rows = GSM.rows
+            self.cols = GSM.cols
+            self.num_revealed = 0
+            self.flag_count = 0
+            self.complete = False
+            self.mines = []
+            self.first_click= (0,0)
+            self.seed = None
+            self.death_click = None
+            self.revealed_tiles = set()
+            self.unfinished_clues = set()
+            self.flagged_tiles = set()
+            self.minecount = 0
+            self.cloned = False
+    # load info into freshly init board
+    def clone_board(self,board):
         self.tiles = []
-        for row in range(GSM.rows):
+        for row in range(board.rows):
             self.tiles.append([])
-            for col in range(GSM.cols):
-                tile = Tile(row,col,tile_unknown_path,UNKNOWN)
-                tile.neighbors = get_neighbors((row,col))
+            for col in range(board.cols):
+                tile = copy.copy(board.tiles[row][col])
                 self.tiles[row].append(tile)
-        self.rows = GSM.rows
-        self.cols = GSM.cols
-        self.num_revealed = 0
-        self.flag_count = 0
-        self.complete = False
-        self.mines = []
-        self.first_click= (0,0)
-        self.seed = None
-        self.death_click = None
-        self.revealed_tiles = set()
-        self.unfinished_clues = set()
-        self.flagged_tiles = set()
-        self.minecount = 0
-
-    def reset_probs(self):
-        for row in self.tiles:
-            for tile in row: 
-                tile.prob_mine_local = -1
+        self.rows = board.rows
+        self.cols = board.cols
+        self.num_revealed = board.num_revealed
+        self.flag_count = board.flag_count
+        self.complete = board.complete
+        self.mines = board.mines
+        self.first_click=board.first_click
+        self.seed = board.seed
+        self.death_click=board.death_click
+        self.revealed_tiles=set(board.revealed_tiles)
+        self.unfinished_clues=set(board.unfinished_clues)
+        self.flagged_tiles=set(board.flagged_tiles)
+        self.cloned=True
 
     def get_type_at_loc(self,loc):
         return self.tiles[loc[0]][loc[1]].get_type()
@@ -233,20 +245,6 @@ class Board:
 
     def get_flag_count(self):
         return self.flag_count
-    def toggle_flag_at_loc(self,x,y):
-        if not self.tiles[x][y].is_revealed():
-            self.tiles[x][y].toggle_flag()
-            if self.tiles[x][y].is_flagged():
-                self.flag_count +=1
-                neighbors = self.get_neighbor_tiles((x,y))
-                for n in neighbors:
-                    n.num_adj_flags += 1
-                    
-            else:
-                self.flag_count -=1
-                neighbors = self.get_neighbor_tiles((x,y))
-                for n in neighbors:
-                    n.num_adj_flags -= 1
 
     def draw(self,screen):
         for row in self.tiles:
@@ -310,7 +308,8 @@ class Board:
             
 
         
-    def reveal_tiles(self,mx,my):
+    def reveal_tiles(self,loc):
+        mx,my=loc
         if self.tiles[mx][my].is_revealed() or self.tiles[mx][my].is_flagged():
             return
         self.tiles[mx][my].set_revealed(True)

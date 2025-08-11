@@ -156,7 +156,7 @@ class MenuScreen:
                     
                     elif event.button == 3:
                         if not self.first_click:
-                            self.board.toggle_flag_at_loc(mx,my)
+                            self.board.toggle_flag_at_loc((mx,my))
                 
 
                 

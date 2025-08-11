@@ -208,7 +208,7 @@ class Game:
                     C.handle_keypress_u()
                 elif event.key == pygame.K_i:
                     Board.display_probs += 1
-                    Board.display_probs %= 5
+                    Board.display_probs %= 4
                 elif event.key == pygame.K_o:
                     C.handle_keypress_o()
                 elif event.key == pygame.K_p:
