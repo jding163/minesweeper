@@ -154,9 +154,6 @@ def handle_keypress_w():
 def handle_keypress_e():
     pass
 
-    #prob.update_nonfrontier_tile_probs(board)
-    # l = [(cc, sols) for cc, sols in board.ccs_dict.items() if len(cc) != len (sols[0])]
-    # print(l)
 
 def handle_keypress_t(seed=None,timeout=None):
     if GSM.get_game_state() is False:
@@ -167,8 +164,8 @@ def handle_keypress_t(seed=None,timeout=None):
         handle_board_click()
     else:
         handle_board_click(seed=seed)
-    #player.set_strategy(strat.SafestTile())
-    player.set_strategy(strat.SecSafety())
+    player.set_strategy(strat.SafestTile())
+    #player.set_strategy(strat.SecSafety())
     
     start = time.time()
     if timeout is not None:
@@ -176,7 +173,7 @@ def handle_keypress_t(seed=None,timeout=None):
 
     #player.set_strategy(strat.SafestTileAndLikeliestOpening())
     try:
-        player.autoplay(risk=False)
+        player.autoplay(risk=True)
     except Exception as e:
         print(e)
         traceback.print_exc()
@@ -214,15 +211,6 @@ def handle_keypress_k():
     board.open_known_tiles()
 
 def handle_keypress_o():
-    
-    # # x,y = (0,0)
-    # # if not tile.is_revealed() and not tile.is_flagged():
-    # for x in range(GSM.rows):
-    #     for y in range(GSM.cols):
-    #         tile_state = board.tile_state_tracker[x][y]
-    #         if tile_state is UNKNOWN:
-    #             tile.prob_opening = prob.calc_prob_opening_for_loc(board,(x,y))
-                #prob.calc_local_prob_of_opening_at_loc(board,(x,y))
     Board.display_probs = 2
 
 def handle_keypress_n():

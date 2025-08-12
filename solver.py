@@ -6,6 +6,8 @@ from itertools import product
 import copy
 import fifty_fifty_detection as ffd
 from dataclasses import dataclass
+import time
+import probability as prob
 
 
 # # Set up logging
@@ -17,8 +19,7 @@ from dataclasses import dataclass
 # )
 class TimeoutException(Exception):
     pass
-import time
-import probability as prob
+
 
 @dataclass 
 class SolverHeuristics():
@@ -100,14 +101,14 @@ class Solver(Board):
     def is_loc_candidate_for_analysis(self,loc):
         if loc not in self.nonfrontier_tiles:
             return True
-        tile = self.tiles[loc[0]][loc[1]]
-        neighbor_coords = tile.neighbors
+        x,y=loc
+        neighbor_coords = self.tile_neighbors[x][y]
         count_nonfrontier = 0
         count_frontier = 0
         for x,y in neighbor_coords:
             if (x,y) in self.nonfrontier_tiles:
                 count_nonfrontier += 1
-            elif self.tiles[x][y].is_unknown():
+            elif self.tile_state_tracker[x][y] is UNKNOWN:
                 count_frontier += 1
             if count_nonfrontier - count_frontier >= 4:
                 return False
@@ -119,9 +120,10 @@ class Solver(Board):
         groups_dict = defaultdict(list)
 
         for loc in locs:
+            x,y=loc
             # Get set of neighboring number tiles
             number_neighbors = frozenset(
-                tile.loc for tile in self.get_number_neighbor_tiles(loc)
+                (xn,yn) for xn,yn in self.tile_neighbors[x][y] if self.tile_state_tracker[xn][yn] == REVEALED
             )
             groups_dict[number_neighbors].append(loc)
         # Sort each group for determinism
@@ -141,21 +143,21 @@ class Solver(Board):
     # flags neighbors if they are known to be mines
     def flag_neighbors(self,loc):
         x,y=loc
-        tile = self.tiles[x][y]
-        target_mines = tile.num_adj_mines
-        curr_flags = tile.num_adj_flags
+        target_mines = self.num_mine_tracker[x][y]
+        curr_flags = self.adj_flag_tracker[x][y]
         mines_to_find = target_mines - curr_flags
         unknown_neighbors = []
-        neighbors = self.get_neighbor_tiles(loc)
+        neighbors = self.tile_neighbors[x][y]
         for neighbor in neighbors:
-            if neighbor.is_unknown():
+            xn,yn=neighbor
+            if self.tile_state_tracker[xn][yn] is UNKNOWN:
                 unknown_neighbors.append(neighbor)
         flags_found = len(unknown_neighbors) == mines_to_find
         if flags_found:
             for neighbor in unknown_neighbors:
-                self.toggle_flag_at_loc((neighbor.row,neighbor.col))
+                self.toggle_flag_at_loc(neighbor)
         #return flags_found
-        return [neighbor.loc for neighbor in unknown_neighbors]
+        return unknown_neighbors
     
     def flag_board(self):
         flags_found = False
@@ -185,12 +187,14 @@ class Solver(Board):
     def get_ccs(self):
         adj_sets = []
         for loc in self.unfinished_clues:
-            neighbors = self.get_neighbor_tiles(loc)
+            x,y=loc
+            neighbors = self.tile_neighbors[x][y]
             adj_set = set()
 
             for neighbor in neighbors:
-                if neighbor.is_unknown():
-                    adj_set.add((neighbor.row,neighbor.col))
+                xn,yn = neighbor
+                if self.tile_state_tracker[xn][yn] is UNKNOWN:
+                    adj_set.add(neighbor)
             if len(adj_set) > 0: 
                 adj_sets.append(adj_set)
         merged = merge_sets(adj_sets)
@@ -210,23 +214,25 @@ class Solver(Board):
         regions = self.convert_ccs_to_regions(ccs)
         return regions
 
-    def assign_tile_value(self,tile,val):
-        orig_val_at_loc = tile.num_adj_mines
-        tile.num_adj_mines = val
-        tile.type = NUMBER
-        self.unfinished_clues.add(tile.loc)
+    def assign_tile_value(self,loc,val):
+        x,y=loc
+        orig_val_at_loc = self.num_mine_tracker[x][y]
+        self.num_mine_tracker[x][y] = val
+        self.tile_state_tracker[x][y] = REVEALED
+        self.unfinished_clues.add(loc)
         return orig_val_at_loc
     
-    def unassign_tile_value(self,tile,orig_val_at_loc):
-        tile.num_adj_mines = orig_val_at_loc
-        tile.type = UNKNOWN
-        self.unfinished_clues.discard(tile.loc)
+    def unassign_tile_value(self,loc,orig_val_at_loc):
+        x,y=loc
+
+        self.num_mine_tracker[x][y] = orig_val_at_loc
+        self.tile_state_tracker[x][y] = UNKNOWN
+        self.unfinished_clues.discard(loc)
 
     # return total_count,best_prob, num_safe
     def get_sol_counts_at_loc_for_val(self,loc,val):
         x,y = loc
-        tile = self.tiles[x][y]
-        orig_val_at_loc = self.assign_tile_value(tile,val)
+        orig_val_at_loc = self.assign_tile_value(loc,val)
         regions = self.get_updated_regions_list()
         regions_to_solve = []
         for region in regions:
@@ -254,17 +260,12 @@ class Solver(Board):
             nonfrontier_locs = set()
             for r in range(self.rows):
                 for c in range(self.cols):
-                    if (r,c) not in frontier_locs and self.tiles[r][c].is_unknown():
+                    if (r,c) not in frontier_locs and self.tile_state_tracker[r][c] is UNKNOWN:
                         nonfrontier_locs.add((r,c))
 
             safe_locs, _,best_prob,total_count= self.calc_probs_for_board(regions_to_solve,groups_list,nonfrontier_locs,update_self=False) 
             num_safe = len(safe_locs)
-            # for region in regions_to_solve:
-            #     ff_groups_in_region = ffd.is_two_tile_ff_in_region(self,region)
-            #     if ff_groups_in_region:
-            #         has_ff = True
-            #         break
-        self.unassign_tile_value(tile,orig_val_at_loc)
+        self.unassign_tile_value(loc,orig_val_at_loc)
         return SolverHeuristics(total_count=total_count,best_prob=best_prob, num_safe=num_safe,has_ff=has_ff)
 
 
@@ -314,7 +315,7 @@ class Solver(Board):
         for i in range(len(all_groups)):
             group = all_groups[i]
             x,y = group[0]
-            neighbors = self.tiles[x][y].neighbors
+            neighbors = self.tile_neighbors[x][y]
             clue_neighbors = [n for n in neighbors if n in unfinished_clues_list]
 
             clue_indices_for_group = [clue_index_dict[n] for n in clue_neighbors]
@@ -396,7 +397,7 @@ class Solver(Board):
         relevant_clues = set()
 
         for x, y in region_tiles:
-            for neighbor in self.tiles[x][y].neighbors:
+            for neighbor in self.tile_neighbors[x][y]:
                 if neighbor in self.unfinished_clues:
                     relevant_clues.add(clue_index_dict[neighbor])
         relevant_clues = list(relevant_clues)
@@ -416,9 +417,10 @@ class Solver(Board):
         # satisfy the clue at unfinished_clues_list[i]
         mines_added_per_clue = [0] * len(clue_index_dict)
         for clue_loc, clue_index in clue_index_dict.items():
+            x,y=clue_loc
             if clue_index in relevant_clues:
-                clue = self.tiles[clue_loc[0]][clue_loc[1]]
-                mines_added_per_clue[clue_index] = clue.num_adj_mines-clue.num_adj_flags
+                clue = self.num_mine_tracker[x][y]
+                mines_added_per_clue[clue_index] = self.num_mine_tracker[x][y]-self.adj_flag_tracker[x][y]
         while (num_used_clues < len(relevant_clues)):
             best_clue = -1
             best_clue_boundary = len(groups_list) + 1
@@ -472,8 +474,7 @@ class Solver(Board):
 
     def calc_prob_at_loc(self,loc,groups_list,nonfrontier_locs,total_sols,total_sols_dict,num_local_sols_at_count,ps_with_num_mines):
         x,y=loc
-        tile = self.tiles[x][y]
-        if not tile.is_unknown():
+        if self.tile_state_tracker[x][y] is not UNKNOWN:
             return 0
         
 
@@ -544,9 +545,9 @@ class Solver(Board):
                 rep_loc = group_locs[0]
                 prob_at_loc = self.calc_prob_at_loc(rep_loc,groups_list,nonfrontier_locs,total_sols,total_sols_dict,num_local_sols_at_count,ps_with_num_mines)
                 for loc in group_locs:
+                    x,y=loc
                     if update_self:
-                        tile = self.tiles[loc[0]][loc[1]]
-                        tile.prob_mine_local = prob_at_loc
+                        self.mine_probs[x][y] = prob_at_loc
                     if prob_at_loc == 0:
                         safe_locs.append(loc)
                     elif prob_at_loc == 1:
@@ -567,8 +568,9 @@ class Solver(Board):
             prob_at_loc = self.calc_prob_at_loc(nf_loc,groups_list,nonfrontier_locs,total_sols,total_sols_dict,num_local_sols_at_count,ps_with_num_mines)
             for loc in nonfrontier_locs:
                 if update_self:
-                    tile = self.tiles[loc[0]][loc[1]]
-                    tile.prob_mine_local = prob_at_loc
+                    x,y=loc
+                    self.mine_probs[x][y] = prob_at_loc
+
 
 
                 if prob_at_loc == 0:
@@ -578,6 +580,7 @@ class Solver(Board):
             safest_prob = min(safest_prob,prob_at_loc)
 
         return safe_locs,mine_locs,safest_prob,total_sols
+    
     def solve_exhaustive(self):
         self.regions_list = self.get_updated_regions_list()
         groups_list= self.find_possibilities(self.regions_list)
@@ -605,7 +608,7 @@ class Solver(Board):
         nonfrontier_locs = set()
         for r in range(self.rows):
             for c in range(self.cols):
-                if (r,c) not in frontier_locs and self.tiles[r][c].is_unknown():
+                if (r,c) not in frontier_locs and self.tile_state_tracker[r][c] is UNKNOWN:
                     nonfrontier_locs.add((r,c))
         self.nonfrontier_tiles = sorted(nonfrontier_locs)
         if len(groups_list) == 0 and mines_left==0:
@@ -613,8 +616,7 @@ class Solver(Board):
             safe_locs = []
             for x,y in nonfrontier_locs:
                 
-                tile = self.tiles[x][y]
-                tile.prob_mine_local = 0
+                self.mine_probs[x][y] = 0
                 safe_locs.append((x,y))
             return safe_locs,[]
         # if len(groups_list) == 0 and len(nonfrontier_locs) <= 5 and len(nonfrontier_locs) > 2:
@@ -624,11 +626,10 @@ class Solver(Board):
         safe_locs, mine_locs = self.search_possibilities(self.regions_list,groups_list)
         if len(safe_locs) > 0:
             for x,y in safe_locs:
-                tile = self.tiles[x][y]
-                tile.prob_mine_local = 0
+                self.mine_probs[x][y]= 0
             for x,y in mine_locs:
-                tile = self.tiles[x][y]
-                tile.prob_mine_local = 1
+                self.mine_probs[x][y]= 1
+
         else:
             safe_locs, mine_locs,_,total_sols= self.calc_probs_for_board(self.regions_list,groups_list,nonfrontier_locs) 
             self.total_sols = total_sols
@@ -698,10 +699,12 @@ class Solver(Board):
         tile_neighbors = defaultdict(set)
 
         for loc in locs:
-            neighbors = self.get_neighbor_tiles(loc)
+            x,y=loc
+            neighbors = self.tile_neighbors[x][y]
             for neighbor in neighbors:
-                if neighbor.type is NUMBER:
-                    constraint_map[(neighbor.row,neighbor.col)].add(loc)
+                xn,yn=neighbor
+                if self.tile_state_tracker[xn][yn] is REVEALED and self.num_mine_tracker[xn][yn] != 9:
+                    constraint_map[neighbor].add(loc)
 
         # Build tile_neighbors from constraints
         for tiles in constraint_map.values():

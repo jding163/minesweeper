@@ -15,9 +15,6 @@ from line_profiler import profile
 # OPENING = 2
 # MINE = 3
 
-REVEALED = 1
-FLAGGED = 2
-
 
 tile_number_paths = []
 for i in range(1, 9):
@@ -166,6 +163,9 @@ class Board:
             self.num_mine_tracker = [[0]*self.cols for _ in range(self.rows)]
             self.tile_state_tracker = [[0]*self.cols for _ in range(self.rows)]
             self.adj_flag_tracker = [[0]*self.cols for _ in range(self.rows)]
+            self.mine_probs = [[0]*self.cols for _ in range(self.rows)]
+            self.opening_probs = [[0]*self.cols for _ in range(self.rows)]
+
     # load info into freshly init board
     def clone_board(self,board):
 
@@ -182,6 +182,14 @@ class Board:
         self.unfinished_clues=set(board.unfinished_clues)
         self.flagged_tiles=set(board.flagged_tiles)
         self.cloned=True
+
+        self.tile_neighbors=copy.copy(board.tile_neighbors)
+        self.num_mine_tracker=copy.copy(board.num_mine_tracker)
+        self.tile_state_tracker=copy.copy(board.tile_state_tracker)
+        self.adj_flag_tracker=copy.copy(board.adj_flag_tracker)
+        self.mine_probs=copy.copy(board.mine_probs)
+        self.opening_probs=copy.copy(board.opening_probs)
+
 
     
     def toggle_flag_at_loc(self,loc):

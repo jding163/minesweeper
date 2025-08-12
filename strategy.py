@@ -6,6 +6,13 @@ from line_profiler import profile
 import solver
 import fifty_fifty_detection as ffd
 
+
+def get_priority(board,loc):
+    x,y=loc
+    on_h_edge = 1 if x == 0 or x == board.rows - 1 else 0
+    on_v_edge = 1 if y == 0 or x == board.cols - 1 else 0
+    return on_h_edge + on_v_edge
+
 class Strategy:
 
     def __str__(self):
@@ -27,55 +34,58 @@ class SafestTile(Strategy):
         min_prob = 1
         min_x=-1
         min_y=-1
-        priority = -1
+        best_priority = -1
 
         unrevealed_tile_locs = []
         for region in board.regions_list:
             for loc in region.locs:
                 unrevealed_tile_locs.append(loc)
         for x,y in unrevealed_tile_locs:
-            tile = board.tiles[x][y]
-            if tile.prob_mine_local < min_prob:
-                min_prob = tile.prob_mine_local
+            prob_mine = board.mine_probs[x][y]
+            if prob_mine < min_prob:
+                min_prob = prob_mine
                 min_x = x
                 min_y = y
-                priority = tile.pos_type
-            elif tile.prob_mine_local == min_prob:
-                if tile.pos_type > priority:
+                best_priority = get_priority(board,(x,y))
+            elif prob_mine == min_prob:
+                priority = get_priority(board,(x,y))
+                if priority > best_priority:
                     min_x = x
                     min_y = y
-                    priority = tile.pos_type
+                    best_priority = priority
         if len(board.nonfrontier_tiles) > 0:
             x_nf,y_nf = board.nonfrontier_tiles[0]
-            nonfrontier_tile = board.tiles[x_nf][y_nf]
-            nonfrontier_tile_prob = nonfrontier_tile.prob_mine_local
+            nonfrontier_tile_prob = board.mine_probs[x_nf][y_nf]
             if nonfrontier_tile_prob <= min_prob:
+
                 for x,y in board.nonfrontier_tiles:
-                    tile = board.tiles[x][y]
-                    if tile.pos_type > priority:
+                    priority = get_priority(board,(x,y))
+
+                    if priority > best_priority:
                         min_x = x
                         min_y = y
-                        priority = tile.pos_type
+                        best_priority = priority
         return min_x,min_y
     
     def find_move_from_locs(self,board,locs):
         min_prob = 1
         min_x=-1
         min_y=-1
-        priority = -1
+        best_priority = -1
 
         for x,y in locs:
-            tile = board.tiles[x][y]
-            if tile.prob_mine_local < min_prob:
-                min_prob = tile.prob_mine_local
+            prob_mine = board.mine_probs[x][y]
+            if prob_mine < min_prob:
+                min_prob = prob_mine
                 min_x = x
                 min_y = y
-                priority = tile.pos_type
-            elif tile.prob_mine_local == min_prob:
-                if tile.pos_type > priority:
+                best_priority = get_priority(board,(x,y))
+            elif prob_mine == min_prob:
+                priority = get_priority(board,(x,y))
+                if priority > best_priority:
                     min_x = x
                     min_y = y
-                    priority = tile.pos_type
+                    best_priority = priority
         return min_x,min_y
 
 

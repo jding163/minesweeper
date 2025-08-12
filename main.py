@@ -159,8 +159,8 @@ class Game:
                         #C.handle_board_click(seed=-1569694061328666230)
                         #C.handle_board_click(seed=3180935053634563155)
                         #C.handle_board_click(seed=569029668483675204)
-                        C.handle_board_click(seed=4426209640626608113)
-                        #C.handle_board_click(seed=2952632461156066079)
+                        #C.handle_board_click(seed=4426209640626608113)
+                        C.handle_board_click(seed=5056955005007350431)
 
                         #C.handle_board_click()
                     
@@ -240,5 +240,5 @@ def main():
     g.run()
 
 if __name__ == "__main__":
-    multiprocessing.set_start_method("spawn")  # Important on macOS/Windows
+    multiprocessing.set_start_method("spawn") 
     main()

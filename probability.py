@@ -70,43 +70,6 @@ def calc_global_prob_for_group(merged_regions,group,sols_per_mines_in_frontier):
     # print(total_sols)
     return global_prob
 
-def distribute_ones(n, length):
-    """Generate all binary lists of a given length with n ones."""
-    if n > length:
-        return []
-    result = []
-    for ones_positions in combinations(range(length), n):
-        arr = [0] * length
-        for pos in ones_positions:
-            arr[pos] = 1
-        result.append(arr)
-    return result
-
-def expand_sols_flat(sols, groups):
-    lens = [len(group) for group in groups]
-    all_group_distributions = []
-    for count, length in zip(sols, lens):
-        if length == 0:
-            all_group_distributions.append([[]])
-        elif count == 0:
-            all_group_distributions.append([[0] * length])
-        else:
-            all_group_distributions.append(distribute_ones(count, length))
-
-    # Cartesian product to form all full combinations
-    grouped_sols = product(*all_group_distributions)
-
-    # Flatten each solution across all groups
-    flattened_sols = [sum(solution, []) for solution in grouped_sols]
-    return flattened_sols
-
-def expand_batch(batch_sols, groups):
-    all_flattened = []
-    for sols in batch_sols:
-        expanded = expand_sols_flat(sols, groups)
-        all_flattened.extend(expanded)
-    return all_flattened
-
 # @dataclass 
 # class SolverHeuristics():
 #     total_count: int

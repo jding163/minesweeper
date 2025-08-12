@@ -60,9 +60,9 @@ class Player():
         min_x=-1
         min_y=-1
         for x,y in locs:
-            tile = self.board.tiles[x][y]
-            if tile.prob_mine_local < min_prob:
-                min_prob = tile.prob_mine_local
+            prob_mine = self.board.mine_probs[x][y]
+            if prob_mine < min_prob:
+                min_prob = prob_mine
                 min_x = x
                 min_y = y
         return min_x,min_y
@@ -158,7 +158,7 @@ class Player():
                 if tiletype == -1: #mine
                     reqs_satisfied = (x,y) in self.board.mines
                 else:
-                    reqs_satisfied = ((not (x,y) in self.board.mines) and (self.board.tiles[x][y].get_adj_mines() == tiletype))
+                    reqs_satisfied = ((not (x,y) in self.board.mines) and (self.board.num_mine_tracker[x][y] == tiletype))
                 if not reqs_satisfied:
                     break
             if not reqs_satisfied:
@@ -217,7 +217,7 @@ class Player():
                     print(i)
                     logging.info(i)
                 seed=seeds[i]
-                logging.info(f'starting game {i}: {seed}')
+                #logging.info(f'starting game {i}: {seed}')
                 try:
                     result = self.play_game(seed=seed)
                 except TimeoutException as e:
@@ -319,9 +319,9 @@ def main():
     #b=Solver()
 
     p = Player(timeout=60)
-    #p.set_strategy(strat.SafestTile())
+    p.set_strategy(strat.SafestTile())
     #p.set_strategy(strat.SafestTileAndLikeliestOpening())
-    p.set_strategy(strat.SecSafety())
+    #p.set_strategy(strat.SecSafety())
 
     # with open('seeds1.txt', 'r') as f:
     #     seeds_list = [int(line.strip()) for line in f]
