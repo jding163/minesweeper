@@ -217,7 +217,7 @@ class Player():
                     print(i)
                     logging.info(i)
                 seed=seeds[i]
-                #logging.info(f'starting game {i}: {seed}')
+                logging.info(f'starting game {i}: {seed}')
                 try:
                     result = self.play_game(seed=seed)
                 except TimeoutException as e:

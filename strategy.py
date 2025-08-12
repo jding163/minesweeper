@@ -5,7 +5,7 @@ import time
 from line_profiler import profile
 import solver
 import fifty_fifty_detection as ffd
-
+import logging
 
 def get_priority(board,loc):
     x,y=loc
@@ -277,6 +277,7 @@ class SecSafety(Strategy):
         #         board.collected=True
         #         print(best_loc)
         #         print(best_loc1)
+        logging.info(best_loc)
         return best_loc
 
     def find_move_from_locs(self, board,locs):
