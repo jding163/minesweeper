@@ -334,7 +334,7 @@ def main():
     #seed=5
     # res = p.play_game(seed=seed)
     # print(res)
-    w1 = p.play_games(25,seed=seed,parallel=False,timeout=30)
+    w1 = p.play_games(100,seed=seed,parallel=False,timeout=30)
     # for w in w1:
     #     print(w)
 
