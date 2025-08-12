@@ -63,8 +63,8 @@ class Region():
 
 class Solver(Board):
     collected_seeds = []
-    def __init__(self,first_click=(0,0),run_pygame=True,empty=False):
-        super().__init__(run_pygame=run_pygame,empty=empty)
+    def __init__(self,first_click=(0,0),empty=False):
+        super().__init__(empty=empty)
         if not empty:
             self.first_click = first_click
             self.nonfrontier_tiles = []

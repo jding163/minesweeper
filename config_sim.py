@@ -29,7 +29,7 @@ def gen_board_from_sample(board,sample):
     #     new_mines.append(loc)
     start = time.time()
 
-    new_board = Solver(run_pygame=False,empty=True)
+    new_board = Solver(empty=True)
     new_board.clone_board(board)
     new_board.mines = new_mines
     new_board.copy_solver_info(board)

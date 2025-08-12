@@ -15,6 +15,7 @@ import progress as prog
 test=True
 
 board = None
+board_ui = None
 game = None
 player = None
 mx = 0
@@ -29,9 +30,10 @@ def set_player(p):
     global player
     player = p
 def set_board(b):
-    global board
+    global board,board_ui
     board = b
     player.set_board(b)
+    board_ui = BoardUI(board)
 
 def set_game(g):
     global game
@@ -51,10 +53,10 @@ def reset_board():
     set_board(b)
 
 def draw_board(screen):
-    board.draw(screen)
+    board_ui.draw(screen)
 
 def get_flag_count():
-    return board.get_flag_count()
+    return board.flag_count
 
 
 def game_won():
@@ -121,7 +123,8 @@ def handle_board_click(mines=False,seed=None):
         board.populate((mx,my),custom_mines=mines,seed=seed)
         game.first_click = False
         game.start_time = time.time()
-    if board.tiles[mx][my].is_revealed():
+    
+    if board.tile_state_tracker[mx][my] is REVEALED:
         board.chord((mx,my))
 
     board.reveal_tiles((mx,my))
@@ -212,14 +215,13 @@ def handle_keypress_k():
 
 def handle_keypress_o():
     
-    # x,y = (0,0)
-    # tile = board.tiles[x][y]
-    # if not tile.is_revealed() and not tile.is_flagged():
-    for x in range(GSM.rows):
-        for y in range(GSM.cols):
-            tile = board.tiles[x][y]
-            if not tile.is_revealed() and not tile.is_flagged():
-                tile.prob_opening = prob.calc_prob_opening_for_loc(board,(x,y))
+    # # x,y = (0,0)
+    # # if not tile.is_revealed() and not tile.is_flagged():
+    # for x in range(GSM.rows):
+    #     for y in range(GSM.cols):
+    #         tile_state = board.tile_state_tracker[x][y]
+    #         if tile_state is UNKNOWN:
+    #             tile.prob_opening = prob.calc_prob_opening_for_loc(board,(x,y))
                 #prob.calc_local_prob_of_opening_at_loc(board,(x,y))
     Board.display_probs = 2
 
@@ -263,11 +265,11 @@ def handle_keypress_v():
 def handle_keypress_space():
     if my<0:
         return
-    if board.get_type_at_loc((mx,my)) is UNKNOWN or board.get_type_at_loc((mx,my)) is MINE:
+    if board.tile_state_tracker[mx][my] is UNKNOWN or board.tile_state_tracker[mx][my] is FLAGGED:
         handle_board_right_click()
-    elif board.get_type_at_loc((mx,my)) is NUMBER:
+    else:
         handle_board_click()
-
+    
 def handle_customization_sliders(event):
     event.ui_element.update_text()
 def handle_customization_text(event):

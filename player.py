@@ -122,7 +122,7 @@ class Player():
     def play_game(self,seed=None):
         #C.handle_keypress_n()  # full reset
         #GSM.set_game_state(True)
-        self.board = Solver(run_pygame=False)
+        self.board = Solver()
         if self.timeout is not None:
             self.board.deadline = time.time() + self.timeout
 
