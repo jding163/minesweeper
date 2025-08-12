@@ -5,7 +5,6 @@ import copy
 from solver import Solver
 from line_profiler import profile
 
-@profile
 def gen_board_from_sample(board,sample):
     groups_list = board.groups_list
     # new_mines = []

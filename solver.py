@@ -229,6 +229,7 @@ class Solver(Board):
         self.tile_state_tracker[x][y] = UNKNOWN
         self.unfinished_clues.discard(loc)
 
+    @profile
     # return total_count,best_prob, num_safe
     def get_sol_counts_at_loc_for_val(self,loc,val):
         x,y = loc
@@ -343,6 +344,7 @@ class Solver(Board):
             new_ps.append(new_p)
 
         return new_start_index, new_ps
+    
     def find_possibilities(self,regions_to_solve):
         groups_list = {}
         if len(regions_to_solve) > 0:
@@ -375,7 +377,7 @@ class Solver(Board):
                     region.ps = new_ps
         return groups_list
 
-
+    @profile
     def find_possibilities_for_region(self,region,groups_list, unfinished_clues_list, clue_index_dict):
         #groups_list: dict(group id: GroupInfo(tile_locs,clue_indices))
         #unfinished_clues_list: list of locs of clues to be used
@@ -509,6 +511,8 @@ class Solver(Board):
             avg_mines_in_group += (num_sols_at_num_mines/total_sols) * avg_mines_in_group_at_num_mines
         prob_loc_is_mine = avg_mines_in_group/group_size
         return prob_loc_is_mine
+    
+    @profile
     def calc_probs_for_board(self,regions,groups_list,nonfrontier_locs,update_self=True):
         safe_locs = []
         mine_locs = []
