@@ -343,6 +343,8 @@ class Solver(Board):
             new_ps.append(new_p)
 
         return new_start_index, new_ps
+    
+    @profile
     def find_possibilities(self,regions_to_solve):
         groups_list = {}
         if len(regions_to_solve) > 0:
