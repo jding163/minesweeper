@@ -183,12 +183,26 @@ class Board:
         self.flagged_tiles=set(board.flagged_tiles)
         self.cloned=True
 
-        self.tile_neighbors=copy.copy(board.tile_neighbors)
-        self.num_mine_tracker=copy.copy(board.num_mine_tracker)
-        self.tile_state_tracker=copy.copy(board.tile_state_tracker)
-        self.adj_flag_tracker=copy.copy(board.adj_flag_tracker)
-        self.mine_probs=copy.copy(board.mine_probs)
-        self.opening_probs=copy.copy(board.opening_probs)
+        self.tile_neighbors=[]
+        self.num_mine_tracker=[]
+        self.tile_state_tracker=[]
+        self.adj_flag_tracker=[]
+        self.mine_probs=[]
+        self.opening_probs=[]
+        for row in range(GSM.rows):
+            self.tile_neighbors.append(board.tile_neighbors[row][:])          
+            self.num_mine_tracker.append(board.num_mine_tracker[row][:])                
+            self.tile_state_tracker.append(board.tile_state_tracker[row][:])                
+            self.adj_flag_tracker.append(board.adj_flag_tracker[row][:])                
+            self.mine_probs.append(board.mine_probs[row][:])                
+            self.opening_probs.append(board.opening_probs[row][:])                
+     
+        # self.tile_neighbors=copy.deepcopy(board.tile_neighbors)
+        # self.num_mine_tracker=copy.deepcopy(board.num_mine_tracker)
+        # self.tile_state_tracker=copy.deepcopy(board.tile_state_tracker)
+        # self.adj_flag_tracker=copy.deepcopy(board.adj_flag_tracker)
+        # self.mine_probs=copy.deepcopy(board.mine_probs)
+        # self.opening_probs=copy.deepcopy(board.opening_probs)
 
 
     

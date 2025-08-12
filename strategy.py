@@ -106,9 +106,10 @@ class SafestTileAndLikeliestOpening(Strategy):
                 unrevealed_tile_locs.append(loc)
         for loc in unrevealed_tile_locs:
             x,y = loc
-            tile = board.tiles[x][y]
-            if tile.prob_mine_local < min_prob:
-                min_prob = tile.prob_mine_local
+            prob_mine = board.mine_probs[x][y]
+
+            if prob_mine < min_prob:
+                min_prob = prob_mine
                 min_x = x
                 min_y = y
 
@@ -120,39 +121,37 @@ class SafestTileAndLikeliestOpening(Strategy):
         # print(threshold)
         for loc in unrevealed_tile_locs:
             x,y = loc
-            tile = board.tiles[x][y]
-            if tile.prob_mine_local <= min_prob:
-                candidates.append(tile)
+            prob_mine = board.mine_probs[x][y]
+            if prob_mine <= min_prob:
+                candidates.append(loc)
   
 
         x_nf,y_nf = board.nonfrontier_tiles[0]
-        nonfrontier_tile = board.tiles[x_nf][y_nf]
-        nonfrontier_tile_prob = nonfrontier_tile.prob_mine_local
+        nonfrontier_tile_prob = board.mine_probs[x_nf][y_nf]
         eps = 0.000001
 
         if nonfrontier_tile_prob <= min_prob + eps:
-            for x,y in board.nonfrontier_tiles:
+            for loc in board.nonfrontier_tiles:
 
-                tile = board.tiles[x][y]
-                candidates.append(tile)
+                candidates.append(loc)
 
         if len(candidates) == 1:
-            return candidates[0].loc
-        candidates = sorted(candidates, key=lambda c: (c.loc[0], c.loc[1]))        
+            return candidates[0]
+        candidates = sorted(candidates, key=lambda c: (c[0], c[1]))        
         filtered = []
         for c in candidates:
-            if c.num_adj_flags == 0:
+            if board.adj_flag_tracker[c[0]][c[1]] == 0:
                 filtered.append(c)
 
         if len(filtered) == 1:
-            return filtered[0].loc
+            return filtered[0]
         if len(filtered) == 0:
-            return candidates[0].loc
+            return candidates[0]
         progress_dists = {}
 
         for c in filtered:
-            if board.is_loc_candidate_for_analysis(c.loc):
-                progress_dists[c.loc] = prob.calc_prob_opening_for_loc(board,c.loc)
+            if board.is_loc_candidate_for_analysis(c):
+                progress_dists[c] = prob.calc_prob_opening_for_loc(board,c)
         best = None
         prob_opening_best = -1
         for k,v in progress_dists.items():
@@ -168,9 +167,9 @@ class SafestTileAndLikeliestOpening(Strategy):
 
         for loc in locs:
             x,y = loc
-            tile = board.tiles[x][y]
-            if tile.prob_mine_local < min_prob:
-                min_prob = tile.prob_mine_local
+            prob_mine = board.mine_probs[x][y]
+            if prob_mine < min_prob:
+                min_prob = prob_mine
                 min_x = x
                 min_y = y
 
@@ -182,27 +181,27 @@ class SafestTileAndLikeliestOpening(Strategy):
         # print(threshold)
         for loc in locs:
             x,y = loc
-            tile = board.tiles[x][y]
-            if tile.prob_mine_local <= min_prob:
-                candidates.append(tile)
+            prob_mine = board.mine_probs[x][y]
+            if prob_mine <= min_prob:
+                candidates.append(loc)
   
         if len(candidates) == 1:
-            return candidates[0].loc
-        candidates = sorted(candidates, key=lambda c: (c.loc[0], c.loc[1]))        
+            return candidates[0]
+        candidates = sorted(candidates, key=lambda c: (c[0], c[1]))        
         filtered = []
         for c in candidates:
-            if c.num_adj_flags == 0:
+            if board.adj_flag_tracker[c[0]][c[1]] == 0:
                 filtered.append(c)
 
         if len(filtered) == 1:
-            return filtered[0].loc
+            return filtered[0]
         if len(filtered) == 0:
-            return candidates[0].loc
+            return candidates[0]
         progress_dists = {}
 
         for c in filtered:
-            if board.is_loc_candidate_for_analysis(c.loc):
-                progress_dists[c.loc] = prob.calc_prob_opening_for_loc(board,c.loc)
+            if board.is_loc_candidate_for_analysis(c):
+                progress_dists[c] = prob.calc_prob_opening_for_loc(board,c)
         best = None
         prob_opening_best = -1
         for k,v in progress_dists.items():

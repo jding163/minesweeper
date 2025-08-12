@@ -164,14 +164,15 @@ def handle_keypress_t(seed=None,timeout=None):
         handle_board_click()
     else:
         handle_board_click(seed=seed)
-    player.set_strategy(strat.SafestTile())
+    #player.set_strategy(strat.SafestTile())
+    player.set_strategy(strat.SafestTileAndLikeliestOpening())
+
     #player.set_strategy(strat.SecSafety())
     
     start = time.time()
     if timeout is not None:
         player.board.deadline = start + timeout
 
-    #player.set_strategy(strat.SafestTileAndLikeliestOpening())
     try:
         player.autoplay(risk=True)
     except Exception as e:

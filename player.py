@@ -319,8 +319,8 @@ def main():
     #b=Solver()
 
     p = Player(timeout=60)
-    p.set_strategy(strat.SafestTile())
-    #p.set_strategy(strat.SafestTileAndLikeliestOpening())
+    #p.set_strategy(strat.SafestTile())
+    p.set_strategy(strat.SafestTileAndLikeliestOpening())
     #p.set_strategy(strat.SecSafety())
 
     # with open('seeds1.txt', 'r') as f:
