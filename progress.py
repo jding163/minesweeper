@@ -75,16 +75,15 @@ def find_loc_with_best_progress_over_locs(board,locs,expected_clears_weight=0.00
         #     board.collected=True
     return best_loc
 def calc_progress_info_at_loc(board,loc,threshold,threshold_on=True):
-    x,y=loc
-    prob_mine = board.mine_probs[x][y]
+    prob_mine = board.mine_probs[loc]
 
     min_flags = 0
     max_flags = 0
-    neighbors = board.tile_neighbors[x][y]
-    for xn,yn in neighbors:
-        if board.tile_state_tracker[xn][yn] is FLAGGED:
+    neighbors = board.lookup_neighbors(loc)
+    for neighbor in neighbors:
+        if board.tile_state_tracker[neighbor] == FLAGGED:
             min_flags+=1
-        elif board.tile_state_tracker[xn][yn] is UNKNOWN:
+        elif board.tile_state_tracker[neighbor] == UNKNOWN:
             max_flags +=1
     max_flags += min_flags
     probs_loc_is_val = defaultdict(float) # value: prob that loc is value 

@@ -9,6 +9,7 @@ import sys
 import pprint
 import copy
 from line_profiler import profile
+import numpy as np
 
 # UNKNOWN = 0
 # NUMBER = 1
@@ -74,9 +75,9 @@ class TileUI:
         state = self.state
         loc = (self.x,self.y)
         
-        if state is UNKNOWN:
+        if state == UNKNOWN:
             display.blit(image_dict[tile_unknown_path],loc)
-        elif state is REVEALED:
+        elif state == REVEALED:
             if is_mine:
                 if self.loc == TileUI.death_click:
                     display.blit(image_dict[tile_exploded_path],loc)
@@ -112,7 +113,7 @@ class BoardUI():
     display_probs = 0 #0,1,2
 
     def __init__(self, board):
-        self.tiles = [[TileUI(r,c,board.num_mine_tracker[r][c]) for c in range(board.cols)] for r in range(board.rows)]
+        self.tiles = [[TileUI(r,c,board.num_mine_tracker[r,c]) for c in range(board.cols)] for r in range(board.rows)]
         self.board=board
         self.display = pygame.Surface((GSM.rows * TILESIZE, GSM.cols * TILESIZE))
 
@@ -120,9 +121,9 @@ class BoardUI():
         for r in range(self.board.rows):
             for c in range(self.board.cols):
                 tile = self.tiles[r][c]
-                tile.state = self.board.tile_state_tracker[r][c]
-                tile.num_adj_flags = self.board.adj_flag_tracker[r][c]
-                tile.num = self.board.num_mine_tracker[r][c]
+                tile.state = self.board.tile_state_tracker[r,c]
+                tile.num_adj_flags = self.board.adj_flag_tracker[r,c]
+                tile.num = self.board.num_mine_tracker[r,c]
         TileUI.game_over = self.board.game_over
         TileUI.death_click = self.board.death_click
     def draw(self,screen):
@@ -139,6 +140,7 @@ class Board:
         if not empty:
             self.rows = GSM.rows
             self.cols = GSM.cols
+            self.dims = (self.rows,self.cols)
             self.num_revealed = 0
             self.flag_count = 0
             self.complete = False
@@ -160,11 +162,12 @@ class Board:
                 for col in range(GSM.cols):
                     neighbors = get_neighbors((row,col))
                     self.tile_neighbors[row].append(neighbors)
-            self.num_mine_tracker = [[0]*self.cols for _ in range(self.rows)]
-            self.tile_state_tracker = [[0]*self.cols for _ in range(self.rows)]
-            self.adj_flag_tracker = [[0]*self.cols for _ in range(self.rows)]
-            self.mine_probs = [[0]*self.cols for _ in range(self.rows)]
-            self.opening_probs = [[0]*self.cols for _ in range(self.rows)]
+
+            self.num_mine_tracker = np.zeros((self.dims),dtype=int)
+            self.tile_state_tracker = np.zeros((self.dims),dtype=int)
+            self.adj_flag_tracker = np.zeros((self.dims),dtype=int)
+            self.mine_probs = np.zeros((self.dims))
+            self.opening_probs = np.zeros((self.dims))
 
     # load info into freshly init board
     def clone_board(self,board):
@@ -197,32 +200,27 @@ class Board:
             self.mine_probs.append(board.mine_probs[row][:])                
             self.opening_probs.append(board.opening_probs[row][:])                
      
-        # self.tile_neighbors=copy.deepcopy(board.tile_neighbors)
-        # self.num_mine_tracker=copy.deepcopy(board.num_mine_tracker)
-        # self.tile_state_tracker=copy.deepcopy(board.tile_state_tracker)
-        # self.adj_flag_tracker=copy.deepcopy(board.adj_flag_tracker)
-        # self.mine_probs=copy.deepcopy(board.mine_probs)
-        # self.opening_probs=copy.deepcopy(board.opening_probs)
 
 
+    def lookup_neighbors(self,loc):
+        return self.tile_neighbors[loc[0]][loc[1]]
     
     def toggle_flag_at_loc(self,loc):
-        x,y=loc
-        tile_state = self.tile_state_tracker[x][y]
-        if tile_state is not REVEALED:
-            if tile_state is UNKNOWN:
-                self.tile_state_tracker[x][y] = FLAGGED
+        tile_state = self.tile_state_tracker[loc]
+        if tile_state != REVEALED:
+            if tile_state == UNKNOWN:
+                self.tile_state_tracker[loc] = FLAGGED
                 self.flag_count += 1
-                neighbors = self.tile_neighbors[x][y]
-                for xn,yn in neighbors:
-                    self.adj_flag_tracker[xn][yn] += 1
+                neighbors = np.array(self.lookup_neighbors(loc))
+                rows, cols = neighbors.T
+                self.adj_flag_tracker[rows, cols] += 1
                 self.flagged_tiles.add(loc)
             else: # tile is flagged
-                self.tile_state_tracker[x][y] = UNKNOWN
+                self.tile_state_tracker[loc] = UNKNOWN
                 self.flag_count -= 1
-                neighbors = self.tile_neighbors[x][y]
-                for xn,yn in neighbors:
-                    self.adj_flag_tracker[xn][yn] -= 1
+                neighbors = np.array(self.lookup_neighbors(loc))
+                rows, cols = neighbors.T
+                self.adj_flag_tracker[rows, cols] -= 1
                 self.flagged_tiles.discard(loc)
     
 
@@ -253,10 +251,8 @@ class Board:
             self.mines = custom_mines
             GSM.mine_count = len(custom_mines)
         for loc in self.mines:
-            x,y=loc
-            #self.tiles[loc[0]][loc[1]].set_type(MINE)
             self.update_neighbors_with_minecount(loc)
-            self.num_mine_tracker[x][y] = 9
+            self.num_mine_tracker[loc] = 9
         self.minecount = len(self.mines)
 
         GSM.set_game_state(True)
@@ -266,28 +262,25 @@ class Board:
 
     # precondition: clicked a number tile
     def chord(self,loc):
-        x,y=loc
-        if self.num_mine_tracker[x][y] == self.adj_flag_tracker[x][y]:
+        if self.num_mine_tracker[loc] == self.adj_flag_tracker[loc]:
             self.reveal_neighbors(loc)
             self.unfinished_clues.discard(loc)
     
     def update_neighbors_with_minecount(self,loc):
-        x,y=loc
-        neighbors = self.tile_neighbors[x][y]
-        for x1,y1 in neighbors:
-            if (x1,y1) not in self.mines:
-                self.num_mine_tracker[x1][y1] += 1
+        neighbors = np.array(self.lookup_neighbors(loc))
+        rows,cols = neighbors.T
+        not_mines_mask = self.num_mine_tracker[rows, cols] != 9
+        self.num_mine_tracker[rows[not_mines_mask], cols[not_mines_mask]] += 1
             
 
         
     def reveal_tiles(self,loc):
-        mx,my=loc
-        if self.tile_state_tracker[mx][my] is not UNKNOWN:
+        if self.tile_state_tracker[loc] != UNKNOWN:
             return
         
-        self.tile_state_tracker[mx][my] = REVEALED
+        self.tile_state_tracker[loc] = REVEALED
 
-        if self.num_mine_tracker[mx][my] == 9:
+        if self.num_mine_tracker[loc] == 9:
             self.death_click = loc
             GSM.set_game_state(False)
             self.reveal_mines()
@@ -295,7 +288,7 @@ class Board:
         else:
             self.num_revealed += 1
             self.revealed_tiles.add(loc)
-            if self.num_mine_tracker[mx][my] > 0:
+            if self.num_mine_tracker[loc] > 0:
                 self.unfinished_clues.add(loc)
             else:
                 self.reveal_neighbors(loc)
@@ -303,9 +296,7 @@ class Board:
 
     # precondition: an opening was clicked, current tile is already revealed
     def reveal_neighbors(self,loc):
-        x,y=loc
-        neighbors = self.tile_neighbors[x][y]
-
+        neighbors = self.lookup_neighbors(loc)
         for nloc in neighbors:
             self.reveal_tiles(nloc)
 
@@ -314,24 +305,21 @@ class Board:
         return self.num_revealed == GSM.rows*GSM.cols - GSM.mine_count
     
     def verify_win(self):
-        for row in range(GSM.rows):
-            for col in range(GSM.cols):
-                if self.num_mine_tracker[row][col]<9 and self.tile_state_tracker[row][col] is not REVEALED:
-                    return False
-        return True
+        mine_check = self.num_mine_tracker < 9
+        not_revealed = self.tile_state_tracker != REVEALED 
+        mask = mine_check & not_revealed
+
+        return not np.any(mask)
     
 
 
     def reveal_mines(self):
-        for x,y in self.mines:
-            self.tile_state_tracker[x][y] = REVEALED
+        self.tile_state_tracker[self.num_mine_tracker == 9] = REVEALED
 
     def reveal_board(self):
         if not self.mines:
             self.populate((0,0))
-        for row in range(GSM.rows):
-            for col in range(GSM.cols):
-                self.tile_state_tracker[row][col] = REVEALED
+        self.tile_state_tracker[:] = REVEALED
         self.num_revealed = GSM.rows*GSM.cols - GSM.mine_count
         GSM.set_game_state(False)
         self.game_over = True

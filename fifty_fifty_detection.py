@@ -19,9 +19,9 @@ def is_region_info_complete(board,region):
     # check if region is contained (none of its tiles are adjecent to unrevealed info outside of the region)
     contained = True
     for loc in region.locs:
-        x,y=loc
-        for xn,yn in board.tile_neighbors[x][y]:
-            if board.tile_state_tracker[xn][yn] is UNKNOWN and (xn,yn) not in region.locs:
+        neighbors = board.lookup_neighbors(loc)
+        for neighbor in neighbors:
+            if board.tile_state_tracker[neighbor] == UNKNOWN and neighbor not in region.locs:
                 contained = False
                 break
         if not contained:
@@ -49,10 +49,10 @@ def is_two_tile_ff_in_region(board,region):
                 continue
             loc0 = group[0]
             loc1 = group[1]
-            loc0_neighbors = board.tile_neighbors[loc0[0]][loc0[1]]
-            unknown_loc0_neighbor_locs = set((xn,yn) for xn,yn in loc0_neighbors if board.tile_state_tracker[xn][yn] is UNKNOWN)
-            loc1_neighbors = board.tile_neighbors[loc1[0]][loc1[1]]
-            unknown_loc1_neighbor_locs = set((xn,yn) for xn,yn in loc1_neighbors if board.tile_state_tracker[xn][yn] is UNKNOWN)
+            loc0_neighbors = board.lookup_neighbors(loc0)
+            unknown_loc0_neighbor_locs = set(neighbor for neighbor in loc0_neighbors if board.tile_state_tracker[neighbor] == UNKNOWN)
+            loc1_neighbors = board.lookup_neighbors(loc1)
+            unknown_loc1_neighbor_locs = set(neighbor for neighbor in loc1_neighbors if board.tile_state_tracker[neighbor] == UNKNOWN)
 
             if loc0 in unknown_loc1_neighbor_locs:
                 unknown_loc0_neighbor_locs.add(loc0)

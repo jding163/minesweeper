@@ -124,7 +124,7 @@ def handle_board_click(mines=False,seed=None):
         game.first_click = False
         game.start_time = time.time()
     
-    if board.tile_state_tracker[mx][my] is REVEALED:
+    if board.tile_state_tracker[mx,my] == REVEALED:
         board.chord((mx,my))
 
     board.reveal_tiles((mx,my))
@@ -164,8 +164,8 @@ def handle_keypress_t(seed=None,timeout=None):
         handle_board_click()
     else:
         handle_board_click(seed=seed)
-    #player.set_strategy(strat.SafestTile())
-    player.set_strategy(strat.SafestTileAndLikeliestOpening())
+    player.set_strategy(strat.SafestTile())
+    #player.set_strategy(strat.SafestTileAndLikeliestOpening())
 
     #player.set_strategy(strat.SecSafety())
     
@@ -229,8 +229,7 @@ def handle_keypress_m():
 
 def handle_keypress_r():
     board.reveal_board()
-    print(sorted(board.mines,key=lambda coord: (coord[0], coord[1]))
-)
+    #print(sorted(board.mines,key=lambda coord: (coord[0], coord[1])))
 def handle_keypress_b():
     samples = cs.sample_mines_per_group_x_times(board,20000)
     # cs.verify_sampling_distribution_from_samples(board,samples)
@@ -254,7 +253,7 @@ def handle_keypress_v():
 def handle_keypress_space():
     if my<0:
         return
-    if board.tile_state_tracker[mx][my] is UNKNOWN or board.tile_state_tracker[mx][my] is FLAGGED:
+    if board.tile_state_tracker[mx,my] == UNKNOWN or board.tile_state_tracker[mx,my] == FLAGGED:
         handle_board_right_click()
     else:
         handle_board_click()

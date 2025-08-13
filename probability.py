@@ -111,7 +111,7 @@ def convolve_freqs_helper(freqs, index, total_mines, total_count, total_freqs):
             new_tm = total_mines + tm
             new_tc = total_count * tc
             convolve_freqs_helper(freqs,index+1,new_tm,new_tc,total_freqs)
-
+@profile
 def calc_prob_for_nonfrontier_tiles(prob_dist, mines_left, num_nonfrontier_tiles):
     total_prob = 0
     if len(prob_dist) == 0:
@@ -205,8 +205,7 @@ def calc_local_prob_of_opening_at_loc(board,loc):
 
                 for l in group:
                     if l in frontier_tile_locs:
-                        x,y =l
-                        group_prob += board.tiles[x][y].prob_mine_local
+                        group_prob += board.tiles[l].prob_mine_local
                 prob_safe_frontier *= 1-group_prob
     curr_tile.prob_opening = prob_safe_frontier * prob_safe_nonfrontier
     return curr_tile.prob_opening

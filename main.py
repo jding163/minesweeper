@@ -160,7 +160,7 @@ class Game:
                         #C.handle_board_click(seed=3180935053634563155)
                         #C.handle_board_click(seed=569029668483675204)
                         #C.handle_board_click(seed=4426209640626608113)
-                        C.handle_board_click(seed=5276217306593413708)
+                        C.handle_board_click(seed=6704850492719565049)
 
                         #C.handle_board_click()
                     
