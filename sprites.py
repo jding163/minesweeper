@@ -149,6 +149,8 @@ class Board:
             self.seed = None
             self.death_click = None
             self.revealed_tiles = set()
+            self.unrevealed_tiles = set()
+
             self.unfinished_clues = set()
             self.flagged_tiles = set()
             self.minecount = 0
@@ -215,6 +217,7 @@ class Board:
                 rows, cols = neighbors.T
                 self.adj_flag_tracker[rows, cols] += 1
                 self.flagged_tiles.add(loc)
+                self.unrevealed_tiles.remove(loc)
             else: # tile is flagged
                 self.tile_state_tracker[loc] = UNKNOWN
                 self.flag_count -= 1
@@ -222,13 +225,15 @@ class Board:
                 rows, cols = neighbors.T
                 self.adj_flag_tracker[rows, cols] -= 1
                 self.flagged_tiles.discard(loc)
+                self.unrevealed_tiles.add(loc)
+
     
 
 
     def populate(self,first_click,custom_mines=False,seed=None):
         self.first_click = first_click
+        self.unrevealed_tiles = [(row, col) for row in range(GSM.rows) for col in range(GSM.cols)]
         if not custom_mines:
-            possible_locs = [(row, col) for row in range(GSM.rows) for col in range(GSM.cols)]
             if seed is not None:
                 random.seed(seed)
                 self.seed = seed
@@ -239,13 +244,14 @@ class Board:
 
                 random.seed(genned_seed)
                 #print('seed: {}'.format(genned_seed))
-            locs = random.sample(possible_locs, GSM.mine_count+1)
+            locs = random.sample(self.unrevealed_tiles, GSM.mine_count+1)
 
             if first_click in locs:
                 locs.remove(first_click)
             else:
                 del locs[-1]
             #del locs[-1]
+            self.unrevealed_tiles=set(self.unrevealed_tiles)
             self.mines = locs
         else:
             self.mines = custom_mines
@@ -279,6 +285,7 @@ class Board:
             return
         
         self.tile_state_tracker[loc] = REVEALED
+        self.unrevealed_tiles.remove(loc)
 
         if self.num_mine_tracker[loc] == 9:
             self.death_click = loc
@@ -314,7 +321,7 @@ class Board:
 
 
     def reveal_mines(self):
-        self.tile_state_tracker[self.num_mine_tracker == 9] = REVEALED
+        self.tile_state_tracker[(self.num_mine_tracker == 9) & (self.tile_state_tracker != FLAGGED)] = REVEALED
 
     def reveal_board(self):
         if not self.mines:

@@ -68,6 +68,7 @@ class Player():
 
     def play_one_step(self,risk=True):
         #game_over = not GSM.get_game_state() or (self.board.is_complete() and self.board.verify_win())
+
         game_over = not GSM.get_game_state() or self.board.is_complete()
 
         if game_over:

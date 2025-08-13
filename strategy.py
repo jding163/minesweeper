@@ -52,7 +52,7 @@ class SafestTile(Strategy):
                     min_loc = loc
                     best_priority = priority
         if len(board.nonfrontier_tiles) > 0:
-            nf_tile = board.nonfrontier_tiles[0]
+            nf_tile = board.nf_rep_loc
             nonfrontier_tile_prob = board.mine_probs[nf_tile]
             if nonfrontier_tile_prob <= min_prob:
 
@@ -116,7 +116,7 @@ class SafestTileAndLikeliestOpening(Strategy):
                 candidates.append(loc)
   
 
-        nf_tile = board.nonfrontier_tiles[0]
+        nf_tile = board.nf_rep_loc
         nonfrontier_tile_prob = board.mine_probs[nf_tile]
         eps = 0.000001
 
@@ -127,7 +127,7 @@ class SafestTileAndLikeliestOpening(Strategy):
 
         if len(candidates) == 1:
             return candidates[0]
-        candidates = sorted(candidates, key=lambda c: (c[0], c[1]))        
+        candidates = sorted(candidates)        
         filtered = []
         for c in candidates:
             if board.adj_flag_tracker[c] == 0:
@@ -173,7 +173,7 @@ class SafestTileAndLikeliestOpening(Strategy):
   
         if len(candidates) == 1:
             return candidates[0]
-        candidates = sorted(candidates, key=lambda c: (c[0], c[1]))        
+        candidates = sorted(candidates)        
         filtered = []
         for c in candidates:
             if board.adj_flag_tracker[c] == 0:
@@ -229,7 +229,8 @@ class SecSafety(Strategy):
 
             if prob_mine <= eps_threshold:
                 candidates.add(loc)
-        nf_tile = board.nonfrontier_tiles[0]
+        nf_tile = board.nf_rep_loc
+
         nonfrontier_tile_prob = board.mine_probs[nf_tile]
         if nonfrontier_tile_prob <= eps_threshold:
             for loc in board.nonfrontier_tiles:
@@ -249,7 +250,7 @@ class SecSafety(Strategy):
         # for c in candidates:
         #     print(c.loc)
         #     print(c.prob_mine_local)
-        candidates = sorted(candidates,key=lambda k: [k[0], k[1]])
+        candidates = sorted(candidates)
         # if not board.collected and len(board.ff_influence_locs) > 0:
         #     for l in board.ff_influence_locs:
         #         print(l)
@@ -290,9 +291,8 @@ class SecSafety(Strategy):
         if len(candidates) == 1:
             return candidates[0]
 
-        candidates = sorted(candidates,key=lambda k: [k[0], k[1]])
+        candidates = sorted(candidates)
         best_loc = prog.find_loc_with_best_progress_over_locs(board,candidates)
-        # best_loc = prog.find_loc_with_best_progress_over_locs(board,candidate_locs)
 
 
         return best_loc

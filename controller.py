@@ -165,9 +165,9 @@ def handle_keypress_t(seed=None,timeout=None):
     else:
         handle_board_click(seed=seed)
     #player.set_strategy(strat.SafestTile())
-    player.set_strategy(strat.SafestTileAndLikeliestOpening())
+    #player.set_strategy(strat.SafestTileAndLikeliestOpening())
 
-    #player.set_strategy(strat.SecSafety())
+    player.set_strategy(strat.SecSafety())
     
     start = time.time()
     if timeout is not None:
@@ -190,7 +190,8 @@ def handle_keypress_s():
     player.play_games(10,seed=5,parallel=True)
 def handle_keypress_d():
     player.set_strategy(strat.SecSafety())
-    player.play_games(10,seed=5)
+    player.play_games(100,seed=5,parallel=False)
+    # solver.print_frontier_summary()
 def handle_keypress_f():
     player.board.find_possibilities()
 

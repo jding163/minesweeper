@@ -115,6 +115,7 @@ class Game:
     def events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+
                 pygame.quit()
                 quit(0)
             self.ui_manager.process_events(event)

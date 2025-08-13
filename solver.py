@@ -7,7 +7,55 @@ import copy
 import fifty_fifty_detection as ffd
 from dataclasses import dataclass
 import time
+from itertools import chain
 import probability as prob
+
+# framework for comparisons
+# Cumulative timers
+_frontier_times = {"np mask": 0.0, "direct set": 0.0}
+_frontier_calls = 0
+
+def compare_builds(board,frontier_locs):
+    global _frontier_calls
+
+    # 1. numpy mask
+
+            # unknown_mask = (self.tile_state_tracker == UNKNOWN)  # bool array
+            # frontier_mask = np.zeros((self.rows, self.cols), dtype=bool)
+            # for l in frontier_locs:
+            #     frontier_mask[l] = True
+            # mask = (~frontier_mask) & unknown_mask
+            # nonfrontier_rows, nonfrontier_cols = np.where(mask)
+            # nonfrontier_locs1 = set((int(r), int(c)) for r, c in zip(nonfrontier_rows, nonfrontier_cols))        
+            # assert nonfrontier_locs1 == nonfrontier_locs, str(len(nonfrontier_locs1)) + ' ' + str(len(nonfrontier_locs))
+    start = time.perf_counter()
+    unknown_mask = (board.tile_state_tracker == UNKNOWN)  # bool array
+    frontier_mask = np.zeros((board.rows, board.cols), dtype=bool)
+    for l in frontier_locs:
+        frontier_mask[l] = True
+    mask = (~frontier_mask) & unknown_mask
+    nonfrontier_rows, nonfrontier_cols = np.where(mask)
+    nonfrontier_locs1 = set((int(r), int(c)) for r, c in zip(nonfrontier_rows, nonfrontier_cols))        
+
+    _frontier_times["np mask"] += time.perf_counter() - start
+
+    # 2. list.extend + set()
+    start = time.perf_counter()
+    nonfrontier_locs2 = set(ul for ul in board.unrevealed_tiles if ul not in frontier_locs)
+
+    _frontier_times["direct set"] += time.perf_counter() - start
+
+
+    # Sanity check
+    assert nonfrontier_locs1 == nonfrontier_locs2, "Results differ!"
+
+    _frontier_calls += 1
+
+def print_frontier_summary():
+    print("\n=== Frontier Locs Build Timing Summary ===")
+    print(f"Total calls: {_frontier_calls}")
+    for method, total_time in _frontier_times.items():
+        print(f"{method:12} -> {total_time:.6f} seconds total")
 
 
 # # Set up logging
@@ -214,6 +262,8 @@ class Solver(Board):
         self.tile_state_tracker[loc] = REVEALED
 
         self.unfinished_clues.add(loc)
+        self.unrevealed_tiles.remove(loc)
+        self.revealed_tiles.add(loc)
         return orig_val_at_loc
     
     def unassign_tile_value(self,loc,orig_val_at_loc):
@@ -222,6 +272,8 @@ class Solver(Board):
         self.num_mine_tracker[loc] = orig_val_at_loc
         self.tile_state_tracker[loc] = UNKNOWN
         self.unfinished_clues.discard(loc)
+        self.unrevealed_tiles.add(loc)
+        self.revealed_tiles.remove(loc)
 
     @profile
     # return total_count,best_prob, num_safe
@@ -248,22 +300,11 @@ class Solver(Board):
                 solvable = False
                 break
         if solvable:
-            frontier_locs = set()
+            frontier_locs = []
             for region in regions_to_solve:
-                for l in region.locs:
-                    frontier_locs.add(l)
-            unknown_mask = (self.tile_state_tracker == UNKNOWN)  # bool array
-            frontier_mask = np.zeros((self.rows, self.cols), dtype=bool)
-            for l in frontier_locs:
-                frontier_mask[l] = True
-            mask = (~frontier_mask) & unknown_mask
-            nonfrontier_rows, nonfrontier_cols = np.where(mask)
-            nonfrontier_locs = set((int(r), int(c)) for r, c in zip(nonfrontier_rows, nonfrontier_cols))        
-            # for r in range(self.rows):
-            #     for c in range(self.cols):
-            #         if (r,c) not in frontier_locs and self.tile_state_tracker[r,c] == UNKNOWN:
-            #             nonfrontier_locs.add((r,c))
-
+                frontier_locs.extend(region.locs)
+            frontier_locs = set(frontier_locs)
+            nonfrontier_locs = set(ul for ul in self.unrevealed_tiles if ul not in frontier_locs)
             safe_locs, _,best_prob,total_count= self.calc_probs_for_board(regions_to_solve,groups_list,nonfrontier_locs,update_self=False) 
             num_safe = len(safe_locs)
         self.unassign_tile_value(loc,orig_val_at_loc)
@@ -606,22 +647,13 @@ class Solver(Board):
         self.ff_influence_locs = ff_influence_locs
         self.groups_list = groups_list
         mines_left = self.minecount-self.flag_count
-        frontier_locs = set()
+        frontier_locs = []
         for region in self.regions_list:
-            for l in region.locs:
-                frontier_locs.add(l)
-        unknown_mask = (self.tile_state_tracker == UNKNOWN)  # bool array
-        frontier_mask = np.zeros((self.rows, self.cols), dtype=bool)
-        for loc in frontier_locs:
-            frontier_mask[loc] = True
-        mask = (~frontier_mask) & unknown_mask
-        nonfrontier_rows, nonfrontier_cols = np.where(mask)
-        nonfrontier_locs = set((int(r), int(c)) for r, c in zip(nonfrontier_rows, nonfrontier_cols))        
-        # for r in range(self.rows):
-        #     for c in range(self.cols):
-        #         if (r,c) not in frontier_locs and self.tile_state_tracker[r,c] == UNKNOWN:
-        #             nonfrontier_locs.add((r,c))
-        self.nonfrontier_tiles = sorted(nonfrontier_locs)
+            frontier_locs.extend(region.locs)
+        frontier_locs = set(frontier_locs)  
+        nonfrontier_locs = set(ul for ul in self.unrevealed_tiles if ul not in frontier_locs)
+        self.nonfrontier_tiles = nonfrontier_locs
+        self.nf_rep_loc = min(nonfrontier_locs) if len(nonfrontier_locs) > 0 else None
         if len(groups_list) == 0 and mines_left==0:
 
             safe_locs = []
