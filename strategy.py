@@ -28,6 +28,7 @@ class SafestTile(Strategy):
 
     def __str__(self):
         return 'SafestTile'
+    @profile
     def find_move(self,board):
         #update_nonfrontier_tile_probs(board)
 

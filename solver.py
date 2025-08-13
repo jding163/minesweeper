@@ -208,19 +208,26 @@ class Solver(Board):
         return regions
 
     def assign_tile_value(self,loc,val):
+
         orig_val_at_loc = self.num_mine_tracker[loc]
         self.num_mine_tracker[loc] = val
         self.tile_state_tracker[loc] = REVEALED
+
         self.unfinished_clues.add(loc)
         return orig_val_at_loc
     
     def unassign_tile_value(self,loc,orig_val_at_loc):
+
+
         self.num_mine_tracker[loc] = orig_val_at_loc
         self.tile_state_tracker[loc] = UNKNOWN
         self.unfinished_clues.discard(loc)
+
     @profile
     # return total_count,best_prob, num_safe
     def get_sol_counts_at_loc_for_val(self,loc,val):
+        if loc == (29,15):
+            pass
         orig_val_at_loc = self.assign_tile_value(loc,val)
         regions = self.get_updated_regions_list()
         regions_to_solve = []
@@ -241,19 +248,17 @@ class Solver(Board):
                 solvable = False
                 break
         if solvable:
-            nonfrontier_locs = set()
             frontier_locs = set()
             for region in regions_to_solve:
                 for l in region.locs:
                     frontier_locs.add(l)
-            nonfrontier_locs = set()
             unknown_mask = (self.tile_state_tracker == UNKNOWN)  # bool array
             frontier_mask = np.zeros((self.rows, self.cols), dtype=bool)
-            for loc in frontier_locs:
-                frontier_mask[loc] = True
+            for l in frontier_locs:
+                frontier_mask[l] = True
             mask = (~frontier_mask) & unknown_mask
             nonfrontier_rows, nonfrontier_cols = np.where(mask)
-            nonfrontier_locs = set(zip(nonfrontier_rows, nonfrontier_cols))
+            nonfrontier_locs = set((int(r), int(c)) for r, c in zip(nonfrontier_rows, nonfrontier_cols))        
             # for r in range(self.rows):
             #     for c in range(self.cols):
             #         if (r,c) not in frontier_locs and self.tile_state_tracker[r,c] == UNKNOWN:
@@ -262,6 +267,8 @@ class Solver(Board):
             safe_locs, _,best_prob,total_count= self.calc_probs_for_board(regions_to_solve,groups_list,nonfrontier_locs,update_self=False) 
             num_safe = len(safe_locs)
         self.unassign_tile_value(loc,orig_val_at_loc)
+        # print(loc)
+        # print(best_prob)
         return SolverHeuristics(total_count=total_count,best_prob=best_prob, num_safe=num_safe,has_ff=has_ff)
 
 
@@ -609,7 +616,7 @@ class Solver(Board):
             frontier_mask[loc] = True
         mask = (~frontier_mask) & unknown_mask
         nonfrontier_rows, nonfrontier_cols = np.where(mask)
-        nonfrontier_locs = set(zip(nonfrontier_rows, nonfrontier_cols))
+        nonfrontier_locs = set((int(r), int(c)) for r, c in zip(nonfrontier_rows, nonfrontier_cols))        
         # for r in range(self.rows):
         #     for c in range(self.cols):
         #         if (r,c) not in frontier_locs and self.tile_state_tracker[r,c] == UNKNOWN:

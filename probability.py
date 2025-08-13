@@ -80,7 +80,8 @@ def calc_prob_opening_for_loc(board,loc):
 
     info = board.get_sol_counts_at_loc_for_val(loc,0)
     num_sols = board.total_sols
-    return info.total_count/num_sols
+    prob_opening = info.total_count/num_sols
+    return prob_opening
 
 def find_matching_indices(locs, targets):
     if not isinstance(targets,list):

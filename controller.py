@@ -164,8 +164,8 @@ def handle_keypress_t(seed=None,timeout=None):
         handle_board_click()
     else:
         handle_board_click(seed=seed)
-    player.set_strategy(strat.SafestTile())
-    #player.set_strategy(strat.SafestTileAndLikeliestOpening())
+    #player.set_strategy(strat.SafestTile())
+    player.set_strategy(strat.SafestTileAndLikeliestOpening())
 
     #player.set_strategy(strat.SecSafety())
     
