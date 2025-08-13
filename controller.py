@@ -174,7 +174,7 @@ def handle_keypress_t(seed=None,timeout=None):
         player.board.deadline = start + timeout
 
     try:
-        player.autoplay(risk=True)
+        player.autoplay(risk=False)
     except Exception as e:
         print(e)
         traceback.print_exc()
@@ -236,8 +236,9 @@ def handle_keypress_b():
     # cs.verify_sampling_distribution_from_samples(board,samples)
     cum_time=0
     start = time.time()
+    nonfrontier_tiles_list = sorted(board.nonfrontier_tiles)
     for sample in samples:
-        cum_time+=cs.gen_board_from_sample(board,sample)
+        cum_time+=cs.gen_board_from_sample(board,sample,nonfrontier_tiles_list)
     print('total time:',time.time()-start)
     print('time to copy:',cum_time)
     

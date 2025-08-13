@@ -5,7 +5,7 @@ import copy
 from solver import Solver
 from line_profiler import profile
 
-def gen_board_from_sample(board,sample):
+def gen_board_from_sample(board,sample,nonfrontier_tiles_list):
     groups_list = board.groups_list
     # new_mines = []
     # for loc in board.flagged_tiles:
@@ -21,7 +21,7 @@ def gen_board_from_sample(board,sample):
         #     new_mines.append(loc)
 
     mines_left = len(board.mines) - len(new_mines)
-    nonfrontier_mines = random.sample(board.nonfrontier_tiles,mines_left)
+    nonfrontier_mines = random.sample(nonfrontier_tiles_list,mines_left)
     new_mines.extend(nonfrontier_mines)
 
     # for loc in nonfrontier_mines:
