@@ -70,43 +70,6 @@ def calc_global_prob_for_group(merged_regions,group,sols_per_mines_in_frontier):
     # print(total_sols)
     return global_prob
 
-def distribute_ones(n, length):
-    """Generate all binary lists of a given length with n ones."""
-    if n > length:
-        return []
-    result = []
-    for ones_positions in combinations(range(length), n):
-        arr = [0] * length
-        for pos in ones_positions:
-            arr[pos] = 1
-        result.append(arr)
-    return result
-
-def expand_sols_flat(sols, groups):
-    lens = [len(group) for group in groups]
-    all_group_distributions = []
-    for count, length in zip(sols, lens):
-        if length == 0:
-            all_group_distributions.append([[]])
-        elif count == 0:
-            all_group_distributions.append([[0] * length])
-        else:
-            all_group_distributions.append(distribute_ones(count, length))
-
-    # Cartesian product to form all full combinations
-    grouped_sols = product(*all_group_distributions)
-
-    # Flatten each solution across all groups
-    flattened_sols = [sum(solution, []) for solution in grouped_sols]
-    return flattened_sols
-
-def expand_batch(batch_sols, groups):
-    all_flattened = []
-    for sols in batch_sols:
-        expanded = expand_sols_flat(sols, groups)
-        all_flattened.extend(expanded)
-    return all_flattened
-
 # @dataclass 
 # class SolverHeuristics():
 #     total_count: int
@@ -117,7 +80,8 @@ def calc_prob_opening_for_loc(board,loc):
 
     info = board.get_sol_counts_at_loc_for_val(loc,0)
     num_sols = board.total_sols
-    return info.total_count/num_sols
+    prob_opening = info.total_count/num_sols
+    return prob_opening
 
 def find_matching_indices(locs, targets):
     if not isinstance(targets,list):
@@ -148,7 +112,7 @@ def convolve_freqs_helper(freqs, index, total_mines, total_count, total_freqs):
             new_tm = total_mines + tm
             new_tc = total_count * tc
             convolve_freqs_helper(freqs,index+1,new_tm,new_tc,total_freqs)
-
+@profile
 def calc_prob_for_nonfrontier_tiles(prob_dist, mines_left, num_nonfrontier_tiles):
     total_prob = 0
     if len(prob_dist) == 0:
@@ -242,8 +206,7 @@ def calc_local_prob_of_opening_at_loc(board,loc):
 
                 for l in group:
                     if l in frontier_tile_locs:
-                        x,y =l
-                        group_prob += board.tiles[x][y].prob_mine_local
+                        group_prob += board.tiles[l].prob_mine_local
                 prob_safe_frontier *= 1-group_prob
     curr_tile.prob_opening = prob_safe_frontier * prob_safe_nonfrontier
     return curr_tile.prob_opening

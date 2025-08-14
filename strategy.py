@@ -5,6 +5,13 @@ import time
 from line_profiler import profile
 import solver
 import fifty_fifty_detection as ffd
+import logging
+
+def get_priority(board,loc):
+    x,y=loc
+    on_h_edge = 1 if x == 0 or x == board.rows - 1 else 0
+    on_v_edge = 1 if y == 0 or x == board.cols - 1 else 0
+    return on_h_edge + on_v_edge
 
 class Strategy:
 
@@ -21,62 +28,59 @@ class SafestTile(Strategy):
 
     def __str__(self):
         return 'SafestTile'
+    @profile
     def find_move(self,board):
         #update_nonfrontier_tile_probs(board)
 
         min_prob = 1
-        min_x=-1
-        min_y=-1
-        priority = -1
+        min_loc = (-1,-1)
+        best_priority = -1
 
         unrevealed_tile_locs = []
         for region in board.regions_list:
             for loc in region.locs:
                 unrevealed_tile_locs.append(loc)
-        for x,y in unrevealed_tile_locs:
-            tile = board.tiles[x][y]
-            if tile.prob_mine_local < min_prob:
-                min_prob = tile.prob_mine_local
-                min_x = x
-                min_y = y
-                priority = tile.pos_type
-            elif tile.prob_mine_local == min_prob:
-                if tile.pos_type > priority:
-                    min_x = x
-                    min_y = y
-                    priority = tile.pos_type
+        for loc in unrevealed_tile_locs:
+            prob_mine = board.mine_probs[loc]
+            if prob_mine < min_prob:
+                min_prob = prob_mine
+                min_loc = loc
+                best_priority = get_priority(board,loc)
+            elif prob_mine == min_prob:
+                priority = get_priority(board,loc)
+                if priority > best_priority:
+                    min_loc = loc
+                    best_priority = priority
         if len(board.nonfrontier_tiles) > 0:
-            x_nf,y_nf = board.nonfrontier_tiles[0]
-            nonfrontier_tile = board.tiles[x_nf][y_nf]
-            nonfrontier_tile_prob = nonfrontier_tile.prob_mine_local
+            nf_tile = board.nf_rep_loc
+            nonfrontier_tile_prob = board.mine_probs[nf_tile]
             if nonfrontier_tile_prob <= min_prob:
-                for x,y in board.nonfrontier_tiles:
-                    tile = board.tiles[x][y]
-                    if tile.pos_type > priority:
-                        min_x = x
-                        min_y = y
-                        priority = tile.pos_type
-        return min_x,min_y
+
+                for loc in board.nonfrontier_tiles:
+                    priority = get_priority(board,loc)
+
+                    if priority > best_priority:
+                        min_loc = loc
+                        best_priority = priority
+        return min_loc
     
     def find_move_from_locs(self,board,locs):
         min_prob = 1
-        min_x=-1
-        min_y=-1
-        priority = -1
+        min_loc = (-1,-1)
+        best_priority = -1
 
-        for x,y in locs:
-            tile = board.tiles[x][y]
-            if tile.prob_mine_local < min_prob:
-                min_prob = tile.prob_mine_local
-                min_x = x
-                min_y = y
-                priority = tile.pos_type
-            elif tile.prob_mine_local == min_prob:
-                if tile.pos_type > priority:
-                    min_x = x
-                    min_y = y
-                    priority = tile.pos_type
-        return min_x,min_y
+        for loc in locs:
+            prob_mine = board.mine_probs[loc]
+            if prob_mine < min_prob:
+                min_prob = prob_mine
+                min_loc = loc
+                best_priority = get_priority(board,loc)
+            elif prob_mine == min_prob:
+                priority = get_priority(board,loc)
+                if priority > best_priority:
+                    min_loc = loc
+                    best_priority = priority
+        return min_loc
 
 
 
@@ -88,61 +92,56 @@ class SafestTileAndLikeliestOpening(Strategy):
     
     def find_move(self,board):
         min_prob = 1
-        min_x=-1
-        min_y=-1
+        min_loc = (-1,-1)
         unrevealed_tile_locs = []
         for region in board.regions_list:
             for loc in region.locs:
                 unrevealed_tile_locs.append(loc)
         for loc in unrevealed_tile_locs:
-            x,y = loc
-            tile = board.tiles[x][y]
-            if tile.prob_mine_local < min_prob:
-                min_prob = tile.prob_mine_local
-                min_x = x
-                min_y = y
+            prob_mine = board.mine_probs[loc]
+
+            if prob_mine < min_prob:
+                min_prob = prob_mine
+                min_loc = loc
 
         if len(board.nonfrontier_tiles) == 0:
-            return min_x,min_y
+            return min_loc
 
         candidates = []
         # threshold = 1-((1-min_prob)*0.9)
         # print(threshold)
         for loc in unrevealed_tile_locs:
-            x,y = loc
-            tile = board.tiles[x][y]
-            if tile.prob_mine_local <= min_prob:
-                candidates.append(tile)
+            prob_mine = board.mine_probs[loc]
+            if prob_mine <= min_prob:
+                candidates.append(loc)
   
 
-        x_nf,y_nf = board.nonfrontier_tiles[0]
-        nonfrontier_tile = board.tiles[x_nf][y_nf]
-        nonfrontier_tile_prob = nonfrontier_tile.prob_mine_local
+        nf_tile = board.nf_rep_loc
+        nonfrontier_tile_prob = board.mine_probs[nf_tile]
         eps = 0.000001
 
         if nonfrontier_tile_prob <= min_prob + eps:
-            for x,y in board.nonfrontier_tiles:
+            for loc in board.nonfrontier_tiles:
 
-                tile = board.tiles[x][y]
-                candidates.append(tile)
+                candidates.append(loc)
 
         if len(candidates) == 1:
-            return candidates[0].loc
-        candidates = sorted(candidates, key=lambda c: (c.loc[0], c.loc[1]))        
+            return candidates[0]
+        candidates = sorted(candidates)        
         filtered = []
         for c in candidates:
-            if c.num_adj_flags == 0:
+            if board.adj_flag_tracker[c] == 0:
                 filtered.append(c)
 
         if len(filtered) == 1:
-            return filtered[0].loc
+            return filtered[0]
         if len(filtered) == 0:
-            return candidates[0].loc
+            return candidates[0]
         progress_dists = {}
 
         for c in filtered:
-            if board.is_loc_candidate_for_analysis(c.loc):
-                progress_dists[c.loc] = prob.calc_prob_opening_for_loc(board,c.loc)
+            if board.is_loc_candidate_for_analysis(c):
+                progress_dists[c] = prob.calc_prob_opening_for_loc(board,c)
         best = None
         prob_opening_best = -1
         for k,v in progress_dists.items():
@@ -153,46 +152,42 @@ class SafestTileAndLikeliestOpening(Strategy):
         return best
     def find_move_from_locs(self,board,locs):
         min_prob = 1
-        min_x=-1
-        min_y=-1
+        min_loc = (-1,-1)
 
         for loc in locs:
-            x,y = loc
-            tile = board.tiles[x][y]
-            if tile.prob_mine_local < min_prob:
-                min_prob = tile.prob_mine_local
-                min_x = x
-                min_y = y
+            prob_mine = board.mine_probs[loc]
+            if prob_mine < min_prob:
+                min_prob = prob_mine
+                min_loc = loc
 
         if len(board.nonfrontier_tiles) == 0:
-            return min_x,min_y
+            return min_loc
 
         candidates = []
         # threshold = 1-((1-min_prob)*0.9)
         # print(threshold)
         for loc in locs:
-            x,y = loc
-            tile = board.tiles[x][y]
-            if tile.prob_mine_local <= min_prob:
-                candidates.append(tile)
+            prob_mine = board.mine_probs[loc]
+            if prob_mine <= min_prob:
+                candidates.append(loc)
   
         if len(candidates) == 1:
-            return candidates[0].loc
-        candidates = sorted(candidates, key=lambda c: (c.loc[0], c.loc[1]))        
+            return candidates[0]
+        candidates = sorted(candidates)        
         filtered = []
         for c in candidates:
-            if c.num_adj_flags == 0:
+            if board.adj_flag_tracker[c] == 0:
                 filtered.append(c)
 
         if len(filtered) == 1:
-            return filtered[0].loc
+            return filtered[0]
         if len(filtered) == 0:
-            return candidates[0].loc
+            return candidates[0]
         progress_dists = {}
 
         for c in filtered:
-            if board.is_loc_candidate_for_analysis(c.loc):
-                progress_dists[c.loc] = prob.calc_prob_opening_for_loc(board,c.loc)
+            if board.is_loc_candidate_for_analysis(c):
+                progress_dists[c] = prob.calc_prob_opening_for_loc(board,c)
         best = None
         prob_opening_best = -1
         for k,v in progress_dists.items():
@@ -209,106 +204,95 @@ class SecSafety(Strategy):
 
     def find_move(self, board):
         min_prob = 1
-        min_x = -1
-        min_y = -1
+        min_loc = (-1,-1)
         unrevealed_tile_locs = []
 
         for region in board.regions_list:
             for loc in region.locs:
                 unrevealed_tile_locs.append(loc)
 
-        for x,y in unrevealed_tile_locs:
-            tile = board.tiles[x][y]
-            if tile.prob_mine_local < min_prob:
-                min_prob = tile.prob_mine_local
-                min_x = x
-                min_y = y
+        for loc in unrevealed_tile_locs:
+            prob_mine = board.mine_probs[loc]
+            if prob_mine < min_prob:
+                min_prob = prob_mine
+                min_loc = loc
         if len(board.nonfrontier_tiles) == 0:
-            return min_x,min_y
+            return min_loc
         
         candidates = set()
         eps = (1-min_prob)/12
         eps_ffi = 2*eps
         eps_threshold = min_prob+eps
-        for x,y in unrevealed_tile_locs:
-            tile = board.tiles[x][y]
-            tile_prob = tile.prob_mine_local
+        for loc in unrevealed_tile_locs:
+            prob_mine = board.mine_probs[loc]
 
-            if tile_prob <= eps_threshold:
-                candidates.add(tile)
-        x_nf,y_nf = board.nonfrontier_tiles[0]
-        nonfrontier_tile = board.tiles[x_nf][y_nf]
-        nonfrontier_tile_prob = nonfrontier_tile.prob_mine_local
+
+            if prob_mine <= eps_threshold:
+                candidates.add(loc)
+        nf_tile = board.nf_rep_loc
+
+        nonfrontier_tile_prob = board.mine_probs[nf_tile]
         if nonfrontier_tile_prob <= eps_threshold:
-            for x,y in board.nonfrontier_tiles:
-                if board.is_loc_candidate_for_analysis((x,y)):
-                    tile = board.tiles[x][y]
-                    candidates.add(tile)
+            for loc in board.nonfrontier_tiles:
+                if board.is_loc_candidate_for_analysis(loc):
+                    candidates.add(loc)
         ffi_threshold = min_prob+eps_ffi
-        for x,y in board.ff_influence_locs:
-            tile = board.tiles[x][y]
-            tile_prob = tile.prob_mine_local
-
-            if tile_prob <= ffi_threshold:
-                candidates.add(tile)
+        for loc in board.ff_influence_locs:
+            prob_mine = board.mine_probs[loc]
+            if prob_mine <= ffi_threshold:
+                candidates.add(loc)
 
 
 
         candidates=list(candidates)
         if len(candidates) == 1:
-            return candidates[0].loc
+            return candidates[0]
         # for c in candidates:
         #     print(c.loc)
         #     print(c.prob_mine_local)
-        candidate_locs = [c.loc for c in candidates]
-        candidate_locs = sorted(candidate_locs,key=lambda k: [k[0], k[1]])
+        candidates = sorted(candidates)
         # if not board.collected and len(board.ff_influence_locs) > 0:
         #     for l in board.ff_influence_locs:
         #         print(l)
         #     board.collected=True
-        best_loc = prog.find_loc_with_best_progress_over_locs(board,candidate_locs)
+        best_loc = prog.find_loc_with_best_progress_over_locs(board,candidates)
         # if not board.collected:
         #     best_loc1 = prog.find_loc_with_best_progress_over_locs(board,candidate_locs,ff_influence_weight=1)
         #     if best_loc != best_loc1:
         #         board.collected=True
         #         print(best_loc)
         #         print(best_loc1)
+        logging.info(best_loc)
         return best_loc
 
     def find_move_from_locs(self, board,locs):
         min_prob = 1
-        min_x = -1
-        min_y = -1
+        min_loc = (-1,-1)
 
 
-        for x,y in locs:
-            tile = board.tiles[x][y]
-            if tile.prob_mine_local < min_prob:
-                min_prob = tile.prob_mine_local
-                min_x = x
-                min_y = y
+        for loc in locs:
+            prob_mine = board.mine_probs[loc]
+            if prob_mine < min_prob:
+                min_prob = prob_mine
+                min_loc = loc
         if len(board.nonfrontier_tiles) == 0:
-            return min_x,min_y
+            return min_loc
         
         candidates = []
         eps = (1-min_prob)/12
         #eps=0
         for loc in locs:
-            x,y = loc
-            tile = board.tiles[x][y]
-            score = tile.prob_mine_local
+            prob_mine = board.mine_probs[loc]
             # if loc in board.ff_influence_locs:
             #     score /= 1.02
-            if score <= min_prob + eps:
-                candidates.append(tile)
+            if prob_mine <= min_prob + eps:
+                candidates.append(loc)
 
         if len(candidates) == 1:
-            return candidates[0].loc
+            return candidates[0]
 
-        candidate_locs = [c.loc for c in candidates]
-        candidate_locs = sorted(candidate_locs,key=lambda k: [k[0], k[1]])
-        best_loc = prog.find_loc_with_best_progress_over_locs(board,candidate_locs)
-        # best_loc = prog.find_loc_with_best_progress_over_locs(board,candidate_locs)
+        candidates = sorted(candidates)
+        best_loc = prog.find_loc_with_best_progress_over_locs(board,candidates)
 
 
         return best_loc

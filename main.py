@@ -115,6 +115,7 @@ class Game:
     def events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+
                 pygame.quit()
                 quit(0)
             self.ui_manager.process_events(event)
@@ -160,7 +161,7 @@ class Game:
                         #C.handle_board_click(seed=3180935053634563155)
                         #C.handle_board_click(seed=569029668483675204)
                         C.handle_board_click(seed=4426209640626608113)
-                        #C.handle_board_click(seed=2952632461156066079)
+                        #C.handle_board_click(seed=6704850492719565049)
 
                         #C.handle_board_click()
                     
@@ -207,8 +208,8 @@ class Game:
                 elif event.key == pygame.K_u:
                     C.handle_keypress_u()
                 elif event.key == pygame.K_i:
-                    Board.display_probs += 1
-                    Board.display_probs %= 4
+                    BoardUI.display_probs += 1
+                    BoardUI.display_probs %= 4
                 elif event.key == pygame.K_o:
                     C.handle_keypress_o()
                 elif event.key == pygame.K_p:
@@ -227,7 +228,7 @@ class Game:
                 elif event.key == pygame.K_SPACE:
                     C.handle_keypress_space()
 def main():
-    Tile.set_font(tile_font)
+    TileUI.font = tile_font
 
     b=Solver()
     p = Player()
@@ -240,5 +241,5 @@ def main():
     g.run()
 
 if __name__ == "__main__":
-    multiprocessing.set_start_method("spawn")  # Important on macOS/Windows
+    multiprocessing.set_start_method("spawn") 
     main()

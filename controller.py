@@ -15,6 +15,7 @@ import progress as prog
 test=True
 
 board = None
+board_ui = None
 game = None
 player = None
 mx = 0
@@ -29,9 +30,10 @@ def set_player(p):
     global player
     player = p
 def set_board(b):
-    global board
+    global board,board_ui
     board = b
     player.set_board(b)
+    board_ui = BoardUI(board)
 
 def set_game(g):
     global game
@@ -51,10 +53,10 @@ def reset_board():
     set_board(b)
 
 def draw_board(screen):
-    board.draw(screen)
+    board_ui.draw(screen)
 
 def get_flag_count():
-    return board.get_flag_count()
+    return board.flag_count
 
 
 def game_won():
@@ -121,7 +123,8 @@ def handle_board_click(mines=False,seed=None):
         board.populate((mx,my),custom_mines=mines,seed=seed)
         game.first_click = False
         game.start_time = time.time()
-    if board.tiles[mx][my].is_revealed():
+    
+    if board.tile_state_tracker[mx,my] == REVEALED:
         board.chord((mx,my))
 
     board.reveal_tiles((mx,my))
@@ -151,9 +154,6 @@ def handle_keypress_w():
 def handle_keypress_e():
     pass
 
-    #prob.update_nonfrontier_tile_probs(board)
-    # l = [(cc, sols) for cc, sols in board.ccs_dict.items() if len(cc) != len (sols[0])]
-    # print(l)
 
 def handle_keypress_t(seed=None,timeout=None):
     if GSM.get_game_state() is False:
@@ -165,13 +165,14 @@ def handle_keypress_t(seed=None,timeout=None):
     else:
         handle_board_click(seed=seed)
     #player.set_strategy(strat.SafestTile())
+    #player.set_strategy(strat.SafestTileAndLikeliestOpening())
+
     player.set_strategy(strat.SecSafety())
     
     start = time.time()
     if timeout is not None:
         player.board.deadline = start + timeout
 
-    #player.set_strategy(strat.SafestTileAndLikeliestOpening())
     try:
         player.autoplay(risk=False)
     except Exception as e:
@@ -189,7 +190,8 @@ def handle_keypress_s():
     player.play_games(10,seed=5,parallel=True)
 def handle_keypress_d():
     player.set_strategy(strat.SecSafety())
-    player.play_games(10,seed=5)
+    player.play_games(100,seed=5,parallel=False)
+    # solver.print_frontier_summary()
 def handle_keypress_f():
     player.board.find_possibilities()
 
@@ -211,16 +213,6 @@ def handle_keypress_k():
     board.open_known_tiles()
 
 def handle_keypress_o():
-    
-    # x,y = (0,0)
-    # tile = board.tiles[x][y]
-    # if not tile.is_revealed() and not tile.is_flagged():
-    for x in range(GSM.rows):
-        for y in range(GSM.cols):
-            tile = board.tiles[x][y]
-            if not tile.is_revealed() and not tile.is_flagged():
-                tile.prob_opening = prob.calc_prob_opening_for_loc(board,(x,y))
-                #prob.calc_local_prob_of_opening_at_loc(board,(x,y))
     Board.display_probs = 2
 
 def handle_keypress_n():
@@ -238,15 +230,15 @@ def handle_keypress_m():
 
 def handle_keypress_r():
     board.reveal_board()
-    print(sorted(board.mines,key=lambda coord: (coord[0], coord[1]))
-)
+    #print(sorted(board.mines,key=lambda coord: (coord[0], coord[1])))
 def handle_keypress_b():
     samples = cs.sample_mines_per_group_x_times(board,20000)
     # cs.verify_sampling_distribution_from_samples(board,samples)
     cum_time=0
     start = time.time()
+    nonfrontier_tiles_list = sorted(board.nonfrontier_tiles)
     for sample in samples:
-        cum_time+=cs.gen_board_from_sample(board,sample)
+        cum_time+=cs.gen_board_from_sample(board,sample,nonfrontier_tiles_list)
     print('total time:',time.time()-start)
     print('time to copy:',cum_time)
     
@@ -263,11 +255,11 @@ def handle_keypress_v():
 def handle_keypress_space():
     if my<0:
         return
-    if board.get_type_at_loc((mx,my)) is UNKNOWN or board.get_type_at_loc((mx,my)) is MINE:
+    if board.tile_state_tracker[mx,my] == UNKNOWN or board.tile_state_tracker[mx,my] == FLAGGED:
         handle_board_right_click()
-    elif board.get_type_at_loc((mx,my)) is NUMBER:
+    else:
         handle_board_click()
-
+    
 def handle_customization_sliders(event):
     event.ui_element.update_text()
 def handle_customization_text(event):

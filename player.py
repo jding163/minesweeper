@@ -57,19 +57,18 @@ class Player():
     
     def find_safest_among_locs(self,locs):
         min_prob = 1
-        min_x=-1
-        min_y=-1
-        for x,y in locs:
-            tile = self.board.tiles[x][y]
-            if tile.prob_mine_local < min_prob:
-                min_prob = tile.prob_mine_local
-                min_x = x
-                min_y = y
-        return min_x,min_y
+        min_loc = (-1,-1)
+        for loc in locs:
+            prob_mine = self.board.mine_probs[loc]
+            if prob_mine < min_prob:
+                min_prob = prob_mine
+                min_loc = loc
+        return min_loc
 
 
     def play_one_step(self,risk=True):
         #game_over = not GSM.get_game_state() or (self.board.is_complete() and self.board.verify_win())
+
         game_over = not GSM.get_game_state() or self.board.is_complete()
 
         if game_over:
@@ -84,27 +83,19 @@ class Player():
         if risk is True and not game_over:
             if len(self.board.ff_groups) > 0:
                 ff_groups = sorted(self.board.ff_groups, key=lambda sublist: (sublist[0][0], sublist[0][1]))
-                x,y = ff_groups[0][0]
+                best_move = ff_groups[0][0]
             elif len(self.board.ic_regions) > 0:
                 isolated_locs = []
                 for region in self.board.ic_regions:
                     for loc in region.locs:
                         isolated_locs.append(loc)
                 isolated_locs = sorted(isolated_locs,key=lambda k: [k[0], k[1]])
-                x,y = self.strategy.find_move_from_locs(self.board,isolated_locs)
-
-                # x,y = self.find_safest_among_locs(isolated_locs)
-                # x1,y1 = self.strategy.find_move_from_locs(self.board,isolated_locs)
-                # if (x,y) != (x1,y1):
-                #     self.board.collected = True
-                #     print('safest:',(x,y))
-                #     print('progress:',(x1,y1))
+                best_move = self.strategy.find_move_from_locs(self.board,isolated_locs)
 
             else:
-                x,y = self.strategy.find_move(self.board)
-            # x,y = self.strategy.find_move(self.board)
+                best_move = self.strategy.find_move(self.board)
 
-            self.board.reveal_tiles((x,y))
+            self.board.reveal_tiles(best_move)
             return True
         return False
 
@@ -122,7 +113,7 @@ class Player():
     def play_game(self,seed=None):
         #C.handle_keypress_n()  # full reset
         #GSM.set_game_state(True)
-        self.board = Solver(run_pygame=False)
+        self.board = Solver()
         if self.timeout is not None:
             self.board.deadline = time.time() + self.timeout
 
@@ -154,11 +145,10 @@ class Player():
             
             reqs_satisfied = True
             for req,tiletype in reqs.items():
-                x,y = req
                 if tiletype == -1: #mine
-                    reqs_satisfied = (x,y) in self.board.mines
+                    reqs_satisfied = req in self.board.mines
                 else:
-                    reqs_satisfied = ((not (x,y) in self.board.mines) and (self.board.tiles[x][y].get_adj_mines() == tiletype))
+                    reqs_satisfied = ((not req in self.board.mines) and (self.board.num_mine_tracker[req] == tiletype))
                 if not reqs_satisfied:
                     break
             if not reqs_satisfied:

@@ -5,6 +5,8 @@ import sprites
 from settings import *
 from collections import defaultdict
 from dataclasses import dataclass
+from line_profiler import profile
+
 
 
 @dataclass(kw_only=True)
@@ -72,19 +74,16 @@ def find_loc_with_best_progress_over_locs(board,locs,expected_clears_weight=0.00
         #     # print(best_score)
         #     board.collected=True
     return best_loc
-
 def calc_progress_info_at_loc(board,loc,threshold,threshold_on=True):
-    x,y=loc
-    tile = board.tiles[x][y]
-    prob_mine = tile.prob_mine_local
+    prob_mine = board.mine_probs[loc]
 
     min_flags = 0
     max_flags = 0
-    neighbors = board.get_neighbor_tiles(loc)
-    for n in neighbors:
-        if n.type == MINE:
+    neighbors = board.lookup_neighbors(loc)
+    for neighbor in neighbors:
+        if board.tile_state_tracker[neighbor] == FLAGGED:
             min_flags+=1
-        elif n.type == UNKNOWN:
+        elif board.tile_state_tracker[neighbor] == UNKNOWN:
             max_flags +=1
     max_flags += min_flags
     probs_loc_is_val = defaultdict(float) # value: prob that loc is value 

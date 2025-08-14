@@ -1,3 +1,5 @@
+from settings import *
+
 # find regions which have the same number of mines across all possibilities, 
 # and which are next to no unrevealed tiles
 def is_region_info_complete(board,region):
@@ -17,8 +19,9 @@ def is_region_info_complete(board,region):
     # check if region is contained (none of its tiles are adjecent to unrevealed info outside of the region)
     contained = True
     for loc in region.locs:
-        for neighbor in board.get_neighbor_tiles(loc):
-            if neighbor.is_unknown() and neighbor.loc not in region.locs:
+        neighbors = board.lookup_neighbors(loc)
+        for neighbor in neighbors:
+            if board.tile_state_tracker[neighbor] == UNKNOWN and neighbor not in region.locs:
                 contained = False
                 break
         if not contained:
@@ -46,10 +49,10 @@ def is_two_tile_ff_in_region(board,region):
                 continue
             loc0 = group[0]
             loc1 = group[1]
-            loc0_neighbors = board.get_neighbor_tiles(loc0)
-            unknown_loc0_neighbor_locs = set(n.loc for n in loc0_neighbors if n.is_unknown())
-            loc1_neighbors = board.get_neighbor_tiles(loc1)
-            unknown_loc1_neighbor_locs = set(n.loc for n in loc1_neighbors if n.is_unknown())
+            loc0_neighbors = board.lookup_neighbors(loc0)
+            unknown_loc0_neighbor_locs = set(neighbor for neighbor in loc0_neighbors if board.tile_state_tracker[neighbor] == UNKNOWN)
+            loc1_neighbors = board.lookup_neighbors(loc1)
+            unknown_loc1_neighbor_locs = set(neighbor for neighbor in loc1_neighbors if board.tile_state_tracker[neighbor] == UNKNOWN)
 
             if loc0 in unknown_loc1_neighbor_locs:
                 unknown_loc0_neighbor_locs.add(loc0)

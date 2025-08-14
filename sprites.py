@@ -9,11 +9,13 @@ import sys
 import pprint
 import copy
 from line_profiler import profile
+import numpy as np
 
 # UNKNOWN = 0
 # NUMBER = 1
 # OPENING = 2
 # MINE = 3
+
 
 tile_number_paths = []
 for i in range(1, 9):
@@ -54,127 +56,91 @@ def get_neighbors(loc):
             valid_neighbors.append(neighbor)
     return valid_neighbors
 
-class Tile:
+class TileUI:
     font = None
-    def __init__(self, x,y,image,type):
+    game_over = False
+    death_click=None
+    def __init__(self, x, y, num):
         self.x = x * TILESIZE
         self.y = y * TILESIZE
         self.row = x
         self.col = y
-        self.loc = (self.row,self.col)
-        self.image = image
-        self.type = type
-        self.revealed = False
-        self.flagged = False
-        self.num_adj_mines = 0
+        self.loc = (x,y)
+        self.num = num
+        self.state = 0
         self.num_adj_flags = 0
-        self.prob_mine_local = -1
-        self.prob_opening = -1
-        self.neighbors = []
-
-
-        # 0: non-edge non-corner 1: edge 2: corner
-        if (self.row == 0 or self.row == GSM.rows-1) and (self.col == 0 or self.col == GSM.cols-1):
-            self.pos_type = 2
-        elif (self.row == 0 or self.row == GSM.rows-1) or (self.col == 0 or self.col == GSM.cols-1):
-            self.pos_type = 1
-        else:
-            self.pos_type = 0
-
-    def set_font(font):
-        Tile.font = font 
-
-
-    def get_type(self):
-        return self.type
-
-    def set_type(self,type):
-        self.type = type
-        if type == MINE:
-            self.image = tile_mine_path
-        elif type == NUMBER:
-            self.image = tile_number_paths[self.num_adj_mines-1]
-        elif type == OPENING:
-            self.image = tile_opening_path
-    
-    def set_image(self,image):
-        self.image = image
-        
-    def is_flagged(self):
-        return self.flagged
-    def toggle_flag(self):
-        if not self.revealed:
-            self.flagged = not self.flagged
-            if self.flagged:
-                self.set_type(MINE)
-            else:
-                self.set_type(UNKNOWN)
-
-    def incr_adj_mines(self):
-        self.num_adj_mines += 1
-    
-    def get_adj_mines(self):
-        return self.num_adj_mines
-    def get_adj_flags(self):
-        return self.num_adj_flags
-
-    def is_revealed(self):
-        return self.revealed
-
-    def is_unknown(self):
-        return not self.type is NUMBER and not self.is_flagged() and not self.is_revealed()
-
-    def set_revealed(self,revealed):
-        self.revealed = revealed
-
     def draw(self,display,display_probs):
-
-        if not self.revealed and not self.flagged:
-            display.blit(image_dict[tile_unknown_path],(self.x,self.y))
-        elif self.revealed and self.flagged:
-            display.blit(image_dict[tile_flag_path],(self.x,self.y))
-
-        elif self.revealed:
-            display.blit(image_dict[self.image],(self.x,self.y))
-        elif self.flagged:
-            if self.type is MINE:
-                display.blit(image_dict[tile_flag_path],(self.x,self.y))
+        is_mine = (self.num ==9)
+        is_opening = (self.num == 0)
+        state = self.state
+        loc = (self.x,self.y)
+        
+        if state == UNKNOWN:
+            display.blit(image_dict[tile_unknown_path],loc)
+        elif state == REVEALED:
+            if is_mine:
+                if self.loc == TileUI.death_click:
+                    display.blit(image_dict[tile_exploded_path],loc)
+                else:
+                    display.blit(image_dict[tile_mine_path],loc)
+            elif is_opening:
+                display.blit(image_dict[tile_opening_path],loc)
             else:
-                display.blit(image_dict[tile_not_mine_path],(self.x,self.y))
-        if display_probs == 1:
-            if self.prob_mine_local != -1 and not self.revealed and not self.flagged:
-                prob_text = Tile.font.render(f"{self.prob_mine_local * 100:.1f}", True, (0, 0, 0))  # Black text
-                text_rect = prob_text.get_rect(center=(self.x + TILESIZE // 2, self.y + TILESIZE // 2))
-                display.blit(prob_text, text_rect)
-        elif display_probs == 2:
-            if self.prob_mine_local != -1 and not self.revealed and not self.flagged:
-                prob_text = Tile.font.render(f"{self.prob_opening * 100:.1f}", True, (0, 0, 0))  # Black text
-                text_rect = prob_text.get_rect(center=(self.x + TILESIZE // 2, self.y + TILESIZE // 2))
-                display.blit(prob_text, text_rect)
-        elif display_probs == 3:
-            loc_text = Tile.font.render(f"{self.loc}", True, (0, 0, 0))  # Black text
-            text_rect = loc_text.get_rect(center=(self.x + TILESIZE // 2, self.y + TILESIZE // 2))
-            display.blit(loc_text, text_rect)
+               display.blit(image_dict[tile_number_paths[self.num - 1]],loc)   
+        else: #flagged
+            if not TileUI.game_over or is_mine:
+                display.blit(image_dict[tile_flag_path],loc)
+            else:
+                display.blit(image_dict[tile_not_mine_path],loc)
+
+        # if display_probs == 1:
+        #     if self.prob_mine_local != -1 and not self.revealed and not self.flagged:
+        #         prob_text = Tile.font.render(f"{self.prob_mine_local * 100:.1f}", True, (0, 0, 0))  # Black text
+        #         text_rect = prob_text.get_rect(center=(self.x + TILESIZE // 2, self.y + TILESIZE // 2))
+        #         display.blit(prob_text, text_rect)
+        # elif display_probs == 2:
+        #     if self.prob_mine_local != -1 and not self.revealed and not self.flagged:
+        #         prob_text = Tile.font.render(f"{self.prob_opening * 100:.1f}", True, (0, 0, 0))  # Black text
+        #         text_rect = prob_text.get_rect(center=(self.x + TILESIZE // 2, self.y + TILESIZE // 2))
+        #         display.blit(prob_text, text_rect)
+        # elif display_probs == 3:
+        #     loc_text = Tile.font.render(f"{self.loc}", True, (0, 0, 0))  # Black text
+        #     text_rect = loc_text.get_rect(center=(self.x + TILESIZE // 2, self.y + TILESIZE // 2))
+        #     display.blit(loc_text, text_rect)
 
 
+class BoardUI():
+    display_probs = 0 #0,1,2
 
+    def __init__(self, board):
+        self.tiles = [[TileUI(r,c,board.num_mine_tracker[r,c]) for c in range(board.cols)] for r in range(board.rows)]
+        self.board=board
+        self.display = pygame.Surface((GSM.rows * TILESIZE, GSM.cols * TILESIZE))
+
+    def sync(self):
+        for r in range(self.board.rows):
+            for c in range(self.board.cols):
+                tile = self.tiles[r][c]
+                tile.state = self.board.tile_state_tracker[r,c]
+                tile.num_adj_flags = self.board.adj_flag_tracker[r,c]
+                tile.num = self.board.num_mine_tracker[r,c]
+        TileUI.game_over = self.board.game_over
+        TileUI.death_click = self.board.death_click
+    def draw(self,screen):
+        self.sync()
+        for row in self.tiles:
+            for tile in row: 
+                tile.draw(self.display,BoardUI.display_probs)
+
+        screen.blit(self.display, (0, HEADER_HEIGHT))
 
 class Board:
     seed = None
-    display_probs = 0 #0,1,2
-    def __init__(self,run_pygame=True,empty=False):
-        if run_pygame:
-            self.display = pygame.Surface((GSM.rows * TILESIZE, GSM.cols * TILESIZE))
+    def __init__(self,empty=False):
         if not empty:
-            self.tiles = []
-            for row in range(GSM.rows):
-                self.tiles.append([])
-                for col in range(GSM.cols):
-                    tile = Tile(row,col,tile_unknown_path,UNKNOWN)
-                    tile.neighbors = get_neighbors((row,col))
-                    self.tiles[row].append(tile)
             self.rows = GSM.rows
             self.cols = GSM.cols
+            self.dims = (self.rows,self.cols)
             self.num_revealed = 0
             self.flag_count = 0
             self.complete = False
@@ -183,18 +149,31 @@ class Board:
             self.seed = None
             self.death_click = None
             self.revealed_tiles = set()
+            self.unrevealed_tiles = set()
+
             self.unfinished_clues = set()
             self.flagged_tiles = set()
             self.minecount = 0
+            self.game_over = False
             self.cloned = False
+
+
+            self.tile_neighbors = []
+            for row in range(GSM.rows):
+                self.tile_neighbors.append([])
+                for col in range(GSM.cols):
+                    neighbors = get_neighbors((row,col))
+                    self.tile_neighbors[row].append(neighbors)
+
+            self.num_mine_tracker = np.zeros((self.dims),dtype=int)
+            self.tile_state_tracker = np.zeros((self.dims),dtype=int)
+            self.adj_flag_tracker = np.zeros((self.dims),dtype=int)
+            self.mine_probs = np.zeros((self.dims))
+            self.opening_probs = np.zeros((self.dims))
+
     # load info into freshly init board
     def clone_board(self,board):
-        self.tiles = []
-        for row in range(board.rows):
-            self.tiles.append([])
-            for col in range(board.cols):
-                tile = copy.copy(board.tiles[row][col])
-                self.tiles[row].append(tile)
+
         self.rows = board.rows
         self.cols = board.cols
         self.num_revealed = board.num_revealed
@@ -209,60 +188,58 @@ class Board:
         self.flagged_tiles=set(board.flagged_tiles)
         self.cloned=True
 
-    def get_type_at_loc(self,loc):
-        return self.tiles[loc[0]][loc[1]].get_type()
-    def get_neighbor_tiles(self,loc):
-       #neighbor_coords = get_neighbors(loc)
-        x,y=loc
-        tile = self.tiles[x][y]
-        neighbors = []
-        for coord in tile.neighbors:
-            neighbors.append(self.tiles[coord[0]][coord[1]])
-        return neighbors
-    
-    def get_number_neighbor_tiles(self,loc):
-        neighbors = self.get_neighbor_tiles(loc)
-        return [neighbor for neighbor in neighbors if neighbor.type is NUMBER]
-    
-    
+        # self.tile_neighbors=[]
+        # self.num_mine_tracker=[]
+        # self.tile_state_tracker=[]
+        # self.adj_flag_tracker=[]
+        # self.mine_probs=[]
+        # self.opening_probs=[]
+        # for row in range(GSM.rows):
+        #     self.tile_neighbors.append(board.tile_neighbors[row][:])          
+        #     self.num_mine_tracker.append(board.num_mine_tracker[row][:])                
+        #     self.tile_state_tracker.append(board.tile_state_tracker[row][:])                
+        #     self.adj_flag_tracker.append(board.adj_flag_tracker[row][:])                
+        #     self.mine_probs.append(board.mine_probs[row][:])                
+        #     self.opening_probs.append(board.opening_probs[row][:])
+        self.tile_neighbors = board.tile_neighbors.copy()
+        self.num_mine_tracker = board.num_mine_tracker.copy()
+        self.tile_state_tracker = board.tile_state_tracker.copy()
+        self.adj_flag_tracker = board.adj_flag_tracker.copy()
+        self.mine_probs = board.mine_probs.copy()
+        self.opening_probs = board.opening_probs.copy()                
+     
 
+
+    def lookup_neighbors(self,loc):
+        return self.tile_neighbors[loc[0]][loc[1]]
     
     def toggle_flag_at_loc(self,loc):
-        if not self.tiles[loc[0]][loc[1]].is_revealed():
-            self.tiles[loc[0]][loc[1]].toggle_flag()
-            if self.tiles[loc[0]][loc[1]].is_flagged():
-                self.flag_count +=1
-                neighbors = self.get_neighbor_tiles(loc)
-                for n in neighbors:
-                   n.num_adj_flags += 1
+        tile_state = self.tile_state_tracker[loc]
+        if tile_state != REVEALED:
+            if tile_state == UNKNOWN:
+                self.tile_state_tracker[loc] = FLAGGED
+                self.flag_count += 1
+                neighbors = np.array(self.lookup_neighbors(loc))
+                rows, cols = neighbors.T
+                self.adj_flag_tracker[rows, cols] += 1
                 self.flagged_tiles.add(loc)
-            else:
-                self.flag_count -=1
-                neighbors = self.get_neighbor_tiles(loc)
-                for n in neighbors:
-                    n.num_adj_flags -= 1
+                self.unrevealed_tiles.remove(loc)
+            else: # tile is flagged
+                self.tile_state_tracker[loc] = UNKNOWN
+                self.flag_count -= 1
+                neighbors = np.array(self.lookup_neighbors(loc))
+                rows, cols = neighbors.T
+                self.adj_flag_tracker[rows, cols] -= 1
                 self.flagged_tiles.discard(loc)
+                self.unrevealed_tiles.add(loc)
 
-    def get_flag_count(self):
-        return self.flag_count
-
-    def draw(self,screen):
-        for row in self.tiles:
-            for tile in row: 
-                tile.draw(self.display,Board.display_probs)
-        screen.blit(self.display, (0, HEADER_HEIGHT))
     
-
-
-    def display_board(self):
-        for row in self.tiles:
-            print(row)
 
 
     def populate(self,first_click,custom_mines=False,seed=None):
         self.first_click = first_click
+        self.unrevealed_tiles = [(row, col) for row in range(GSM.rows) for col in range(GSM.cols)]
         if not custom_mines:
-            possible_locs = [(row, col) for row in range(GSM.rows) for col in range(GSM.cols)]
             if seed is not None:
                 random.seed(seed)
                 self.seed = seed
@@ -273,20 +250,21 @@ class Board:
 
                 random.seed(genned_seed)
                 #print('seed: {}'.format(genned_seed))
-            locs = random.sample(possible_locs, GSM.mine_count+1)
+            locs = random.sample(self.unrevealed_tiles, GSM.mine_count+1)
 
             if first_click in locs:
                 locs.remove(first_click)
             else:
                 del locs[-1]
             #del locs[-1]
+            self.unrevealed_tiles=set(self.unrevealed_tiles)
             self.mines = locs
         else:
             self.mines = custom_mines
             GSM.mine_count = len(custom_mines)
         for loc in self.mines:
-            #self.tiles[loc[0]][loc[1]].set_type(MINE)
             self.update_neighbors_with_minecount(loc)
+            self.num_mine_tracker[loc] = 9
         self.minecount = len(self.mines)
 
         GSM.set_game_state(True)
@@ -296,106 +274,67 @@ class Board:
 
     # precondition: clicked a number tile
     def chord(self,loc):
-
-        if self.tiles[loc[0]][loc[1]].get_adj_mines() == self.tiles[loc[0]][loc[1]].get_adj_flags():
+        if self.num_mine_tracker[loc] == self.adj_flag_tracker[loc]:
             self.reveal_neighbors(loc)
             self.unfinished_clues.discard(loc)
     
     def update_neighbors_with_minecount(self,loc):
-        neighbors = self.get_neighbor_tiles(loc)
-        for neighbor in neighbors:
-            neighbor.incr_adj_mines()
+        neighbors = np.array(self.lookup_neighbors(loc))
+        rows,cols = neighbors.T
+        not_mines_mask = self.num_mine_tracker[rows, cols] != 9
+        self.num_mine_tracker[rows[not_mines_mask], cols[not_mines_mask]] += 1
             
 
         
     def reveal_tiles(self,loc):
-        mx,my=loc
-        if self.tiles[mx][my].is_revealed() or self.tiles[mx][my].is_flagged():
+        if self.tile_state_tracker[loc] != UNKNOWN:
             return
-        self.tiles[mx][my].set_revealed(True)
-        self.revealed_tiles.add((mx,my))
+        
+        self.tile_state_tracker[loc] = REVEALED
+        self.unrevealed_tiles.remove(loc)
 
-        if (mx,my) in self.mines:
-            self.tiles[mx][my].set_type(MINE)
-            self.tiles[mx][my].set_image(tile_exploded_path)
-            self.death_click = (mx,my)
-            self.reveal_mines()
+        if self.num_mine_tracker[loc] == 9:
+            self.death_click = loc
             GSM.set_game_state(False)
+            self.reveal_mines()
+            self.game_over = True
         else:
-            self.incr_num_revealed()
-            if self.tiles[mx][my].get_adj_mines() > 0:
-                self.tiles[mx][my].set_type(NUMBER)
-                self.unfinished_clues.add((mx,my))
+            self.num_revealed += 1
+            self.revealed_tiles.add(loc)
+            if self.num_mine_tracker[loc] > 0:
+                self.unfinished_clues.add(loc)
             else:
-                self.tiles[mx][my].set_type(OPENING)
-                self.reveal_neighbors((mx,my))
+                self.reveal_neighbors(loc)
 
 
     # precondition: an opening was clicked, current tile is already revealed
     def reveal_neighbors(self,loc):
-
-        neighbors = self.get_neighbor_tiles(loc)
-        for neighbor in neighbors:
-            if neighbor.is_revealed() is False and neighbor.is_flagged() is False:
-                neighbor.set_revealed(True)
-                self.revealed_tiles.add(neighbor.loc)
-                if neighbor.loc in self.mines:
-                    neighbor.set_type(MINE)
-                    neighbor.set_image(tile_exploded_path)
-                    self.reveal_mines()
-                    #self.reveal_board()
-                else:
-                    self.incr_num_revealed()
-                    if neighbor.get_adj_mines() == 0:
-                        neighbor.set_type(OPENING)
-                        self.reveal_neighbors((neighbor.row,neighbor.col))
-                    else:
-                        self.unfinished_clues.add(neighbor.loc)
-
-                        neighbor.set_type(NUMBER)
-
+        neighbors = self.lookup_neighbors(loc)
+        for nloc in neighbors:
+            self.reveal_tiles(nloc)
 
 
     def is_complete(self):
         return self.num_revealed == GSM.rows*GSM.cols - GSM.mine_count
     
     def verify_win(self):
-        for row in range(GSM.rows):
-            for col in range(GSM.cols):
-                if self.tiles[row][col].get_type() is NUMBER and not self.tiles[row][col].is_revealed():
-                    return False
-        return True
+        mine_check = self.num_mine_tracker < 9
+        not_revealed = self.tile_state_tracker != REVEALED 
+        mask = mine_check & not_revealed
+
+        return not np.any(mask)
     
 
 
     def reveal_mines(self):
-        for mine in self.mines:
-            if self.tiles[mine[0]][mine[1]].get_type() is not MINE:
-                self.tiles[mine[0]][mine[1]].set_type(MINE)
-                self.tiles[mine[0]][mine[1]].set_revealed(True)
-        for row in range(GSM.rows):
-            for col in range(GSM.cols):
-                if self.tiles[row][col].is_flagged() and (row,col) not in self.mines:
-                    self.tiles[row][col].set_type(UNKNOWN)
+        self.tile_state_tracker[(self.num_mine_tracker == 9) & (self.tile_state_tracker != FLAGGED)] = REVEALED
 
     def reveal_board(self):
         if not self.mines:
             self.populate((0,0))
-        for row in range(GSM.rows):
-            for col in range(GSM.cols):
-                if (row,col) in self.mines:
-                    self.tiles[row][col].set_type(MINE)
-                else:
-                    if self.tiles[row][col].get_adj_mines() == 0:
-                        self.tiles[row][col].set_type(OPENING)
-                    else:
-                        self.tiles[row][col].set_type(NUMBER)
-                    
-                self.tiles[row][col].set_revealed(True)
+        self.tile_state_tracker[:] = REVEALED
         self.num_revealed = GSM.rows*GSM.cols - GSM.mine_count
         GSM.set_game_state(False)
+        self.game_over = True
 
             
-
-    def debug_revealed(self,mx,my):
-        print(self.tiles[mx][my].get_type())
