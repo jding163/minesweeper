@@ -232,7 +232,7 @@ def handle_keypress_r():
     board.reveal_board()
     #print(sorted(board.mines,key=lambda coord: (coord[0], coord[1])))
 def handle_keypress_b():
-    samples = cs.sample_mines_per_group_x_times(board,20000)
+    samples = cs.sample_mines_per_group_x_times(board,24480)
     # cs.verify_sampling_distribution_from_samples(board,samples)
     cum_time=0
     start = time.time()
@@ -240,7 +240,7 @@ def handle_keypress_b():
     for sample in samples:
         cum_time+=cs.gen_board_from_sample(board,sample,nonfrontier_tiles_list)
     print('total time:',time.time()-start)
-    print('time to copy:',cum_time)
+    print('time to gen new mines:',cum_time)
     
 def handle_keypress_c(seed):
     result = player.play_game(seed=seed)

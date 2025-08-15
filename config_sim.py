@@ -5,28 +5,42 @@ import copy
 from solver import Solver
 from line_profiler import profile
 
+x = 0
+
+
+def tiny_sample(seq, k):
+    n = len(seq)
+    if k == 0:
+        return []
+    if k == n:
+        return list(seq)
+    chosen_indices = set()
+    while len(chosen_indices) < k:
+        chosen_indices.add(random.randrange(n))
+    return [seq[i] for i in chosen_indices]
+
+@profile
 def gen_board_from_sample(board,sample,nonfrontier_tiles_list):
     groups_list = board.groups_list
-    # new_mines = []
-    # for loc in board.flagged_tiles:
-    #     new_mines.append(loc)
     new_mines = list(board.flagged_tiles)
     mpg = sample.mines_per_group
+    start = time.time()
+
     for i, group in enumerate(groups_list):
         num_mines = mpg[i]
-        mine_locs = random.sample(group.tile_locs, num_mines)
-        new_mines.extend(mine_locs)
+        if num_mines > 0:
+            mine_locs = tiny_sample(group.tile_locs, num_mines)
+            new_mines.extend(mine_locs)
 
-        # for loc in mine_locs:
-        #     new_mines.append(loc)
+
 
     mines_left = len(board.mines) - len(new_mines)
     nonfrontier_mines = random.sample(nonfrontier_tiles_list,mines_left)
     new_mines.extend(nonfrontier_mines)
+    elapsed = time.time()-start
 
-    # for loc in nonfrontier_mines:
-    #     new_mines.append(loc)
-    start = time.time()
+
+
 
     new_board = Solver(empty=True)
     new_board.clone_board(board)
@@ -34,7 +48,6 @@ def gen_board_from_sample(board,sample,nonfrontier_tiles_list):
     new_board.copy_solver_info(board)
 
 
-    elapsed = time.time()-start
     new_board.mines = new_mines
 
     return elapsed

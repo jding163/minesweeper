@@ -1,433 +1,50 @@
 pygame-ce 2.5.5 (SDL 2.32.6, Python 3.11.8)
-0
-nf (np.int64(0), np.int64(2))
-(np.int64(0), np.int64(15))
-nf (np.int64(0), np.int64(3))
-(np.int64(0), np.int64(4))
-nf (np.int64(0), np.int64(2))
-(np.int64(0), np.int64(2))
-nf (np.int64(0), np.int64(2))
-(np.int64(0), np.int64(2))
-nf (np.int64(0), np.int64(2))
-(np.int64(0), np.int64(2))
-nf (np.int64(0), np.int64(2))
-(np.int64(0), np.int64(15))
-nf (np.int64(0), np.int64(2))
-(np.int64(0), np.int64(2))
-nf (np.int64(0), np.int64(7))
-(6, 9)
-nf (np.int64(0), np.int64(2))
-(np.int64(0), np.int64(2))
-nf (np.int64(0), np.int64(2))
-(np.int64(0), np.int64(2))
-nf (np.int64(0), np.int64(2))
-(np.int64(0), np.int64(2))
-nf (np.int64(0), np.int64(2))
-(np.int64(0), np.int64(2))
-nf (np.int64(23), np.int64(0))
-nf (np.int64(25), np.int64(0))
-(24, 0)
-nf (np.int64(0), np.int64(2))
-(np.int64(0), np.int64(2))
-nf (np.int64(12), np.int64(0))
-nf (np.int64(13), np.int64(6))
-nf (np.int64(13), np.int64(6))
-nf (np.int64(13), np.int64(6))
-nf (np.int64(13), np.int64(6))
-(23, 8)
-nf (np.int64(0), np.int64(4))
-(4, 2)
-nf (np.int64(0), np.int64(2))
-(np.int64(0), np.int64(2))
-nf (np.int64(0), np.int64(3))
-(2, 3)
-nf (np.int64(0), np.int64(2))
-(np.int64(0), np.int64(2))
-nf (np.int64(0), np.int64(3))
-nf (np.int64(0), np.int64(5))
-nf (np.int64(0), np.int64(5))
-(np.int64(0), np.int64(5))
-nf (np.int64(0), np.int64(2))
-(np.int64(0), np.int64(2))
-nf (np.int64(25), np.int64(14))
-nf (np.int64(25), np.int64(15))
-nf (np.int64(0), np.int64(2))
-(np.int64(0), np.int64(2))
-nf (np.int64(0), np.int64(2))
-(np.int64(0), np.int64(2))
-nf (np.int64(0), np.int64(5))
-nf (np.int64(0), np.int64(6))
-(4, 5)
-nf (np.int64(0), np.int64(2))
-Wrote profile results to player.py.lprof
+False
+0.011581897735595703
+total sols: 3453975092533805554226219136
+local sols: 24480
+sample_mines_per_group_x_times(): 0.17660999298095703
+total time: 4.241039991378784
+time to gen new mines: 3.3175714015960693
+Wrote profile results to main.py.lprof
 Timer unit: 1e-06 s
 
-Total time: 0.000589 s
-File: /Users/jeremyding/Desktop/projects/minesweeper/probability.py
-Function: calc_prob_for_nonfrontier_tiles at line 114
+Total time: 2.99289 s
+File: /Users/jeremyding/Desktop/projects/minesweeper/config_sim.py
+Function: gen_board_from_sample at line 22
 
 Line #      Hits         Time  Per Hit   % Time  Line Contents
 ==============================================================
-   114                                           @profile
-   115                                           def calc_prob_for_nonfrontier_tiles(prob_dist, mines_left, num_nonfrontier_tiles):
-   116       125         22.0      0.2      3.7      total_prob = 0
-   117       125         55.0      0.4      9.3      if len(prob_dist) == 0:
-   118                                                   total_prob = mines_left/num_nonfrontier_tiles
-   119                                               else:
-   120       323        151.0      0.5     25.6          for mines_in_border, prob in prob_dist.items():
-   121       198         57.0      0.3      9.7              mines_out_border = mines_left - mines_in_border
-   122       198         87.0      0.4     14.8              if 0 <= mines_out_border <= num_nonfrontier_tiles:
-   123       198         63.0      0.3     10.7                  safe_prob = (num_nonfrontier_tiles - mines_out_border) / num_nonfrontier_tiles
-   124       198         62.0      0.3     10.5                  total_prob += prob * safe_prob
-   125       125         49.0      0.4      8.3          total_prob = 1- total_prob
-   126       125         43.0      0.3      7.3      return total_prob
-
-Total time: 0.316379 s
-File: /Users/jeremyding/Desktop/projects/minesweeper/solver.py
-Function: get_sol_counts_at_loc_for_val at line 221
-
-Line #      Hits         Time  Per Hit   % Time  Line Contents
-==============================================================
-   221                                               @profile
-   222                                               # return total_count,best_prob, num_safe
-   223                                               def get_sol_counts_at_loc_for_val(self,loc,val):
-   224       179        533.0      3.0      0.2          orig_val_at_loc = self.assign_tile_value(loc,val)
-   225       179      29992.0    167.6      9.5          regions = self.get_updated_regions_list()
-   226       179         57.0      0.3      0.0          regions_to_solve = []
-   227       539        239.0      0.4      0.1          for region in regions:
-   228       360        127.0      0.4      0.0              if region.ps == None:
-   229       348        124.0      0.4      0.0                  regions_to_solve.append(region)
-   230                                                       else:
-   231        12        260.0     21.7      0.1                  regions_to_solve.append(copy.copy(region))
-   232       179         48.0      0.3      0.0          total_count = 0
-   233       179         40.0      0.2      0.0          best_prob = 1
-   234       179         46.0      0.3      0.0          num_safe = 0
-   235       179         28.0      0.2      0.0          has_ff = False
-   236       179         41.0      0.2      0.0          solvable = True
-   237                                           
-   238       179     163592.0    913.9     51.7          groups_list= self.find_possibilities(regions_to_solve)
-   239       447        134.0      0.3      0.0          for region in regions_to_solve:
-   240       360        142.0      0.4      0.0              if len(region.ps) == 0:
-   241        92         19.0      0.2      0.0                  solvable = False
-   242        92         36.0      0.4      0.0                  break
-   243       179         59.0      0.3      0.0          if solvable:
-   244        87         24.0      0.3      0.0              nonfrontier_locs = set()
-   245        87         32.0      0.4      0.0              frontier_locs = set()
-   246       291         89.0      0.3      0.0              for region in regions_to_solve:
-   247      1317        381.0      0.3      0.1                  for l in region.locs:
-   248      1113        400.0      0.4      0.1                      frontier_locs.add(l)
-   249        87         28.0      0.3      0.0              nonfrontier_locs = set()
-   250        87        517.0      5.9      0.2              unknown_mask = (self.tile_state_tracker == UNKNOWN)  # bool array
-   251        87        151.0      1.7      0.0              frontier_mask = np.zeros((self.rows, self.cols), dtype=bool)
-   252      1200        342.0      0.3      0.1              for loc in frontier_locs:
-   253      1113        363.0      0.3      0.1                  frontier_mask[loc] = True
-   254        87        253.0      2.9      0.1              mask = (~frontier_mask) & unknown_mask
-   255        87        741.0      8.5      0.2              nonfrontier_rows, nonfrontier_cols = np.where(mask)
-   256        87       4426.0     50.9      1.4              nonfrontier_locs = set(zip(nonfrontier_rows, nonfrontier_cols))
-   257                                                       # for r in range(self.rows):
-   258                                                       #     for c in range(self.cols):
-   259                                                       #         if (r,c) not in frontier_locs and self.tile_state_tracker[r,c] == UNKNOWN:
-   260                                                       #             nonfrontier_locs.add((r,c))
-   261                                           
-   262        87     112419.0   1292.2     35.5              safe_locs, _,best_prob,total_count= self.calc_probs_for_board(regions_to_solve,groups_list,nonfrontier_locs,update_self=False) 
-   263        87         32.0      0.4      0.0              num_safe = len(safe_locs)
-   264       179        360.0      2.0      0.1          self.unassign_tile_value(loc,orig_val_at_loc)
-   265       179        304.0      1.7      0.1          return SolverHeuristics(total_count=total_count,best_prob=best_prob, num_safe=num_safe,has_ff=has_ff)
-
-Total time: 0.50606 s
-File: /Users/jeremyding/Desktop/projects/minesweeper/solver.py
-Function: find_possibilities at line 342
-
-Line #      Hits         Time  Per Hit   % Time  Line Contents
-==============================================================
-   342                                               @profile
-   343                                               def find_possibilities(self,regions_to_solve):
-   344       273        101.0      0.4      0.0          groups_list = {}
-   345       273        128.0      0.5      0.0          if len(regions_to_solve) > 0:
-   346                                           
-   347                                                       #groups_list: dict(group id: GroupInfo(tile_locs,clue_indices))
-   348                                                       #unfinished_clues_list: list of locs of clues to be used
-   349                                                       #clue_index_dict: dict(loc of clue: index of clue in unfinished_clues_list)
-   350       273      14126.0     51.7      2.8              groups_list, unfinished_clues_list, clue_index_dict = self.find_groupings(regions_to_solve)
-   351       273         86.0      0.3      0.0              tile_to_group_index = {}
-   352      2666       1011.0      0.4      0.2              for i, group_info in enumerate(groups_list):
-   353      2393        836.0      0.3      0.2                  tile_to_group_index[group_info.tile_locs[0]] = i
-   354       794        348.0      0.4      0.1              for region in regions_to_solve:
-   355                                           
-   356       521        201.0      0.4      0.0                  if region.ps == None:
-   357       476        111.0      0.2      0.0                      first_group_index = -1
-   358       476        104.0      0.2      0.0                      num_groups = 0
-   359      4740       2060.0      0.4      0.4                      for group_index,group_info in enumerate(groups_list):
-   360      4264       1243.0      0.3      0.2                          rep_loc = group_info.tile_locs[0]
-   361      4264       1754.0      0.4      0.3                          if rep_loc in region.locs:
-   362      2213        591.0      0.3      0.1                              if first_group_index == -1:
-   363       476        104.0      0.2      0.0                                  first_group_index = group_index
-   364      2213        778.0      0.4      0.2                              num_groups += 1
-   365       476        137.0      0.3      0.0                      region.first_group_index = first_group_index
-   366       476        145.0      0.3      0.0                      region.num_groups = num_groups
-   367       476     480695.0   1009.9     95.0                      ps = self.find_possibilities_for_region(region,groups_list, unfinished_clues_list, clue_index_dict)
-   368       476        165.0      0.3      0.0                      region.ps = ps
-   369                                                           else:
-   370        45       1219.0     27.1      0.2                      new_start_index, new_ps = self.reformat_possibilities_in_existing_region(region,tile_to_group_index)
-   371        45          9.0      0.2      0.0                      region.first_group_index = new_start_index
-   372        45         27.0      0.6      0.0                      region.ps = new_ps
-   373       273         81.0      0.3      0.0          return groups_list
-
-Total time: 0.380076 s
-File: /Users/jeremyding/Desktop/projects/minesweeper/solver.py
-Function: find_possibilities_for_region at line 375
-
-Line #      Hits         Time  Per Hit   % Time  Line Contents
-==============================================================
-   375                                               @profile
-   376                                           
-   377                                               def find_possibilities_for_region(self,region,groups_list, unfinished_clues_list, clue_index_dict):
-   378                                                   #groups_list: dict(group id: GroupInfo(tile_locs,clue_indices))
-   379                                                   #unfinished_clues_list: list of locs of clues to be used
-   380                                                   #clue_index_dict: dict(loc of clue: index of clue in unfinished_clues_list)
-   381                                           
-   382                                           
-   383                                                   #groups_by_clue: dict(index of clue in unfinished_clues_list: adjacent group ids)
-   384       476       4369.0      9.2      1.1          groups_by_clue = get_groupings_by_clue(groups_list, unfinished_clues_list, clue_index_dict)
-   385                                           
-   386                                                   #update region group ids:
-   387       476        126.0      0.3      0.0          group_ids_in_region = []
-   388      4740       1995.0      0.4      0.5          for group_index, group_info in enumerate(groups_list):
-   389      4264       1275.0      0.3      0.3              rep_loc = group_info.tile_locs[0]
-   390      4264       1624.0      0.4      0.4              if rep_loc in region.locs:
-   391      2213        753.0      0.3      0.2                  group_ids_in_region.append(group_index)
-   392       476        155.0      0.3      0.0          region.group_ids = group_ids_in_region
-   393                                           
-   394       476        303.0      0.6      0.1          region_tiles = set(region.locs)
-   395       476        161.0      0.3      0.0          relevant_clues = set()
-   396                                           
-   397      3885       1306.0      0.3      0.3          for loc in region_tiles:
-   398      3409       2071.0      0.6      0.5              neighbors = self.lookup_neighbors(loc)
-   399     27378       9705.0      0.4      2.6              for neighbor in neighbors:
-   400     23969       7370.0      0.3      1.9                  if neighbor in self.unfinished_clues:
-   401      5946       2332.0      0.4      0.6                      relevant_clues.add(clue_index_dict[neighbor])
-   402       476        263.0      0.6      0.1          relevant_clues = list(relevant_clues)
-   403                                           
-   404       476        243.0      0.5      0.1          used_clues = [False] * len(unfinished_clues_list)
-   405       476        186.0      0.4      0.0          used_groups = [False] * len(groups_list)
-   406       476        108.0      0.2      0.0          num_used_clues = 0
-   407                                                   
-   408                                                   # possibility fields:
-   409                                                   # total_mines (default:0)
-   410                                                   # num_cases (default:1)
-   411                                                   # mines_per_group: list where the ith element represents how many mines are in the group at 
-   412                                                   #                  groups_list[i]
-   413       476        610.0      1.3      0.2          ps = [Possibility(mines_per_group=[0] * len(groups_list))]
-   414                                           
-   415                                                   # mines_added_per_clue: list where the ith element represents how many mines need to be added to
-   416                                                   # satisfy the clue at unfinished_clues_list[i]
-   417       476        197.0      0.4      0.1          mines_added_per_clue = [0] * len(clue_index_dict)
-   418      3916       1750.0      0.4      0.5          for clue_loc, clue_index in clue_index_dict.items():
-   419      3440       1026.0      0.3      0.3              if clue_index in relevant_clues:
-   420      1791       1456.0      0.8      0.4                  mines_added_per_clue[clue_index] = int(self.num_mine_tracker[clue_loc]-self.adj_flag_tracker[clue_loc])
-   421      2267        991.0      0.4      0.3          while (num_used_clues < len(relevant_clues)):
-   422      1791        405.0      0.2      0.1              best_clue = -1
-   423      1791        677.0      0.4      0.2              best_clue_boundary = len(groups_list) + 1
-   424     18032       7612.0      0.4      2.0              for clue_index in relevant_clues:
-   425     16241       4272.0      0.3      1.1                  if used_clues[clue_index]:
-   426      7225       1483.0      0.2      0.4                      continue
-   427      9016       2200.0      0.2      0.6                  used_clues[clue_index] = True
-   428      9016     136281.0     15.1     35.9                  boundary = get_boundary(groups_list,used_clues)
-   429      9016      57920.0      6.4     15.2                  supergroups = get_boundary_supergroups(groups_list,used_clues,boundary)
-   430      9016       2343.0      0.3      0.6                  used_clues[clue_index] = False
-   431      9016       2506.0      0.3      0.7                  boundary_change = len(supergroups)
-   432      9016       2485.0      0.3      0.7                  if boundary_change < best_clue_boundary:
-   433      2896        718.0      0.2      0.2                      best_clue = clue_index
-   434      2896        681.0      0.2      0.2                      best_clue_boundary = boundary_change
-   435                                                   
-   436      1791        502.0      0.3      0.1              used_clues[best_clue] = True
-   437      1791        524.0      0.3      0.1              num_used_clues += 1
-   438      1791      19976.0     11.2      5.3              boundary = get_boundary(groups_list,used_clues)
-   439      1791       5867.0      3.3      1.5              supergroups = get_boundary_supergroups(groups_list,used_clues,boundary)
-   440                                           
-   441      1791        464.0      0.3      0.1              groups_to_use = []
-   442      6341       2513.0      0.4      0.7              for group_id in groups_by_clue[best_clue]:
-   443      4550       1263.0      0.3      0.3                  if not used_groups[group_id]:
-   444      2213        513.0      0.2      0.1                      used_groups[group_id] = True
-   445      2213        832.0      0.4      0.2                      groups_to_use.append(group_id)
-   446      1791        463.0      0.3      0.1              new_ps = []
-   447                                           
-   448     12108       3727.0      0.3      1.0              for p in ps:
-   449     10317       2575.0      0.2      0.7                  mines_to_add = mines_added_per_clue[best_clue]
-   450                                           
-   451                                           
-   452     10317       2274.0      0.2      0.6                  mines_in_used_groups = 0
-   453     39039      11397.0      0.3      3.0                  for group_id in groups_by_clue[best_clue]:
-   454                                           
-   455     28722       8108.0      0.3      2.1                      mines_in_used_groups += p.mines_per_group[group_id]
-   456     10317       2428.0      0.2      0.6                  mines_to_add -= mines_in_used_groups
-   457                                           
-   458     10317      55503.0      5.4     14.6                  extend_possibility(p,mines_to_add,groups_to_use,new_ps,len(groups_to_use)-1,groups_list,board=self)
-   459      1791       1047.0      0.6      0.3              ps = new_ps
-   460       476        142.0      0.3      0.0          return ps
-
-Total time: 0.028411 s
-File: /Users/jeremyding/Desktop/projects/minesweeper/solver.py
-Function: calc_prob_at_loc at line 473
-
-Line #      Hits         Time  Per Hit   % Time  Line Contents
-==============================================================
-   473                                               @profile
-   474                                               def calc_prob_at_loc(self,loc,groups_list,nonfrontier_locs,total_sols,total_sols_dict,num_local_sols_at_count,ps_with_num_mines):
-   475      1031        491.0      0.5      1.7          if self.tile_state_tracker[loc] != UNKNOWN:
-   476                                                       return 0
-   477                                                   
-   478                                           
-   479                                                   #total_sols = sum(total_sols_dict.values())
-   480      1031        353.0      0.3      1.2          if loc in nonfrontier_locs:
-   481       125        231.0      1.8      0.8              prob_dist = {mc: num_sols_for_mc / total_sols for mc, num_sols_for_mc in total_sols_dict.items()}
-   482       125         60.0      0.5      0.2              mines_left = len(self.mines) - self.flag_count
-   483                                           
-   484       125       1312.0     10.5      4.6              prob_nf = prob.calc_prob_for_nonfrontier_tiles(prob_dist,mines_left,len(nonfrontier_locs))
-   485                                                       
-   486                                           
-   487       125         43.0      0.3      0.2              return prob_nf
-   488                                                   
-   489       906        205.0      0.2      0.7          group_id = -1
-   490       906        212.0      0.2      0.7          group_size = -1
-   491      6263       2282.0      0.4      8.0          for id,info in enumerate(groups_list):
-   492      6263       1827.0      0.3      6.4              if loc in info.tile_locs:
-   493       906        288.0      0.3      1.0                  group_size = len(info.tile_locs)
-   494       906        212.0      0.2      0.7                  group_id = id
-   495       906        242.0      0.3      0.9                  break
-   496                                           
-   497                                           
-   498       906        204.0      0.2      0.7          avg_mines_in_group = 0
-   499      3045       1187.0      0.4      4.2          for num_mines, num_cases in num_local_sols_at_count.items():
-   500      2139        562.0      0.3      2.0              num_sols_at_num_mines = total_sols_dict[num_mines]
-   501      2139        491.0      0.2      1.7              matching_ps = ps_with_num_mines[num_mines]
-   502      2139        481.0      0.2      1.7              avg_mines_in_group_at_num_mines = 0
-   503     19535       5458.0      0.3     19.2              for p in matching_ps:
-   504     17396       4975.0      0.3     17.5                  frac = p.num_cases/num_cases
-   505                                           
-   506                                           
-   507                                           
-   508     17396       5695.0      0.3     20.0                  avg_mines_in_group_at_num_mines += frac * p.mines_per_group[group_id]
-   509      2139       1104.0      0.5      3.9              avg_mines_in_group += (num_sols_at_num_mines/total_sols) * avg_mines_in_group_at_num_mines
-   510       906        209.0      0.2      0.7          prob_loc_is_mine = avg_mines_in_group/group_size
-   511       906        287.0      0.3      1.0          return prob_loc_is_mine
-
-Total time: 0.134821 s
-File: /Users/jeremyding/Desktop/projects/minesweeper/solver.py
-Function: calc_probs_for_board at line 512
-
-Line #      Hits         Time  Per Hit   % Time  Line Contents
-==============================================================
-   512                                               @profile
-   513                                               def calc_probs_for_board(self,regions,groups_list,nonfrontier_locs,update_self=True):
-   514       130         43.0      0.3      0.0          safe_locs = []
-   515       130         38.0      0.3      0.0          mine_locs = []
-   516       130         84.0      0.6      0.1          total_sols_dict = defaultdict(int)
-   517       130         58.0      0.4      0.0          num_local_sols_at_count = defaultdict(int)
-   518       130         59.0      0.5      0.0          ps_with_num_mines = defaultdict(list)
-   519       130         60.0      0.5      0.0          mines_left = self.minecount-self.flag_count
-   520                                           
-   521                                           
-   522       130         34.0      0.3      0.0          safest_prob = 1
-   523       130         57.0      0.4      0.0          if len(regions)>0:
-   524       130      11932.0     91.8      8.9              ps = self.merge_all_possibilities(regions)
-   525       130        250.0      1.9      0.2              ps = [p for p in ps if p.total_mines <= mines_left]
-   526                                           
-   527       130         25.0      0.2      0.0              if update_self:
-   528        43         63.0      1.5      0.0                  self.global_ps = ps
-   529       993        359.0      0.4      0.3              for p in ps:
-   530       863        427.0      0.5      0.3                  num_local_sols_at_count[p.total_mines] += p.num_cases
-   531                                           
-   532       863        370.0      0.4      0.3                  ps_with_num_mines[p.total_mines].append(p)
-   533       130         47.0      0.4      0.0              total_sols = 0
-   534                                           
-   535       333        155.0      0.5      0.1              for num_mines in ps_with_num_mines.keys():
-   536       203        746.0      3.7      0.6                  total_sols_at_num_mines = num_local_sols_at_count[num_mines] * math.comb(len(nonfrontier_locs),mines_left-num_mines)
-   537       203         64.0      0.3      0.0                  total_sols_dict[num_mines] = total_sols_at_num_mines
-   538       203         80.0      0.4      0.1                  total_sols += total_sols_at_num_mines
-   539       130         36.0      0.3      0.0              if update_self:
-   540        43          9.0      0.2      0.0                  self.total_sols = total_sols
-   541        43         13.0      0.3      0.0                  self.total_sols_dict = total_sols_dict
-   542       130         42.0      0.3      0.0              if total_sols == 0:
-   543                                                           return [],[],1,0
-   544      1036        389.0      0.4      0.3              for group_info in groups_list:
-   545       906        228.0      0.3      0.2                  group_locs = group_info.tile_locs
-   546       906        251.0      0.3      0.2                  rep_loc = group_locs[0]
-   547       906      50064.0     55.3     37.1                  prob_at_loc = self.calc_prob_at_loc(rep_loc,groups_list,nonfrontier_locs,total_sols,total_sols_dict,num_local_sols_at_count,ps_with_num_mines)
-   548      2463       1108.0      0.4      0.8                  for loc in group_locs:
-   549      1557        408.0      0.3      0.3                      if update_self:
-   550       444        209.0      0.5      0.2                          self.mine_probs[loc] = prob_at_loc
-   551      1557        519.0      0.3      0.4                      if prob_at_loc == 0:
-   552       851        284.0      0.3      0.2                          safe_locs.append(loc)
-   553       706        188.0      0.3      0.1                      elif prob_at_loc == 1:
-   554       119         46.0      0.4      0.0                          mine_locs.append(loc)
-   555       906        465.0      0.5      0.3                  safest_prob = min(safest_prob,prob_at_loc)
-   556                                                   else:
-   557                                                       total_sols = math.comb(len(nonfrontier_locs),mines_left)
-   558                                                       if update_self:
-   559                                                           self.total_sols = total_sols
-   560                                                           self.total_sols_dict = {mines_left:total_sols}
-   561                                           
-   562       130         48.0      0.4      0.0          if len(nonfrontier_locs) > 0:
-   563                                                       
-   564       125         25.0      0.2      0.0              nf_loc = None
-   565       125         51.0      0.4      0.0              for nf_l in nonfrontier_locs:
-   566       125         29.0      0.2      0.0                  nf_loc = nf_l
-   567       125         34.0      0.3      0.0                  break
-   568       125       2255.0     18.0      1.7              prob_at_loc = self.calc_prob_at_loc(nf_loc,groups_list,nonfrontier_locs,total_sols,total_sols_dict,num_local_sols_at_count,ps_with_num_mines)
-   569     52806      16782.0      0.3     12.4              for loc in nonfrontier_locs:
-   570     52681      12998.0      0.2      9.6                  if update_self:
-   571     13618       4838.0      0.4      3.6                      self.mine_probs[loc] = prob_at_loc
-   572                                           
-   573                                           
-   574                                           
-   575     52681      15081.0      0.3     11.2                  if prob_at_loc == 0:
-   576         2          1.0      0.5      0.0                      safe_locs.append(loc)
-   577     52679      13307.0      0.3      9.9                  elif prob_at_loc == 1:
-   578                                                               mine_locs.append(loc)
-   579       125         84.0      0.7      0.1              safest_prob = min(safest_prob,prob_at_loc)
-   580                                           
-   581       130         78.0      0.6      0.1          return safe_locs,mine_locs,safest_prob,total_sols
-
-Total time: 0 s
-File: /Users/jeremyding/Desktop/projects/minesweeper/strategy.py
-Function: find_move at line 31
-
-Line #      Hits         Time  Per Hit   % Time  Line Contents
-==============================================================
-    31                                               @profile
-    32                                               def find_move(self,board):
-    33                                                   #update_nonfrontier_tile_probs(board)
+    22                                           @profile
+    23                                           def gen_board_from_sample(board,sample,nonfrontier_tiles_list):
+    24     24480       5969.0      0.2      0.2      groups_list = board.groups_list
+    25     24480      17973.0      0.7      0.6      new_mines = list(board.flagged_tiles)
+    26     24480       7165.0      0.3      0.2      mpg = sample.mines_per_group
+    27     24480       9967.0      0.4      0.3      start = time.time()
+    28                                           
+    29    832320     347286.0      0.4     11.6      for i, group in enumerate(groups_list):
+    30    807840     229780.0      0.3      7.7          num_mines = mpg[i]
+    31    807840     214237.0      0.3      7.2          if num_mines > 0:
+    32    415726     686303.0      1.7     22.9              mine_locs = tiny_sample(group.tile_locs, num_mines)
+    33    415726     150807.0      0.4      5.0              new_mines.extend(mine_locs)
     34                                           
-    35                                                   min_prob = 1
-    36                                                   min_loc = (-1,-1)
-    37                                                   best_priority = -1
-    38                                           
-    39                                                   unrevealed_tile_locs = []
-    40                                                   for region in board.regions_list:
-    41                                                       for loc in region.locs:
-    42                                                           unrevealed_tile_locs.append(loc)
-    43                                                   for loc in unrevealed_tile_locs:
-    44                                                       prob_mine = board.mine_probs[loc]
-    45                                                       if prob_mine < min_prob:
-    46                                                           min_prob = prob_mine
-    47                                                           min_loc = loc
-    48                                                           best_priority = get_priority(board,loc)
-    49                                                       elif prob_mine == min_prob:
-    50                                                           priority = get_priority(board,loc)
-    51                                                           if priority > best_priority:
-    52                                                               min_loc = loc
-    53                                                               best_priority = priority
-    54                                                   if len(board.nonfrontier_tiles) > 0:
-    55                                                       nf_tile = board.nonfrontier_tiles[0]
-    56                                                       nonfrontier_tile_prob = board.mine_probs[nf_tile]
-    57                                                       if nonfrontier_tile_prob <= min_prob:
-    58                                           
-    59                                                           for loc in board.nonfrontier_tiles:
-    60                                                               priority = get_priority(board,loc)
-    61                                           
-    62                                                               if priority > best_priority:
-    63                                                                   min_loc = loc
-    64                                                                   best_priority = priority
-    65                                                   return min_loc
+    35                                           
+    36                                           
+    37     24480      11492.0      0.5      0.4      mines_left = len(board.mines) - len(new_mines)
+    38     24480     580765.0     23.7     19.4      nonfrontier_mines = random.sample(nonfrontier_tiles_list,mines_left)
+    39     24480      14146.0      0.6      0.5      new_mines.extend(nonfrontier_mines)
+    40     24480      10589.0      0.4      0.4      elapsed = time.time()-start
+    41                                           
+    42                                           
+    43                                           
+    44                                           
+    45     24480      29797.0      1.2      1.0      new_board = Solver(empty=True)
+    46     24480     198467.0      8.1      6.6      new_board.clone_board(board)
+    47     24480       7319.0      0.3      0.2      new_board.mines = new_mines
+    48     24480     456323.0     18.6     15.2      new_board.copy_solver_info(board)
+    49                                           
+    50                                           
+    51     24480       7409.0      0.3      0.2      new_board.mines = new_mines
+    52                                           
+    53     24480       7092.0      0.3      0.2      return elapsed
 

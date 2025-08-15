@@ -112,7 +112,6 @@ def convolve_freqs_helper(freqs, index, total_mines, total_count, total_freqs):
             new_tm = total_mines + tm
             new_tc = total_count * tc
             convolve_freqs_helper(freqs,index+1,new_tm,new_tc,total_freqs)
-@profile
 def calc_prob_for_nonfrontier_tiles(prob_dist, mines_left, num_nonfrontier_tiles):
     total_prob = 0
     if len(prob_dist) == 0:
