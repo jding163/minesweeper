@@ -64,8 +64,29 @@ class Player():
                 min_prob = prob_mine
                 min_loc = loc
         return min_loc
+    def get_suggestion(self):
+        safe_locs, mine_locs=self.board.solve_exhaustive()
+        if len(safe_locs) > 0:
+            return safe_locs,mine_locs
+        else:
+            best_move = self.find_best_move()
+            return [best_move],mine_locs
 
+    def find_best_move(self):
+        if len(self.board.ff_groups) > 0:
+            ff_groups = sorted(self.board.ff_groups, key=lambda sublist: (sublist[0][0], sublist[0][1]))
+            best_move = ff_groups[0][0]
+        elif len(self.board.ic_regions) > 0:
+            isolated_locs = []
+            for region in self.board.ic_regions:
+                for loc in region.locs:
+                    isolated_locs.append(loc)
+            isolated_locs = sorted(isolated_locs,key=lambda k: [k[0], k[1]])
+            best_move = self.strategy.find_move_from_locs(self.board,isolated_locs)
 
+        else:
+            best_move = self.strategy.find_move(self.board)
+        return best_move
     def play_one_step(self,risk=True):
         #game_over = not GSM.get_game_state() or (self.board.is_complete() and self.board.verify_win())
 
@@ -81,19 +102,7 @@ class Player():
         game_over = not GSM.get_game_state() or self.board.is_complete()
 
         if risk is True and not game_over:
-            if len(self.board.ff_groups) > 0:
-                ff_groups = sorted(self.board.ff_groups, key=lambda sublist: (sublist[0][0], sublist[0][1]))
-                best_move = ff_groups[0][0]
-            elif len(self.board.ic_regions) > 0:
-                isolated_locs = []
-                for region in self.board.ic_regions:
-                    for loc in region.locs:
-                        isolated_locs.append(loc)
-                isolated_locs = sorted(isolated_locs,key=lambda k: [k[0], k[1]])
-                best_move = self.strategy.find_move_from_locs(self.board,isolated_locs)
-
-            else:
-                best_move = self.strategy.find_move(self.board)
+            best_move = self.find_best_move()
 
             self.board.reveal_tiles(best_move)
             return True
@@ -104,12 +113,13 @@ class Player():
         while True:
             game_over = not GSM.get_game_state() or self.board.is_complete()
             if game_over:
-                return True
+                return self.board.death_click == None
             move_made = self.play_one_step(risk=risk)
             if not move_made:
                 break
+        return False
 
-    
+    @profile
     def play_game(self,seed=None):
         #C.handle_keypress_n()  # full reset
         #GSM.set_game_state(True)

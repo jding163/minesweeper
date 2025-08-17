@@ -67,12 +67,12 @@ def find_loc_with_best_progress_over_locs(board,locs,expected_clears_weight=0.00
                 best_score = final_score
                 threshold = info.sec_safety
                 best_loc = loc
-        # if not board.collected and best_loc in board.ff_influence_locs and old_best > best_score/ff_influence_weight and old_best < best_score:
-        #     # print(old_best_loc)
-        #     # print(old_best)
-        #     # print(best_loc)
-        #     # print(best_score)
-        #     board.collected=True
+        if not board.collected and best_loc in board.ff_influence_locs and old_best > best_score/ff_influence_weight and old_best < best_score:
+            # print(old_best_loc)
+            # print(old_best)
+            # print(best_loc)
+            # print(best_score)
+            board.collected=True
     return best_loc
 def calc_progress_info_at_loc(board,loc,threshold,threshold_on=True):
     prob_mine = board.mine_probs[loc]

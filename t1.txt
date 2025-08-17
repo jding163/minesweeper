@@ -1,50 +1,48 @@
 pygame-ce 2.5.5 (SDL 2.32.6, Python 3.11.8)
-False
-0.011581897735595703
-total sols: 3453975092533805554226219136
-local sols: 24480
-sample_mines_per_group_x_times(): 0.17660999298095703
-total time: 4.241039991378784
-time to gen new mines: 3.3175714015960693
-Wrote profile results to main.py.lprof
+0
+
+--- Statistics Summary ---
+Strategy used: SecSafety
+Total games: 100
+Total time: 33.342971086502075
+Wins: 47
+Losses: 53
+Errors: 0
+Winrate: 47.00%
+Average time per game: 0.33 seconds
+Average time per win: 0.50 seconds
+Median win: 0.12
+timeouts: 0
+Wrote profile results to player.py.lprof
 Timer unit: 1e-06 s
 
-Total time: 2.99289 s
-File: /Users/jeremyding/Desktop/projects/minesweeper/config_sim.py
-Function: gen_board_from_sample at line 22
+Total time: 33.3333 s
+File: player.py
+Function: play_game at line 112
 
 Line #      Hits         Time  Per Hit   % Time  Line Contents
 ==============================================================
-    22                                           @profile
-    23                                           def gen_board_from_sample(board,sample,nonfrontier_tiles_list):
-    24     24480       5969.0      0.2      0.2      groups_list = board.groups_list
-    25     24480      17973.0      0.7      0.6      new_mines = list(board.flagged_tiles)
-    26     24480       7165.0      0.3      0.2      mpg = sample.mines_per_group
-    27     24480       9967.0      0.4      0.3      start = time.time()
-    28                                           
-    29    832320     347286.0      0.4     11.6      for i, group in enumerate(groups_list):
-    30    807840     229780.0      0.3      7.7          num_mines = mpg[i]
-    31    807840     214237.0      0.3      7.2          if num_mines > 0:
-    32    415726     686303.0      1.7     22.9              mine_locs = tiny_sample(group.tile_locs, num_mines)
-    33    415726     150807.0      0.4      5.0              new_mines.extend(mine_locs)
-    34                                           
-    35                                           
-    36                                           
-    37     24480      11492.0      0.5      0.4      mines_left = len(board.mines) - len(new_mines)
-    38     24480     580765.0     23.7     19.4      nonfrontier_mines = random.sample(nonfrontier_tiles_list,mines_left)
-    39     24480      14146.0      0.6      0.5      new_mines.extend(nonfrontier_mines)
-    40     24480      10589.0      0.4      0.4      elapsed = time.time()-start
-    41                                           
-    42                                           
-    43                                           
-    44                                           
-    45     24480      29797.0      1.2      1.0      new_board = Solver(empty=True)
-    46     24480     198467.0      8.1      6.6      new_board.clone_board(board)
-    47     24480       7319.0      0.3      0.2      new_board.mines = new_mines
-    48     24480     456323.0     18.6     15.2      new_board.copy_solver_info(board)
-    49                                           
-    50                                           
-    51     24480       7409.0      0.3      0.2      new_board.mines = new_mines
-    52                                           
-    53     24480       7092.0      0.3      0.2      return elapsed
+   112                                               @profile
+   113                                               def play_game(self,seed=None):
+   114                                                   #C.handle_keypress_n()  # full reset
+   115                                                   #GSM.set_game_state(True)
+   116       100     312772.0   3127.7      0.9          self.board = Solver()
+   117       100         69.0      0.7      0.0          if self.timeout is not None:
+   118       100        124.0      1.2      0.0              self.board.deadline = time.time() + self.timeout
+   119                                           
+   120       100     141371.0   1413.7      0.4          self.board.populate((0,0),seed=seed)
+   121       100         59.0      0.6      0.0          start_time = time.time()
+   122                                           
+   123       100       3172.0     31.7      0.0          self.board.reveal_tiles((0,0))
+   124       100   32873740.0 328737.4     98.6          self.autoplay()
+   125                                           
+   126                                           
+   127       100        119.0      1.2      0.0          end_time = time.time()
+   128       100         46.0      0.5      0.0          duration = end_time - start_time
+   129                                           
+   130       100         77.0      0.8      0.0          return {
+   131       100         26.0      0.3      0.0              'seed': seed,
+   132       100       1748.0     17.5      0.0              'won': self.board.is_complete() and self.board.verify_win(),
+   133       100         22.0      0.2      0.0              'time': duration
+   134                                                   }
 

@@ -4,8 +4,9 @@ import time
 import copy
 from solver import Solver
 from line_profiler import profile
+from player import Player
 
-x = 0
+player = Player()
 
 
 def tiny_sample(seq, k):
@@ -19,38 +20,38 @@ def tiny_sample(seq, k):
         chosen_indices.add(random.randrange(n))
     return [seq[i] for i in chosen_indices]
 
-@profile
+def play_genned_board(board,first_click):
+    player.board = board
+    board.reveal_tiles(first_click)
+    result = player.autoplay()
+    return result
+
+
+
 def gen_board_from_sample(board,sample,nonfrontier_tiles_list):
     groups_list = board.groups_list
     new_mines = list(board.flagged_tiles)
     mpg = sample.mines_per_group
-    start = time.time()
-
     for i, group in enumerate(groups_list):
         num_mines = mpg[i]
         if num_mines > 0:
             mine_locs = tiny_sample(group.tile_locs, num_mines)
             new_mines.extend(mine_locs)
 
-
-
     mines_left = len(board.mines) - len(new_mines)
     nonfrontier_mines = random.sample(nonfrontier_tiles_list,mines_left)
     new_mines.extend(nonfrontier_mines)
-    elapsed = time.time()-start
-
-
-
-
     new_board = Solver(empty=True)
     new_board.clone_board(board)
     new_board.mines = new_mines
     new_board.copy_solver_info(board)
 
 
-    new_board.mines = new_mines
+    for loc in new_board.mines:
+        new_board.update_neighbors_with_minecount(loc)
+        new_board.num_mine_tracker[loc] = 9
 
-    return elapsed
+    return new_board
         
 
     

@@ -161,7 +161,7 @@ class Game:
                         #C.handle_board_click(seed=3180935053634563155)
                         #C.handle_board_click(seed=569029668483675204)
                         C.handle_board_click(seed=4426209640626608113)
-                        #C.handle_board_click(seed=6704850492719565049)
+                        #C.handle_board_click(seed=3727467103200484093)
 
                         #C.handle_board_click()
                     
@@ -224,7 +224,7 @@ class Game:
                     C.handle_keypress_c(8395227948706629321)
                 elif event.key == pygame.K_k:
                     C.handle_keypress_k()
-                    print(f'test: {C.test}')
+                    C.handle_keypress_k()
                 elif event.key == pygame.K_SPACE:
                     C.handle_keypress_space()
 def main():

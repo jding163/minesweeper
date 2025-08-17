@@ -10,6 +10,7 @@ import traceback
 import config_sim as cs
 import probability as prob
 import progress as prog
+from collections import defaultdict
 #import player as P
 
 test=True
@@ -40,6 +41,9 @@ def set_game(g):
     game = g
     player.set_game(g)
 
+def set_first_click(first_click):
+    global game
+    game.first_click = first_click
 
 
 def update_mouse_pos(x,y):
@@ -152,7 +156,8 @@ def handle_keypress_w():
     print(time.time()-start)
 
 def handle_keypress_e():
-    pass
+    player.set_strategy(strat.SecSafety())
+    print(player.get_suggestion())
 
 
 def handle_keypress_t(seed=None,timeout=None):
@@ -174,11 +179,11 @@ def handle_keypress_t(seed=None,timeout=None):
         player.board.deadline = start + timeout
 
     try:
-        player.autoplay(risk=False)
+        print(player.autoplay(risk=True))
     except Exception as e:
         print(e)
         traceback.print_exc()
-    print(game_won())
+    #print(game_won())
     print(time.time()-start)
 
 
@@ -206,11 +211,16 @@ def handle_keypress_y():
     player.play_one_step()
 
 def handle_keypress_l():
-    player.set_strategy(strat.SafestTileAndForce())
-    player.play_one_step()
+    board = Board.load_board('testboard.npz')
+    board = Solver.from_board(board)
+    set_board(board)
+    set_first_click(False)
+    GSM.set_game_state(True)
+
 
 def handle_keypress_k():
-    board.open_known_tiles()
+    player.board.save_board('testboard')
+
 
 def handle_keypress_o():
     Board.display_probs = 2
@@ -232,15 +242,41 @@ def handle_keypress_r():
     board.reveal_board()
     #print(sorted(board.mines,key=lambda coord: (coord[0], coord[1])))
 def handle_keypress_b():
-    samples = cs.sample_mines_per_group_x_times(board,24480)
+    global board
+
+    if len(board.global_ps) == 0:
+        board.solve_exhaustive()
+
+    num_samples = 2000
+    samples = cs.sample_mines_per_group_x_times(board,num_samples)
     # cs.verify_sampling_distribution_from_samples(board,samples)
-    cum_time=0
     start = time.time()
     nonfrontier_tiles_list = sorted(board.nonfrontier_tiles)
+    genned_boards = []
     for sample in samples:
-        cum_time+=cs.gen_board_from_sample(board,sample,nonfrontier_tiles_list)
+        genned_board = cs.gen_board_from_sample(board,sample,nonfrontier_tiles_list)
+        genned_boards.append(genned_board)
+    locs = [(14,13),(14,9)]
+    wins = {}
+    sim_board = Solver()
+    for loc in locs:
+        won_at_loc = 0
+        for i,b in enumerate(genned_boards):
+            if i% 100 == 0:
+                print(i)
+            GSM.set_game_state(True)
+            sim_board.clone_board(b,copy_num_mine_tracker=True)
+            sim_board.copy_solver_info(b)
+            result = cs.play_genned_board(sim_board,loc)
+            if result:
+                won_at_loc+=1
+        wins[loc] = won_at_loc
+    for k,v in wins.items():
+        print(f'{k}: {v/num_samples * 100}')
     print('total time:',time.time()-start)
-    print('time to gen new mines:',cum_time)
+    GSM.set_game_state(True)
+    #set_board(board)
+
     
 def handle_keypress_c(seed):
     result = player.play_game(seed=seed)

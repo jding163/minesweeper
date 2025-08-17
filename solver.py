@@ -128,8 +128,36 @@ class Solver(Board):
             self.total_sols = 0
             self.total_sols_dict = {}
 
+
         #self.populate(first_click)
         #self.reveal_tiles(first_click[0],first_click[1])
+    @classmethod
+    def from_board(cls,board):
+        solver = cls()
+        solver.rows = board.rows
+        solver.cols = board.cols
+        solver.dims = board.dims
+        solver.num_revealed = board.num_revealed
+        solver.flag_count = board.flag_count
+        solver.mines = board.mines
+        solver.first_click= board.first_click
+        solver.seed = board.seed
+        solver.death_click = board.death_click
+        solver.revealed_tiles = board.revealed_tiles
+        solver.unrevealed_tiles = board.unrevealed_tiles
+
+        solver.unfinished_clues = board.unfinished_clues
+        solver.flagged_tiles = board.flagged_tiles
+        solver.minecount = board.minecount
+        solver.game_over = board.game_over
+        solver.cloned = board.cloned
+        solver.tile_neighbors = board.tile_neighbors
+        solver.num_mine_tracker = board.num_mine_tracker
+        solver.tile_state_tracker = board.tile_state_tracker
+        solver.adj_flag_tracker = board.adj_flag_tracker
+        solver.mine_probs = board.mine_probs
+        solver.opening_probs = board.opening_probs
+        return solver
     def copy_solver_info(self, board):
         self.nonfrontier_tiles = board.nonfrontier_tiles
         self.regions_list = [copy.copy(region) for region in board.regions_list]
@@ -182,11 +210,7 @@ class Solver(Board):
         
         return sorted_groups
 
-    
-
-
-    # flags neighbors if they are known to be mines
-    def flag_neighbors(self,loc):
+    def find_flags(self,loc):
         target_mines = self.num_mine_tracker[loc]
         curr_flags = self.adj_flag_tracker[loc]
         mines_to_find = target_mines - curr_flags
@@ -196,11 +220,18 @@ class Solver(Board):
             if self.tile_state_tracker[neighbor] == UNKNOWN:
                 unknown_neighbors.append(neighbor)
         flags_found = len(unknown_neighbors) == mines_to_find
+        return flags_found,unknown_neighbors
+
+
+    # flags neighbors if they are known to be mines
+    def flag_neighbors(self,loc):
+
+        flags_found,unknown_neighbors = self.find_flags(loc)
         if flags_found:
             for neighbor in unknown_neighbors:
                 self.toggle_flag_at_loc(neighbor)
-        #return flags_found
         return unknown_neighbors
+    
     
     def flag_board(self):
         flags_found = False
