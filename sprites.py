@@ -128,7 +128,6 @@ class BoardUI():
                 tile.num = self.board.num_mine_tracker[r,c]
                 tile.mine_prob=self.board.mine_probs[r,c]
                 tile.opening_prob=self.board.opening_probs[r,c]
-        state = self.board.tile_state_tracker[29,0]
         TileUI.game_over = self.board.game_over
         TileUI.death_click = self.board.death_click
     def draw(self,screen):
@@ -327,8 +326,6 @@ class Board:
             self.num_mine_tracker[loc] = 9
         self.minecount = len(self.mines)
 
-        GSM.set_game_state(True)
-
     def incr_num_revealed(self):
         self.num_revealed += 1
 
@@ -355,7 +352,6 @@ class Board:
 
         if self.num_mine_tracker[loc] == 9:
             self.death_click = loc
-            GSM.set_game_state(False)
             self.reveal_mines()
             self.game_over = True
         else:
@@ -394,7 +390,6 @@ class Board:
             self.populate((0,0))
         self.tile_state_tracker[:] = REVEALED
         self.num_revealed = self.rows*self.cols - self.minecount
-        GSM.set_game_state(False)
         self.game_over = True
 
             

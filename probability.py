@@ -211,8 +211,8 @@ def calc_local_prob_of_opening_at_loc(board,loc):
     return curr_tile.prob_opening
 
 def calc_prob_of_opening_for_board(board):
-    for x in range(GSM.rows):
-        for y in range(GSM.cols):
+    for x in range(board.rows):
+        for y in range(board.cols):
             tile = board.tiles[x][y]
             if not tile.is_revealed() and not tile.is_flagged():
                 calc_local_prob_of_opening_at_loc(board,(x,y))
@@ -225,7 +225,7 @@ def update_nonfrontier_tile_probs(board):
 
         if len(board.regions_list) == 0:
             for x,y in board.nonfrontier_tiles:
-                prob_mine_local = (GSM.mine_count - board.flag_count)/len(board.nonfrontier_tiles)
+                prob_mine_local = (board.minecount - board.flag_count)/len(board.nonfrontier_tiles)
                 board.tiles[x][y].prob_mine_local = prob_mine_local
 
         else:

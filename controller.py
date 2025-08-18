@@ -71,23 +71,17 @@ def game_won():
     return won
 
 def game_over():
-    return not GSM.get_game_state() or game_won() 
-
+    game_over = board.game_over
+    if game_over:
+        GSM.set_game_state(False)
+    return game_over
 
 def handle_settings_button():
-    #if not GSM.settings_open:
     game.elapsed_time = time.time() - game.start_time
 
     game.settings_menu.show()
     GSM.settings_open = True
     GSM.set_game_state(False)
-    # else:
-    #     game.start_time = time.time() - game.elapsed_time
-
-    #     game.settings_menu.hide()
-    #     GSM.settings_open = False
-    #     #if game.first_click is False:
-    #     GSM.set_game_state(True)
 
 
 def handle_settings_back_button():
@@ -183,7 +177,6 @@ def handle_keypress_t(seed=None,timeout=None):
     except Exception as e:
         print(e)
         traceback.print_exc()
-    #print(game_won())
     print(time.time()-start)
 
 
@@ -247,7 +240,7 @@ def handle_keypress_b():
     if len(board.global_ps) == 0:
         board.solve_exhaustive()
 
-    num_samples = 2000
+    num_samples = 200
     samples = cs.sample_mines_per_group_x_times(board,num_samples)
     # cs.verify_sampling_distribution_from_samples(board,samples)
     start = time.time()
@@ -264,7 +257,6 @@ def handle_keypress_b():
         for i,b in enumerate(genned_boards):
             if i% 100 == 0:
                 print(i)
-            GSM.set_game_state(True)
             sim_board.clone_board(b,copy_num_mine_tracker=True)
             sim_board.copy_solver_info(b)
             result = cs.play_genned_board(sim_board,move)

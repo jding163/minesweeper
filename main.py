@@ -54,7 +54,9 @@ class Game:
     
     def check_if_game_won(self):
         return C.game_won()
-
+    
+    def check_if_game_over(self):
+        return C.game_over()
     def run(self):
         running = True
   
@@ -66,7 +68,9 @@ class Game:
             time_delta = clock.tick(60) / 1000.0
             self.events()
             self.draw()
-            self.check_if_game_won()
+            game_over = self.check_if_game_over()
+            if game_over:
+                self.check_if_game_won()
 
 
             self.ui_manager.update(time_delta)
