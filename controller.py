@@ -256,10 +256,10 @@ def handle_keypress_b():
     for sample in samples:
         genned_board = cs.gen_board_from_sample(board,sample,nonfrontier_tiles_list)
         genned_boards.append(genned_board)
-    locs = [(14,13),(14,9)]
+    moves = [(14,13),(14,9)]
     wins = {}
     sim_board = Solver()
-    for loc in locs:
+    for move in moves:
         won_at_loc = 0
         for i,b in enumerate(genned_boards):
             if i% 100 == 0:
@@ -267,10 +267,10 @@ def handle_keypress_b():
             GSM.set_game_state(True)
             sim_board.clone_board(b,copy_num_mine_tracker=True)
             sim_board.copy_solver_info(b)
-            result = cs.play_genned_board(sim_board,loc)
+            result = cs.play_genned_board(sim_board,move)
             if result:
                 won_at_loc+=1
-        wins[loc] = won_at_loc
+        wins[move] = won_at_loc
     for k,v in wins.items():
         print(f'{k}: {v/num_samples * 100}')
     print('total time:',time.time()-start)

@@ -87,20 +87,21 @@ class Player():
         else:
             best_move = self.strategy.find_move(self.board)
         return best_move
+    
+    # @return: True if a move is made, else false
     def play_one_step(self,risk=True):
-        #game_over = not GSM.get_game_state() or (self.board.is_complete() and self.board.verify_win())
-
-        game_over = not GSM.get_game_state() or self.board.is_complete()
-
-        if game_over:
+        game_lost = self.board.death_click is not None
+        game_won = self.board.is_complete()
+        if game_lost or game_won:
             return False
         if self.board.solve_trivial_and_open():
             return True
         elif self.board.solve_exhaustive_and_open():
             return True
 
-        game_over = not GSM.get_game_state() or self.board.is_complete()
-
+        game_lost = self.board.death_click is not None
+        game_won = self.board.is_complete()
+        game_over = game_lost or game_won
         if risk is True and not game_over:
             best_move = self.find_best_move()
 
@@ -111,9 +112,12 @@ class Player():
     def autoplay(self,risk=True):
         
         while True:
-            game_over = not GSM.get_game_state() or self.board.is_complete()
-            if game_over:
-                return self.board.death_click == None
+            game_lost = self.board.death_click is not None
+            if game_lost:
+                return False
+            game_won = self.board.is_complete()
+            if game_won:
+                return True
             move_made = self.play_one_step(risk=risk)
             if not move_made:
                 break
@@ -122,7 +126,6 @@ class Player():
     @profile
     def play_game(self,seed=None):
         #C.handle_keypress_n()  # full reset
-        #GSM.set_game_state(True)
         self.board = Solver()
         if self.timeout is not None:
             self.board.deadline = time.time() + self.timeout

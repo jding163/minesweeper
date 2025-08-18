@@ -163,9 +163,9 @@ class Board:
 
 
             self.tile_neighbors = []
-            for row in range(GSM.rows):
+            for row in range(self.rows):
                 self.tile_neighbors.append([])
-                for col in range(GSM.cols):
+                for col in range(self.cols):
                     neighbors = get_neighbors((row,col))
                     self.tile_neighbors[row].append(neighbors)
             self.num_mine_tracker = np.zeros((self.dims),dtype=int)
@@ -216,9 +216,9 @@ class Board:
         board.minecount = len(board.mines)
 
         tile_neighbors = []
-        for row in range(GSM.rows):
+        for row in range(board.rows):
             tile_neighbors.append([])
-            for col in range(GSM.cols):
+            for col in range(board.cols):
                 neighbors = get_neighbors((row,col))
                 tile_neighbors[row].append(neighbors)
         board.tile_neighbors = tile_neighbors
@@ -298,7 +298,7 @@ class Board:
 
     def populate(self,first_click,custom_mines=False,seed=None):
         self.first_click = first_click
-        self.unrevealed_tiles = [(row, col) for row in range(GSM.rows) for col in range(GSM.cols)]
+        self.unrevealed_tiles = [(row, col) for row in range(self.rows) for col in range(self.cols)]
         if not custom_mines:
             if seed is not None:
                 random.seed(seed)
@@ -375,7 +375,7 @@ class Board:
 
 
     def is_complete(self):
-        return self.num_revealed == GSM.rows*GSM.cols - GSM.mine_count
+        return self.num_revealed == self.rows*self.cols - self.minecount
     
     def verify_win(self):
         mine_check = self.num_mine_tracker < 9
@@ -393,7 +393,7 @@ class Board:
         if not self.mines:
             self.populate((0,0))
         self.tile_state_tracker[:] = REVEALED
-        self.num_revealed = GSM.rows*GSM.cols - GSM.mine_count
+        self.num_revealed = self.rows*self.cols - self.minecount
         GSM.set_game_state(False)
         self.game_over = True
 

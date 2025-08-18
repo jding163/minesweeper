@@ -7,7 +7,7 @@ from line_profiler import profile
 from player import Player
 
 player = Player()
-
+sim_board = Solver()
 
 def tiny_sample(seq, k):
     n = len(seq)
@@ -25,6 +25,21 @@ def play_genned_board(board,first_click):
     board.reveal_tiles(first_click)
     result = player.autoplay()
     return result
+
+def sim_moves_on_genned_boards(genned_boards,moves):
+    wins = {}
+    for move in moves:
+        won_at_loc = 0
+        for i,b in enumerate(genned_boards):
+            if i% 100 == 0:
+                print(i)
+            sim_board.clone_board(b,copy_num_mine_tracker=True)
+            sim_board.copy_solver_info(b)
+            result = play_genned_board(sim_board,move)
+            if result:
+                won_at_loc+=1
+        wins[move] = won_at_loc
+    return wins
 
 
 
@@ -88,7 +103,6 @@ def sample_mines_per_group_x_times(board,x):
 
 
 
-from collections import Counter, defaultdict
 
 def verify_sampling_distribution_from_samples(board, samples):
     total_sols_dict = board.total_sols_dict
