@@ -186,8 +186,8 @@ class Player():
         collected_seeds = []
         timeouts = 0
         if parallel:
-            #max_workers = multiprocessing.cpu_count()
-            max_workers = 6
+            max_workers = multiprocessing.cpu_count() - 1
+            #max_workers = 6
             with ProcessPoolExecutor(max_workers=max_workers) as executor:
 
                 futures = {executor.submit(run_game, s,self.strategy,timeout): s for s in seeds}

@@ -5,9 +5,11 @@ import copy
 from solver import Solver
 from line_profiler import profile
 from player import Player
+from concurrent.futures import ProcessPoolExecutor, as_completed
+import multiprocessing
+import numpy as np
 
 player = Player()
-sim_board = Solver()
 
 def tiny_sample(seq, k):
     n = len(seq)
@@ -26,13 +28,27 @@ def play_genned_board(board,first_click):
     result = player.autoplay()
     return result
 
-def sim_moves_on_genned_boards(genned_boards,moves):
+def sim_moves_on_genned_boards(genned_boards,moves,workers=1):
+    if workers == 1:
+        wins = sim_moves(genned_boards,moves)
+    else:
+        wins = {move:0 for move in moves}
+        chunks = np.array_split(np.array(genned_boards, dtype=object), workers)
+        with ProcessPoolExecutor(max_workers=workers) as executor:
+            futures = [executor.submit(sim_moves, chunk, moves) for chunk in chunks]
+            for i,future in enumerate(as_completed(futures)):
+                print(f"Completed chunk {i+1}/{len(futures)}")
+                result = future.result()
+                for move in moves:
+                    wins[move] += result[move]
+    return wins
+
+def sim_moves(genned_boards,moves):
+    sim_board = Solver()
     wins = {}
     for move in moves:
         won_at_loc = 0
-        for i,b in enumerate(genned_boards):
-            if i% 100 == 0:
-                print(i)
+        for b in genned_boards:
             sim_board.clone_board(b,copy_num_mine_tracker=True)
             sim_board.copy_solver_info(b)
             result = play_genned_board(sim_board,move)
@@ -40,8 +56,6 @@ def sim_moves_on_genned_boards(genned_boards,moves):
                 won_at_loc+=1
         wins[move] = won_at_loc
     return wins
-
-
 
 def gen_board_from_sample(board,sample,nonfrontier_tiles_list):
     groups_list = board.groups_list

@@ -3,11 +3,9 @@ import pygame
 import os
 from settings import *
 import random
-import math
 from game_state_manager import GSM
 import sys
-import pprint
-import copy
+
 from line_profiler import profile
 import numpy as np
 

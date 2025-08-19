@@ -51,6 +51,10 @@ def update_mouse_pos(x,y):
     mx=x
     my=y
 
+def get_game():
+    global game
+    return game
+
 def reset_board():
     b = Solver()
 
@@ -204,6 +208,9 @@ def handle_keypress_y():
     player.play_one_step()
 
 def handle_keypress_l():
+    GSM.set_game_state(False)
+    game = get_game()
+    game.start_time = time.time()
     board = Board.load_board('testboard.npz')
     board = Solver.from_board(board)
     set_board(board)
@@ -236,11 +243,11 @@ def handle_keypress_r():
     #print(sorted(board.mines,key=lambda coord: (coord[0], coord[1])))
 def handle_keypress_b():
     global board
-
+    GSM.set_game_state(False)
     if len(board.global_ps) == 0:
         board.solve_exhaustive()
 
-    num_samples = 200
+    num_samples = 2000
     samples = cs.sample_mines_per_group_x_times(board,num_samples)
     # cs.verify_sampling_distribution_from_samples(board,samples)
     start = time.time()
@@ -250,19 +257,7 @@ def handle_keypress_b():
         genned_board = cs.gen_board_from_sample(board,sample,nonfrontier_tiles_list)
         genned_boards.append(genned_board)
     moves = [(14,13),(14,9)]
-    wins = {}
-    sim_board = Solver()
-    for move in moves:
-        won_at_loc = 0
-        for i,b in enumerate(genned_boards):
-            if i% 100 == 0:
-                print(i)
-            sim_board.clone_board(b,copy_num_mine_tracker=True)
-            sim_board.copy_solver_info(b)
-            result = cs.play_genned_board(sim_board,move)
-            if result:
-                won_at_loc+=1
-        wins[move] = won_at_loc
+    wins = cs.sim_moves_on_genned_boards(genned_boards,moves,workers=6)
     for k,v in wins.items():
         print(f'{k}: {v/num_samples * 100}')
     print('total time:',time.time()-start)
