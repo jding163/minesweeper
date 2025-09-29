@@ -12,6 +12,8 @@ import numpy as np
 player = Player()
 
 def tiny_sample(seq, k):
+    if len(seq) == 0:
+        return []
     n = len(seq)
     if k == 0:
         return []
@@ -82,19 +84,12 @@ def gen_board_from_sample(board,sample,nonfrontier_tiles_list):
 
     return new_board
         
-
-    
-
-    
-
-
 def sample_mines_per_group(ps_by_mine_count,mc_keys,mc_weights):
     mc = random.choices(mc_keys,weights=mc_weights,k=1)[0]
     ps = ps_by_mine_count[mc]
     p_weights = [p.num_cases for p in ps]
     chosen_p = random.choices(ps,weights=p_weights,k=1)[0]
     return chosen_p
-
 
 def sample_mines_per_group_x_times(board,x):
     start = time.time()
@@ -109,10 +104,10 @@ def sample_mines_per_group_x_times(board,x):
     results = []
     for _ in range(x):
         results.append(sample_mines_per_group(ps_by_mine_count,mc_keys,mc_weights))
-    print('total sols:',board.total_sols)
+    # print('total sols:',board.total_sols)
     num_loc_sols = sum([p.num_cases for p in global_ps])
-    print('local sols:', num_loc_sols)
-    print('sample_mines_per_group_x_times():',time.time()-start)
+    # print('local sols:', num_loc_sols)
+    # print('sample_mines_per_group_x_times():',time.time()-start)
     return results
 
 
