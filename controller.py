@@ -247,7 +247,7 @@ def handle_keypress_b():
     if len(board.global_ps) == 0:
         board.solve_exhaustive()
 
-    num_samples = 2000
+    num_samples = 500
     samples = cs.sample_mines_per_group_x_times(board,num_samples)
     # cs.verify_sampling_distribution_from_samples(board,samples)
     start = time.time()
@@ -257,7 +257,7 @@ def handle_keypress_b():
         genned_board = cs.gen_board_from_sample(board,sample,nonfrontier_tiles_list)
         genned_boards.append(genned_board)
     moves = [(14,13),(14,9)]
-    wins = cs.sim_moves_on_genned_boards(genned_boards,moves,workers=6)
+    wins = cs.sim_moves_on_genned_boards(genned_boards,moves,workers=3)
     for k,v in wins.items():
         print(f'{k}: {v/num_samples * 100}')
     print('total time:',time.time()-start)
