@@ -1,0 +1,122 @@
+[
+  {
+    "time": 0,
+    "action": "left_click",
+    "pos": [
+      0,
+      0
+    ]
+  },
+  {
+    "time": 1.1632850170135498,
+    "action": "right_click",
+    "pos": [
+      14,
+      15
+    ]
+  },
+  {
+    "time": 1.4414210319519043,
+    "action": "left_click",
+    "pos": [
+      14,
+      14
+    ]
+  },
+  {
+    "time": 1.7714009284973145,
+    "action": "right_click",
+    "pos": [
+      12,
+      14
+    ]
+  },
+  {
+    "time": 1.9904940128326416,
+    "action": "left_click",
+    "pos": [
+      12,
+      15
+    ]
+  },
+  {
+    "time": 2.1594130992889404,
+    "action": "left_click",
+    "pos": [
+      12,
+      15
+    ]
+  },
+  {
+    "time": 2.6482529640197754,
+    "action": "left_click",
+    "pos": [
+      10,
+      15
+    ]
+  },
+  {
+    "time": 3.693010091781616,
+    "action": "left_click",
+    "pos": [
+      4,
+      11
+    ]
+  },
+  {
+    "time": 3.8941991329193115,
+    "action": "left_click",
+    "pos": [
+      3,
+      11
+    ]
+  },
+  {
+    "time": 4.266081094741821,
+    "action": "right_click",
+    "pos": [
+      3,
+      12
+    ]
+  },
+  {
+    "time": 4.451101064682007,
+    "action": "left_click",
+    "pos": [
+      3,
+      11
+    ]
+  },
+  {
+    "time": 4.636280059814453,
+    "action": "left_click",
+    "pos": [
+      2,
+      11
+    ]
+  },
+  {
+    "time": 5.503287076950073,
+    "action": "right_click",
+    "pos": [
+      1,
+      14
+    ]
+  },
+  {
+    "time": 5.655309200286865,
+    "action": "left_click",
+    "pos": [
+      0,
+      14
+    ]
+  },
+  {
+    "time": 5.80675196647644,
+    "action": "left_click",
+    "pos": [
+      0,
+      14
+    ]
+  }
+]

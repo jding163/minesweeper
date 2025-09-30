@@ -10,6 +10,7 @@ from player import Player
 import solver
 from solver import Solver
 import multiprocessing
+from replay_manager import ReplayManager as rm
 
 pygame.init()
 clock = pygame.time.Clock()
@@ -47,11 +48,34 @@ class Game:
         )
         self.settings_menu = UI.SettingsMenu(self.ui_manager, self.screen)
         self.win_text = 'You win!'
+        self.game_over = False
+        self.replay_mode = False
+        self.replay_index = 1
+        self.replay_log = []
+        self.replay_start = 0
 
 
 
+    def reset_replay_info(self):
+        self.replay_index = 1
+        self.replay_log = []
+        self.replay_start = 0      
 
-    
+    def render_replay(self):
+        self.first_click=False
+        if self.replay_index < len(self.replay_log):
+            elapsed = time.time() - self.replay_start
+            replay_event = self.replay_log[self.replay_index]
+            print(replay_event)
+
+            if elapsed >= replay_event['time']:
+                C.process_replay_event(replay_event)
+                self.replay_index += 1
+
+        else:
+            self.replay_mode = False
+            self.reset_replay_info()
+            print('Replay complete')
     def check_if_game_won(self):
         return C.game_won()
     
@@ -66,11 +90,15 @@ class Game:
         # for loop through the event queue   
             #clock.tick(60)
             time_delta = clock.tick(60) / 1000.0
+
+            if self.replay_mode:
+                self.render_replay()
             self.events()
             self.draw()
             game_over = self.check_if_game_over()
             if game_over:
                 self.check_if_game_won()
+            self.game_over = game_over
 
 
             self.ui_manager.update(time_delta)
@@ -86,10 +114,11 @@ class Game:
         self.flag_text = str(GSM.mine_count)
         self.settings_menu.hide()
     def resize(self):
+        return
         self.screen = pygame.display.set_mode((GSM.width,GSM.height+HEADER_HEIGHT))
         self.ui_manager = pygame_gui.UIManager((GSM.width,GSM.height))
         self.settings_button = UI.SettingsButton(
-                manager=self.ui_manager,
+                manager=self.ui_manager
         )
         self.settings_menu = UI.SettingsMenu(self.ui_manager, self.screen)
     def draw(self):
@@ -123,114 +152,122 @@ class Game:
                 pygame.quit()
                 quit(0)
             self.ui_manager.process_events(event)
-            if event.type == pygame_gui.UI_BUTTON_PRESSED:
-                if event.ui_element == self.settings_button:
-                    C.handle_settings_button()
-                elif event.ui_element == self.settings_menu.back_button:
-                    C.handle_settings_back_button()
-                elif event.ui_element == self.settings_menu.easy_button:
-                    C.handle_easy_button()
-                elif event.ui_element == self.settings_menu.intermediate_button:
-                    C.handle_intermediate_button()
-                elif event.ui_element == self.settings_menu.expert_button:
-                    C.handle_expert_button()
-                elif event.ui_element == self.settings_menu.custom_button:
-                    C.handle_custom_button()
-
-            if event.type == pygame_gui.UI_HORIZONTAL_SLIDER_MOVED:
-                C.handle_customization_sliders()
-                C.update_minecount_slider()
-            if event.type == pygame_gui.UI_TEXT_ENTRY_FINISHED:
-                C.handle_customization_text(event)
-            self.ui_manager.draw_ui(self.screen)
 
 
-            mx, my = pygame.mouse.get_pos() 
-            my -= HEADER_HEIGHT
-            mx //= TILESIZE
-            my //= TILESIZE
-            C.update_mouse_pos(mx,my)
-            if event.type == pygame.MOUSEBUTTONDOWN:
+            if self.replay_mode:
+                continue
+            else:
+                if event.type == pygame_gui.UI_BUTTON_PRESSED:
+                    if event.ui_element == self.settings_button:
+                        C.handle_settings_button()
+                    elif event.ui_element == self.settings_menu.back_button:
+                        C.handle_settings_back_button()
+                    elif event.ui_element == self.settings_menu.easy_button:
+                        C.handle_easy_button()
+                    elif event.ui_element == self.settings_menu.intermediate_button:
+                        C.handle_intermediate_button()
+                    elif event.ui_element == self.settings_menu.expert_button:
+                        C.handle_expert_button()
+                    elif event.ui_element == self.settings_menu.custom_button:
+                        C.handle_custom_button()
 
-                if self.ui_manager.get_focus_set():
-                    continue
+                if event.type == pygame_gui.UI_HORIZONTAL_SLIDER_MOVED:
+                    C.handle_customization_sliders()
+                    C.update_minecount_slider()
+                if event.type == pygame_gui.UI_TEXT_ENTRY_FINISHED:
+                    C.handle_customization_text(event)
+                self.ui_manager.draw_ui(self.screen)
 
-                if GSM.get_game_state():
-                    if event.button == 1:
-                        #C.handle_board_click(mines=custom_mines)
-                        #test -8425763037098422648, -8433645031250545356,-3837008816949211577
-                        #C.handle_board_click(seed=-1443323327528190823)
 
-                        #C.handle_board_click(seed=-1569694061328666230)
-                        #C.handle_board_click(seed=3180935053634563155)
-                        #C.handle_board_click(seed=569029668483675204)
-                        C.handle_board_click(seed=4426209640626608113)
-                        #C.handle_board_click(seed=3727467103200484093)
+                mx, my = pygame.mouse.get_pos() 
+                my -= HEADER_HEIGHT
+                mx //= TILESIZE
+                my //= TILESIZE
+                C.update_mouse_pos(mx,my)
+                if event.type == pygame.MOUSEBUTTONDOWN:
 
-                        #C.handle_board_click()
+                    if self.ui_manager.get_focus_set():
+                        continue
+
+                    if GSM.get_game_state():
+                        if event.button == 1:
+                            #C.handle_board_click(mines=custom_mines)
+                            #test -8425763037098422648, -8433645031250545356,-3837008816949211577
+                            #C.handle_board_click(seed=-1443323327528190823)
+
+                            #C.handle_board_click(seed=-1569694061328666230)
+                            #C.handle_board_click(seed=3180935053634563155)
+                            #C.handle_board_click(seed=569029668483675204)
+                            C.handle_board_click(seed=4426209640626608113)
+
+                            #C.handle_board_click()
+                        
+                        elif event.button == 3:
+                            C.handle_board_right_click()
                     
-                    elif event.button == 3:
-                        C.handle_board_right_click()
-                
 
-                
+                    
 
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_r:
-                    C.handle_keypress_r()
-                elif event.key == pygame.K_n:
-                    C.handle_keypress_n()
-                elif event.key == pygame.K_m:
-                    C.handle_keypress_m()
-                elif event.key == pygame.K_q:
-                    C.handle_keypress_q()
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_r:
+                        C.handle_keypress_r()
+                    elif event.key == pygame.K_n:
+                        C.handle_keypress_n()
+                    elif event.key == pygame.K_m:
+                        C.handle_keypress_m()
+                    elif event.key == pygame.K_q:
+                        C.handle_keypress_q()
 
-                elif event.key == pygame.K_w:
-                    C.handle_keypress_w()
-                #     prev = self.board.num_revealed
-                #     self.board.chord_board()
-                #     while self.board.num_revealed != prev:
-                #         self.board.chord_board()
-                #         prev = self.board.num_revealed
+                    elif event.key == pygame.K_w:
+                        C.handle_keypress_w()
+                    #     prev = self.board.num_revealed
+                    #     self.board.chord_board()
+                    #     while self.board.num_revealed != prev:
+                    #         self.board.chord_board()
+                    #         prev = self.board.num_revealed
 
-                elif event.key == pygame.K_e:
-                    C.handle_keypress_e()
-                elif event.key == pygame.K_t:
-                    C.handle_keypress_t(timeout=60)
+                    elif event.key == pygame.K_e:
+                        C.handle_keypress_e()
+                    elif event.key == pygame.K_t:
+                        C.handle_keypress_t(timeout=60)
 
-                    #C.handle_keypress_t()
-                elif event.key == pygame.K_a:
-                    C.handle_keypress_a()
-                elif event.key == pygame.K_s:
-                    C.handle_keypress_s()
-                elif event.key == pygame.K_d:
-                    C.handle_keypress_d()
-                elif event.key == pygame.K_f:
-                    C.handle_keypress_f()
-                elif event.key == pygame.K_y:
-                    C.handle_keypress_y()
-                elif event.key == pygame.K_u:
-                    C.handle_keypress_u()
-                elif event.key == pygame.K_i:
-                    BoardUI.display_probs += 1
-                    BoardUI.display_probs %= 4
-                elif event.key == pygame.K_o:
-                    C.handle_keypress_o()
-                elif event.key == pygame.K_p:
-                    C.handle_keypress_p()
-                elif event.key == pygame.K_l:
-                    C.handle_keypress_l()
-                elif event.key == pygame.K_b:
-                    C.handle_keypress_b()
-                elif event.key == pygame.K_v:
-                    C.handle_keypress_v()
-                elif event.key == pygame.K_c:
-                    C.handle_keypress_c(8395227948706629321)
-                elif event.key == pygame.K_k:
-                    C.handle_keypress_k()
-                    C.handle_keypress_k()
-                elif event.key == pygame.K_SPACE:
-                    C.handle_keypress_space()
+                        #C.handle_keypress_t()
+                    elif event.key == pygame.K_a:
+                        C.handle_keypress_a()
+                    elif event.key == pygame.K_s:
+                        C.handle_keypress_s()
+                    elif event.key == pygame.K_d:
+                        C.handle_keypress_d()
+                    elif event.key == pygame.K_f:
+                        C.handle_keypress_f()
+                    elif event.key == pygame.K_y:
+                        C.handle_keypress_y()
+                    elif event.key == pygame.K_u:
+                        C.handle_keypress_u()
+                    elif event.key == pygame.K_i:
+                        BoardUI.display_probs += 1
+                        BoardUI.display_probs %= 4
+                    elif event.key == pygame.K_o:
+                        C.handle_keypress_o()
+                    elif event.key == pygame.K_p:
+                        C.handle_keypress_p()
+                    elif event.key == pygame.K_l:
+                        C.handle_keypress_l(filename='replay.npz')
+                    elif event.key == pygame.K_b:
+                        C.handle_keypress_b()
+                    elif event.key == pygame.K_v:
+                        C.handle_keypress_v()
+                    elif event.key == pygame.K_x:
+                        C.handle_keypress_x()
+                    elif event.key == pygame.K_z:
+                        C.handle_keypress_z()
+                    elif event.key == pygame.K_c:
+                        C.handle_keypress_c(8395227948706629321)
+                    elif event.key == pygame.K_k:
+                        C.handle_keypress_k()
+                        C.handle_keypress_k()
+                    elif event.key == pygame.K_SPACE:
+                        C.handle_keypress_space()
 def main():
     TileUI.font = tile_font
 

@@ -224,8 +224,6 @@ class Board:
         mask = ((board.adj_flag_tracker != board.num_mine_tracker) & (board.tile_state_tracker == REVEALED))
         board.unfinished_clues = {(int(r), int(c)) 
                for r, c in zip(*np.where(mask))}
-
-
         #default
         board.cloned=False
         board.first_click=None

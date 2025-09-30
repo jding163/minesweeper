@@ -11,6 +11,7 @@ import config_sim as cs
 import probability as prob
 import progress as prog
 from collections import defaultdict
+from replay_manager import ReplayManager as rm
 #import player as P
 
 test=True
@@ -50,7 +51,9 @@ def update_mouse_pos(x,y):
     global mx,my
     mx=x
     my=y
-
+def mouse_pos_in_bounds():
+    in_bounds = 0 <= mx < board.rows and 0 <= my < board.cols
+    return in_bounds
 def get_game():
     global game
     return game
@@ -119,23 +122,36 @@ def handle_custom_button():
     reset_board()
 
 def handle_board_click(mines=False,seed=None):
-    if my<0:
+    in_bounds = mouse_pos_in_bounds()
+    if not in_bounds:
         return
     if game.first_click:
         board.populate((mx,my),custom_mines=mines,seed=seed)
         game.first_click = False
+        rm.replay_log = []
+
         game.start_time = time.time()
-    
+        event_time = 0
+    else:
+        event_time = time.time() - game.start_time
     if board.tile_state_tracker[mx,my] == REVEALED:
         board.chord((mx,my))
 
     board.reveal_tiles((mx,my))
+    if not game.game_over:
+        rm.append_event(event_time, 'left_click',(mx,my))
+
 
 def handle_board_right_click():
-    if my<0:
+    in_bounds = mouse_pos_in_bounds()
+
+    if not in_bounds:
         return
+    event_time = time.time() - game.start_time
     if not game.first_click:
         board.toggle_flag_at_loc((mx,my))
+    if not game.game_over:
+        rm.append_event(event_time, 'right_click',(mx,my))
 
 
 def handle_keypress_p():
@@ -207,11 +223,13 @@ def handle_keypress_y():
     player.set_strategy(strat.SafestTileAndLikeliestOpening())
     player.play_one_step()
 
-def handle_keypress_l():
+def handle_keypress_l(filename='testboard.npz'):
     GSM.set_game_state(False)
     game = get_game()
     game.start_time = time.time()
-    board = Board.load_board('testboard.npz')
+    #board = Board.load_board('testboard.npz')
+    # board = Board.load_board('replay.npz')
+    board = Board.load_board(filename)
     board = Solver.from_board(board)
     set_board(board)
     set_first_click(False)
@@ -219,7 +237,8 @@ def handle_keypress_l():
 
 
 def handle_keypress_k():
-    player.board.save_board('testboard')
+    # player.board.save_board('testboard')
+    player.board.save_board('replay')
 
 
 def handle_keypress_o():
@@ -263,6 +282,31 @@ def handle_keypress_b():
     print('total time:',time.time()-start)
     GSM.set_game_state(True)
     #set_board(board)
+
+def handle_keypress_x():
+    rm.save_replay('replay.json')
+    print('done')
+
+
+def handle_keypress_z():
+    global board
+    replay_data,replay_board = rm.load_replay('replay.json','replay.npz')
+    board = replay_board
+    set_board(board)
+
+    game.replay_log = replay_data
+    game.replay_start = time.time()
+    game.replay_mode = True
+
+def process_replay_event(event):
+    global mx,my
+    mx,my = event['pos']
+    if event['action'] == "left_click":
+        handle_board_click()
+    else:
+        handle_board_right_click()
+
+
 
     
 def handle_keypress_c(seed):
