@@ -63,14 +63,16 @@ class Game:
 
     def render_replay(self):
         self.first_click=False
+        GSM.set_game_state(False)
         if self.replay_index < len(self.replay_log):
             elapsed = time.time() - self.replay_start
             replay_event = self.replay_log[self.replay_index]
-            print(replay_event)
 
             if elapsed >= replay_event['time']:
                 C.process_replay_event(replay_event)
                 self.replay_index += 1
+            self.elapsed_time = time.time()-self.replay_start
+            self.time_text = format_time(self.elapsed_time)
 
         else:
             self.replay_mode = False
