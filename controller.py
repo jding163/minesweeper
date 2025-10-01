@@ -75,6 +75,7 @@ def game_won():
     if won and GSM.get_game_state():
         board.reveal_mines()
         GSM.set_game_state(False)
+        board.game_over = True
     return won
 
 def game_over():
