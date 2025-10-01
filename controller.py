@@ -234,6 +234,7 @@ def handle_keypress_l(filename='testboard.npz'):
     set_board(board)
     set_first_click(False)
     GSM.set_game_state(True)
+    print(rm.get_metadata(board))
 
 
 def handle_keypress_k():
@@ -284,19 +285,23 @@ def handle_keypress_b():
     #set_board(board)
 
 def handle_keypress_x():
-    rm.save_replay('replay.json')
+    rm.save_replay('replay.json',board)
     print('done')
 
 
 def handle_keypress_z():
     global board
-    replay_data,replay_board = rm.load_replay('replay.json','replay.npz')
+    replay_data,replay_board = rm.load_replay('replay.json')
     board = replay_board
     set_board(board)
 
     game.replay_log = replay_data
     game.replay_start = time.time()
     game.replay_mode = True
+
+def save_replay(filename='replay.json'):
+    rm.save_replay(filename,board)
+    print('done')
 
 def process_replay_event(event):
     global mx,my

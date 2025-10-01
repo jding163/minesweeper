@@ -85,10 +85,7 @@ class TileUI:
                 prob_text = TileUI.font.render(f"{self.opening_prob * 100:.1f}", True, (0, 0, 0))  # Black text
                 text_rect = prob_text.get_rect(center=(self.x + TILESIZE // 2, self.y + TILESIZE // 2))
                 display.blit(prob_text, text_rect)
-            elif display_probs == 3:
-                loc_text = TileUI.font.render(f"{self.loc}", True, (0, 0, 0))  # Black text
-                text_rect = loc_text.get_rect(center=(self.x + TILESIZE // 2, self.y + TILESIZE // 2))
-                display.blit(loc_text, text_rect)
+
         elif state == REVEALED:
             if is_mine:
                 if self.loc == TileUI.death_click:
@@ -104,6 +101,12 @@ class TileUI:
                 display.blit(image_dict[tile_flag_path],loc)
             else:
                 display.blit(image_dict[tile_not_mine_path],loc)
+
+        # always display coords for every tile
+        if display_probs == 3:
+            loc_text = TileUI.font.render(f"{self.loc}", True, (0, 0, 0))  # Black text
+            text_rect = loc_text.get_rect(center=(self.x + TILESIZE // 2, self.y + TILESIZE // 2))
+            display.blit(loc_text, text_rect)
 
 
 
@@ -317,6 +320,7 @@ class Board:
         else:
             self.mines = custom_mines
             GSM.mine_count = len(custom_mines)
+            self.seed = None
         for loc in self.mines:
             self.update_neighbors_with_minecount(loc)
             self.num_mine_tracker[loc] = 9

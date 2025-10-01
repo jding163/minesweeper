@@ -50,14 +50,15 @@ class Game:
         self.win_text = 'You win!'
         self.game_over = False
         self.replay_mode = False
-        self.replay_index = 1
+        self.replay_index = 0
         self.replay_log = []
         self.replay_start = 0
+        self.replay_saved = False
 
 
 
     def reset_replay_info(self):
-        self.replay_index = 1
+        self.replay_index = 0
         self.replay_log = []
         self.replay_start = 0      
 
@@ -100,6 +101,9 @@ class Game:
             game_over = self.check_if_game_over()
             if game_over:
                 self.check_if_game_won()
+                if not self.replay_saved:
+                    C.save_replay()
+                    self.replay_saved = True
             self.game_over = game_over
 
 
@@ -115,14 +119,15 @@ class Game:
         self.time_text = DEFAULT_TIME
         self.flag_text = str(GSM.mine_count)
         self.settings_menu.hide()
-    def resize(self):
-        return
-        self.screen = pygame.display.set_mode((GSM.width,GSM.height+HEADER_HEIGHT))
-        self.ui_manager = pygame_gui.UIManager((GSM.width,GSM.height))
-        self.settings_button = UI.SettingsButton(
-                manager=self.ui_manager
-        )
-        self.settings_menu = UI.SettingsMenu(self.ui_manager, self.screen)
+        self.replay_saved = False
+    # def resize(self):
+    #     return
+    #     self.screen = pygame.display.set_mode((GSM.width,GSM.height+HEADER_HEIGHT))
+    #     self.ui_manager = pygame_gui.UIManager((GSM.width,GSM.height))
+    #     self.settings_button = UI.SettingsButton(
+    #             manager=self.ui_manager
+    #     )
+    #     self.settings_menu = UI.SettingsMenu(self.ui_manager, self.screen)
     def draw(self):
         self.screen.fill((255,255,255))
         C.draw_board(self.screen)
