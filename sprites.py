@@ -102,7 +102,7 @@ class TileUI:
             else:
                 display.blit(image_dict[tile_not_mine_path],loc)
 
-        # always display coords for every tile
+        # always display coords for every cell
         if display_probs == 3:
             loc_text = TileUI.font.render(f"{self.loc}", True, (0, 0, 0))  # Black text
             text_rect = loc_text.get_rect(center=(self.x + TILESIZE // 2, self.y + TILESIZE // 2))

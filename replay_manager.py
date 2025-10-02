@@ -22,6 +22,7 @@ class ReplayEvent:
 
 class ReplayManager:
     replay_log = []
+    replay_dur = 0
 
     def append_event(time, action, pos):
         event = ReplayEvent(time, action, pos)
@@ -32,6 +33,7 @@ class ReplayManager:
         metadata = ReplayMetadata(board.rows,board.cols,board.minecount,mode,board.seed,sorted(board.mines))
         return metadata
     def save_replay(filename,board):
+        ReplayManager.replay_dur = ReplayManager.replay_log[-1]['time']
         metadata = ReplayManager.get_metadata(board)
         data = {
             "metadata": asdict(metadata),       # ReplayMetadata dataclass → dict

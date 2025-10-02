@@ -47,6 +47,7 @@ class Game:
                 manager=self.ui_manager,
         )
         self.settings_menu = UI.SettingsMenu(self.ui_manager, self.screen)
+        self.replay_slider = UI.ReplaySlider((50, 500),0,(0,1),self.ui_manager,self.screen,'replay_slider')
         self.win_text = 'You win!'
         self.game_over = False
         self.replay_mode = False
@@ -179,7 +180,7 @@ class Game:
                         C.handle_custom_button()
 
                 if event.type == pygame_gui.UI_HORIZONTAL_SLIDER_MOVED:
-                    C.handle_customization_sliders()
+                    C.handle_customization_sliders(event)
                     C.update_minecount_slider()
                 if event.type == pygame_gui.UI_TEXT_ENTRY_FINISHED:
                     C.handle_customization_text(event)
@@ -205,9 +206,9 @@ class Game:
                             #C.handle_board_click(seed=-1569694061328666230)
                             #C.handle_board_click(seed=3180935053634563155)
                             #C.handle_board_click(seed=569029668483675204)
-                            C.handle_board_click(seed=4426209640626608113)
+                            #C.handle_board_click(seed=4426209640626608113)
 
-                            #C.handle_board_click()
+                            C.handle_board_click()
                         
                         elif event.button == 3:
                             C.handle_board_right_click()
