@@ -23,10 +23,15 @@ class ReplayEvent:
 class ReplayManager:
     replay_log = []
     replay_dur = 0
+    metadata = None
+
 
     def append_event(time, action, pos):
         event = ReplayEvent(time, action, pos)
         ReplayManager.replay_log.append(event)
+
+
+
 
     def get_metadata(board):
         mode = 'custom' if board.seed == None else 'seeded'
@@ -35,6 +40,7 @@ class ReplayManager:
     def save_replay(filename,board):
         ReplayManager.replay_dur = ReplayManager.replay_log[-1]['time']
         metadata = ReplayManager.get_metadata(board)
+        ReplayManager.metadata = metadata
         data = {
             "metadata": asdict(metadata),       # ReplayMetadata dataclass → dict
             "events": [asdict(event) for event in ReplayManager.replay_log]  # list of ReplayEvent dataclasses
@@ -46,7 +52,11 @@ class ReplayManager:
         with open(replay_file, 'r') as f:
             replay_data = json.load(f)
         metadata = replay_data['metadata']
+        ReplayManager.metadata = metadata
+
         events = replay_data['events']
+        ReplayManager.replay_log = events
+        ReplayManager.replay_dur = events[-1]['time']
 
         GSM.update_dims((metadata['rows'],metadata['cols']))
         board = Board()

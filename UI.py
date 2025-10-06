@@ -15,6 +15,7 @@ class SettingsButton(pygame_gui.elements.UIButton):
         )
 
 class ReplaySlider(pygame_gui.elements.UIHorizontalSlider):
+    slider_scale = 100
     def __init__(self,position, start_val, range, manager, container, object_id):
         super().__init__(
             relative_rect=pygame.Rect(position, (container.width // 4, TILESIZE)),
@@ -23,6 +24,7 @@ class ReplaySlider(pygame_gui.elements.UIHorizontalSlider):
             manager=manager,
             object_id=object_id
         )
+        
 
     def update_range(self,new_range):
         self.value_range = new_range

@@ -139,7 +139,7 @@ def handle_board_click(mines=False,seed=None):
         board.chord((mx,my))
 
     board.reveal_tiles((mx,my))
-    if not game.game_over:
+    if not game.replay_mode:
         rm.append_event(event_time, 'left_click',(mx,my))
 
 
@@ -151,7 +151,7 @@ def handle_board_right_click():
     event_time = time.time() - game.start_time
     if not game.first_click:
         board.toggle_flag_at_loc((mx,my))
-    if not game.game_over:
+    if not game.replay_mode:
         rm.append_event(event_time, 'right_click',(mx,my))
 
 
@@ -291,14 +291,28 @@ def handle_keypress_x():
 
 
 def handle_keypress_z():
+    # global board
+    # replay_data,replay_board = rm.load_replay('replay.json')
+    # board = replay_board
+    # set_board(board)
+
+    replay_data, _ = load_replay_board()
+    game.replay_index = 0
+
+    game.replay_log = replay_data
+    # print(len(game.replay_log))
+    game.replay_mode = True
+
+def load_replay_board():
     global board
     replay_data,replay_board = rm.load_replay('replay.json')
     board = replay_board
     set_board(board)
-
-    game.replay_log = replay_data
     game.replay_start = time.time()
-    game.replay_mode = True
+    return replay_data,replay_board
+
+def get_replay_dur():
+    return rm.replay_dur
 
 def save_replay(filename='replay.json'):
     rm.save_replay(filename,board)
