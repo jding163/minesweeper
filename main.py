@@ -48,6 +48,8 @@ class Game:
         )
         self.settings_menu = UI.SettingsMenu(self.ui_manager, self.screen)
         self.replay_slider = UI.ReplaySlider((self.screen.width * 3/4, self.screen.height - 3*TILESIZE),0,(0,1),self.ui_manager,self.screen,'replay_slider')
+        self.pause_button = pygame_gui.elements.UIButton(relative_rect=(self.screen.width * 3/4, self.screen.height - 6*TILESIZE),text='Play/Pause',manager=self.ui_manager,object_id='pause_button')
+
         # print(self.screen.height)
         # print(self.replay_slider.relative_rect.y)
         self.win_text = 'You win!'
@@ -58,6 +60,8 @@ class Game:
         self.replay_start = 0
         self.replay_saved = False
         self.scrubbing_replay = False
+        self.replay_paused = False
+        self.replay_paused_time = 0
 
 
 
@@ -72,7 +76,10 @@ class Game:
         if self.replay_index == 0:
             self.replay_slider.update_range((0,(rm.replay_dur+0.02) * UI.ReplaySlider.slider_scale))
 
-        if self.replay_index < len(self.replay_log):
+        if self.replay_paused:
+            return
+
+        elif self.replay_index < len(self.replay_log):
             elapsed = time.time() - self.replay_start
             replay_event = self.replay_log[self.replay_index]
             # print(self.replay_index)
@@ -120,9 +127,10 @@ class Game:
             #clock.tick(60)
             time_delta = clock.tick(60) / 1000.0
 
+
+            self.events()
             if self.replay_mode:
                 self.render_replay()
-            self.events()
             self.draw()
             game_over = self.check_if_game_over()
             if game_over:
@@ -201,6 +209,8 @@ class Game:
                     C.handle_expert_button()
                 elif event.ui_element == self.settings_menu.custom_button:
                     C.handle_custom_button()
+                elif event.ui_element == self.pause_button:
+                    C.handle_pause_button()
 
             elif event.type == pygame_gui.UI_HORIZONTAL_SLIDER_MOVED:
                 if event.ui_object_id == 'replay_slider':
@@ -305,6 +315,7 @@ class Game:
                     C.handle_keypress_k()
                 elif event.key == pygame.K_SPACE:
                     C.handle_keypress_space()
+
 def main():
     TileUI.font = tile_font
 
@@ -314,7 +325,6 @@ def main():
     C.set_board(b)
     g = Game()
     C.set_game(g)
-
     g.draw()
     g.run()
 

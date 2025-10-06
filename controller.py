@@ -84,6 +84,18 @@ def game_over():
         GSM.set_game_state(False)
     return game_over
 
+def toggle_replay():
+    if game.replay_paused: #resume
+        pause_dur = time.time() - game.replay_paused_time
+        game.replay_start += pause_dur
+    else: #pause
+        game.replay_paused_time = time.time()
+    game.replay_paused = not game.replay_paused
+
+
+def handle_pause_button():
+    toggle_replay()
+
 def handle_settings_button():
     game.elapsed_time = time.time() - game.start_time
 
