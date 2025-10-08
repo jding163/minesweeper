@@ -10,6 +10,7 @@ from player import Player
 import solver
 from solver import Solver
 import multiprocessing
+from replay_manager import ReplayManager as rm
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, as_completed
 import asyncio
 import multiprocessing
@@ -52,10 +53,70 @@ class Game:
                 manager=self.ui_manager,
         )
         self.settings_menu = UI.SettingsMenu(self.ui_manager, self.screen)
+        self.replay_slider = UI.ReplaySlider((self.screen.width * 3/4, self.screen.height - 3*TILESIZE),0,(0,1),self.ui_manager,self.screen,'replay_slider')
+        self.pause_button = pygame_gui.elements.UIButton(relative_rect=(self.screen.width * 3/4, self.screen.height - 6*TILESIZE),text='Play/Pause',manager=self.ui_manager,object_id='pause_button')
+
+        # print(self.screen.height)
+        # print(self.replay_slider.relative_rect.y)
         self.win_text = 'You win!'
-        self.future = None
-        self.executor = ProcessPoolExecutor(max_workers=6)
-        self.board = None
+        self.game_over = False
+        self.replay_mode = False
+        self.replay_index = 0
+        self.replay_log = []
+        self.replay_start = 0
+        self.replay_saved = False
+        self.scrubbing_replay = False
+        self.replay_paused = False
+        self.replay_paused_time = 0
+
+
+
+    def reset_replay_info(self):
+        self.replay_index = 0
+        self.replay_log = []
+        self.replay_start = 0      
+
+    def render_replay(self):
+        self.first_click=False
+        GSM.set_game_state(False)
+        if self.replay_index == 0:
+            self.replay_slider.update_range((0,(rm.replay_dur+0.02) * UI.ReplaySlider.slider_scale))
+
+        if self.replay_paused:
+            return
+
+        elif self.replay_index < len(self.replay_log):
+            elapsed = time.time() - self.replay_start
+            replay_event = self.replay_log[self.replay_index]
+            # print(self.replay_index)
+            # print(len(self.replay_log))
+
+            if elapsed >= replay_event['time']:
+                C.process_replay_event(replay_event)
+                self.replay_index += 1
+                print(replay_event)
+            self.elapsed_time = time.time()-self.replay_start
+            self.time_text = format_time(self.elapsed_time)
+            self.replay_slider.set_current_value(elapsed * UI.ReplaySlider.slider_scale)
+            print(self.replay_slider.current_value)
+
+
+        else:
+            self.replay_mode = False
+            #self.reset_replay_info()
+            print('Replay complete')
+            print(self.replay_slider.value_range)
+
+    def seek_replay(self,target):
+        C.load_replay_board()
+        self.replay_index = 0
+        for event in self.replay_log:
+            if event['time'] <= target:
+                self.replay_index += 1
+                C.process_replay_event(event)
+            else:
+                break
+
 
     def check_if_game_won(self):
         return C.game_won()
@@ -72,11 +133,21 @@ class Game:
         # for loop through the event queue   
             #clock.tick(60)
             time_delta = clock.tick(60) / 1000.0
+
+
             self.events()
+            if self.replay_mode:
+                self.render_replay()
             self.draw()
             game_over = self.check_if_game_over()
             if game_over:
                 self.check_if_game_won()
+                if not self.replay_saved:
+                    C.save_replay()
+                    self.replay_saved = True
+            self.game_over = game_over
+
+
             self.ui_manager.update(time_delta)
             self.ui_manager.draw_ui(self.screen)
             pygame.display.update()
@@ -96,13 +167,15 @@ class Game:
         self.time_text = DEFAULT_TIME
         self.flag_text = str(GSM.mine_count)
         self.settings_menu.hide()
-    def resize(self):
-        self.screen = pygame.display.set_mode((GSM.width,GSM.height+HEADER_HEIGHT))
-        self.ui_manager = pygame_gui.UIManager((GSM.width,GSM.height))
-        self.settings_button = UI.SettingsButton(
-                manager=self.ui_manager,
-        )
-        self.settings_menu = UI.SettingsMenu(self.ui_manager, self.screen)
+        self.replay_saved = False
+    # def resize(self):
+    #     return
+    #     self.screen = pygame.display.set_mode((GSM.width,GSM.height+HEADER_HEIGHT))
+    #     self.ui_manager = pygame_gui.UIManager((GSM.width,GSM.height))
+    #     self.settings_button = UI.SettingsButton(
+    #             manager=self.ui_manager
+    #     )
+    #     self.settings_menu = UI.SettingsMenu(self.ui_manager, self.screen)
     def draw(self):
         self.screen.fill((255,255,255))
         C.draw_board(self.screen)
@@ -134,6 +207,9 @@ class Game:
                 pygame.quit()
                 quit(0)
             self.ui_manager.process_events(event)
+
+
+
             if event.type == pygame_gui.UI_BUTTON_PRESSED:
                 if event.ui_element == self.settings_button:
                     C.handle_settings_button()
@@ -147,11 +223,18 @@ class Game:
                     C.handle_expert_button()
                 elif event.ui_element == self.settings_menu.custom_button:
                     C.handle_custom_button()
+                elif event.ui_element == self.pause_button:
+                    C.handle_pause_button()
 
-            if event.type == pygame_gui.UI_HORIZONTAL_SLIDER_MOVED:
-                C.handle_customization_sliders()
-                C.update_minecount_slider()
-            if event.type == pygame_gui.UI_TEXT_ENTRY_FINISHED:
+            elif event.type == pygame_gui.UI_HORIZONTAL_SLIDER_MOVED:
+                if event.ui_object_id == 'replay_slider':
+                    self.scrubbing_replay = True
+
+                    self.seek_replay(self.replay_slider.get_current_value()/UI.ReplaySlider.slider_scale)
+                else:
+                    C.handle_customization_sliders(event)
+                    C.update_minecount_slider()
+            elif event.type == pygame_gui.UI_TEXT_ENTRY_FINISHED:
                 C.handle_customization_text(event)
             self.ui_manager.draw_ui(self.screen)
 
@@ -175,16 +258,16 @@ class Game:
                         #C.handle_board_click(seed=-1569694061328666230)
                         #C.handle_board_click(seed=3180935053634563155)
                         #C.handle_board_click(seed=569029668483675204)
-                        C.handle_board_click(seed=4426209640626608113)
-                        #C.handle_board_click(seed=3727467103200484093)
+                        #C.handle_board_click(seed=4426209640626608113)
 
-                        #C.handle_board_click()
+                        C.handle_board_click()
                     
                     elif event.button == 3:
                         C.handle_board_right_click()
                 
-
-                
+            elif event.type == pygame.MOUSEBUTTONUP:
+                if self.scrubbing_replay:
+                    self.scrubbing_replay = False
 
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_r:
@@ -230,7 +313,7 @@ class Game:
                 elif event.key == pygame.K_p:
                     C.handle_keypress_p()
                 elif event.key == pygame.K_l:
-                    C.handle_keypress_l()
+                    C.handle_keypress_l(filename='replay.npz')
                 elif event.key == pygame.K_b:
                     # if self.future is None:
                     #future = self.executor.submit(C.handle_keypress_b,self.board,num_samples)
@@ -258,12 +341,17 @@ class Game:
                     #t.join()
                 elif event.key == pygame.K_v:
                     C.handle_keypress_v()
+                elif event.key == pygame.K_x:
+                    C.handle_keypress_x()
+                elif event.key == pygame.K_z:
+                    C.handle_keypress_z()
                 elif event.key == pygame.K_c:
                     C.handle_keypress_c(8395227948706629321)
                 elif event.key == pygame.K_k:
                     C.handle_keypress_k()
                 elif event.key == pygame.K_SPACE:
                     C.handle_keypress_space()
+
 def main():
     TileUI.font = tile_font
     #executor = ProcessPoolExecutor(max_workers=multiprocessing.cpu_count() - 2)
@@ -278,7 +366,6 @@ def main():
     C.set_executor(p_executor)
     g = Game()
     C.set_game(g)
-    g.board = b
     g.draw()
     g.run()
     #t_executor.submit(g.run())

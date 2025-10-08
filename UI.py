@@ -13,6 +13,22 @@ class SettingsButton(pygame_gui.elements.UIButton):
             text='Settings',
             manager=manager
         )
+
+class ReplaySlider(pygame_gui.elements.UIHorizontalSlider):
+    slider_scale = 100
+    def __init__(self,position, start_val, range, manager, container, object_id):
+        super().__init__(
+            relative_rect=pygame.Rect(position, (container.width // 4, TILESIZE)),
+            start_value=start_val,
+            value_range=range,
+            manager=manager,
+            object_id=object_id
+        )
+        
+
+    def update_range(self,new_range):
+        self.value_range = new_range
+
 class CustomSlider(pygame_gui.elements.UIHorizontalSlider):
     def __init__(self,position, start_val, range, manager, container, object_id,textbox):
         super().__init__(
@@ -27,6 +43,7 @@ class CustomSlider(pygame_gui.elements.UIHorizontalSlider):
     
     def update_text(self):
         self.textbox.set_text(str(self.get_current_value()))
+
 
 class CustomSliderTextLine(pygame_gui.elements.UITextEntryLine):
     def __init__(self,position,manager, container, object_id):

@@ -1,0 +1,149 @@
+{
+  "metadata": {
+    "rows": 16,
+    "cols": 16,
+    "minecount": 10,
+    "mode": "seeded",
+    "seed": 4614932272429303561,
+    "mine_positions": [
+      [
+        1,
+        9
+      ],
+      [
+        1,
+        11
+      ],
+      [
+        2,
+        0
+      ],
+      [
+        2,
+        14
+      ],
+      [
+        4,
+        11
+      ],
+      [
+        5,
+        0
+      ],
+      [
+        5,
+        6
+      ],
+      [
+        7,
+        3
+      ],
+      [
+        10,
+        6
+      ],
+      [
+        10,
+        11
+      ]
+    ]
+  },
+  "events": [
+    {
+      "time": 0,
+      "action": "left_click",
+      "pos": [
+        0,
+        0
+      ]
+    },
+    {
+      "time": 1.2194089889526367,
+      "action": "right_click",
+      "pos": [
+        5,
+        0
+      ]
+    },
+    {
+      "time": 1.4937810897827148,
+      "action": "left_click",
+      "pos": [
+        4,
+        1
+      ]
+    },
+    {
+      "time": 2.3568131923675537,
+      "action": "right_click",
+      "pos": [
+        4,
+        11
+      ]
+    },
+    {
+      "time": 2.5432069301605225,
+      "action": "left_click",
+      "pos": [
+        3,
+        12
+      ]
+    },
+    {
+      "time": 3.135227918624878,
+      "action": "right_click",
+      "pos": [
+        1,
+        11
+      ]
+    },
+    {
+      "time": 3.3220860958099365,
+      "action": "left_click",
+      "pos": [
+        2,
+        11
+      ]
+    },
+    {
+      "time": 3.5085692405700684,
+      "action": "left_click",
+      "pos": [
+        2,
+        12
+      ]
+    },
+    {
+      "time": 3.763625144958496,
+      "action": "left_click",
+      "pos": [
+        1,
+        12
+      ]
+    },
+    {
+      "time": 4.290013074874878,
+      "action": "right_click",
+      "pos": [
+        1,
+        9
+      ]
+    },
+    {
+      "time": 4.51164698600769,
+      "action": "left_click",
+      "pos": [
+        1,
+        10
+      ]
+    },
+    {
+      "time": 5.051260948181152,
+      "action": "left_click",
+      "pos": [
+        2,
+        15
+      ]
+    }
+  ]
+}

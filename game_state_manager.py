@@ -22,9 +22,9 @@ class GSM:
 
     def set_board(settings):
         GSM.rows = settings[0]
-        GSM.width = settings[0] * TILESIZE
+        #GSM.width = settings[0] * TILESIZE
         GSM.cols = settings[1]
-        GSM.height = settings[1] * TILESIZE
+        #GSM.height = settings[1] * TILESIZE
         GSM.mine_count = settings[2]
     @staticmethod
     def game_won(board):
@@ -36,6 +36,10 @@ class GSM:
     @staticmethod
     def game_over(board):
         return not GSM.get_game_state() or GSM.game_won(board) 
+    @staticmethod
+    def update_dims(dims):
+        GSM.rows = dims[0]
+        GSM.cols = dims[1]
 
 
 

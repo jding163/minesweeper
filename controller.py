@@ -11,7 +11,7 @@ import config_sim as cs
 import probability as prob
 import progress as prog
 from collections import defaultdict
-import pickle
+from replay_manager import ReplayManager as rm
 #import player as P
 
 
@@ -56,7 +56,9 @@ def update_mouse_pos(x,y):
     global mx,my
     mx=x
     my=y
-
+def mouse_pos_in_bounds():
+    in_bounds = 0 <= mx < board.rows and 0 <= my < board.cols
+    return in_bounds
 def get_game():
     global game
     return game
@@ -78,6 +80,7 @@ def game_won():
     if won and GSM.get_game_state():
         board.reveal_mines()
         GSM.set_game_state(False)
+        board.game_over = True
     return won
 
 def game_over():
@@ -85,6 +88,18 @@ def game_over():
     if game_over:
         GSM.set_game_state(False)
     return game_over
+
+def toggle_replay():
+    if game.replay_paused: #resume
+        pause_dur = time.time() - game.replay_paused_time
+        game.replay_start += pause_dur
+    else: #pause
+        game.replay_paused_time = time.time()
+    game.replay_paused = not game.replay_paused
+
+
+def handle_pause_button():
+    toggle_replay()
 
 def handle_settings_button():
     game.elapsed_time = time.time() - game.start_time
@@ -102,46 +117,59 @@ def handle_settings_back_button():
 def handle_easy_button():
     GSM.set_board(EASY_SETTINGS)
     game.reset()
-    game.resize()
+    #game.resize()
     reset_board()
 
 def handle_intermediate_button():
     GSM.set_board(INTERMEDIATE_SETTINGS)
     game.reset()
-    game.resize()
+    #game.resize()
     reset_board()
 
 def handle_expert_button():
     GSM.set_board(EXPERT_SETTINGS)
     game.reset()
-    game.resize()
+    #game.resize()
     reset_board()
 
 def handle_custom_button():
     custom_settings = (game.settings_menu.w_slider.get_current_value(),game.settings_menu.h_slider.get_current_value(),game.settings_menu.m_slider.get_current_value())
     GSM.set_board(custom_settings)
     game.reset()
-    game.resize()
+    #game.resize()
     reset_board()
 
 def handle_board_click(mines=False,seed=None):
-    if my<0:
+    in_bounds = mouse_pos_in_bounds()
+    if not in_bounds:
         return
     if game.first_click:
         board.populate((mx,my),custom_mines=mines,seed=seed)
         game.first_click = False
+        rm.replay_log = []
+
         game.start_time = time.time()
-    
+        event_time = 0
+    else:
+        event_time = time.time() - game.start_time
     if board.tile_state_tracker[mx,my] == REVEALED:
         board.chord((mx,my))
 
     board.reveal_tiles((mx,my))
+    if not game.replay_mode:
+        rm.append_event(event_time, 'left_click',(mx,my))
+
 
 def handle_board_right_click():
-    if my<0:
+    in_bounds = mouse_pos_in_bounds()
+
+    if not in_bounds:
         return
+    event_time = time.time() - game.start_time
     if not game.first_click:
         board.toggle_flag_at_loc((mx,my))
+    if not game.replay_mode:
+        rm.append_event(event_time, 'right_click',(mx,my))
 
 
 def handle_keypress_p():
@@ -215,20 +243,24 @@ def handle_keypress_y():
     player.set_strategy(strat.SafestTileAndLikeliestOpening())
     player.play_one_step()
 
-def handle_keypress_l():
+def handle_keypress_l(filename='testboard.npz'):
     GSM.set_game_state(False)
     game = get_game()
     game.start_time = time.time()
-    board = Board.load_board('testboard.npz')
+    #board = Board.load_board('testboard.npz')
+    # board = Board.load_board('replay.npz')
+    board = Board.load_board(filename)
     board = Solver.from_board(board)
     set_board(board)
     game.board = board
     set_first_click(False)
     GSM.set_game_state(True)
+    print(rm.get_metadata(board))
 
 
 def handle_keypress_k():
-    player.board.save_board('testboard')
+    # player.board.save_board('testboard')
+    player.board.save_board('replay')
 
 
 def handle_keypress_o():
@@ -288,6 +320,49 @@ def run_move_sim(board,num_samples):
     print('total time:',time.time()-start)
     GSM.set_game_state(True)
     #set_board(board)
+
+def handle_keypress_x():
+    rm.save_replay('replay.json',board)
+    print('done')
+
+
+def handle_keypress_z():
+    # global board
+    # replay_data,replay_board = rm.load_replay('replay.json')
+    # board = replay_board
+    # set_board(board)
+
+    replay_data, _ = load_replay_board()
+    game.replay_index = 0
+
+    game.replay_log = replay_data
+    # print(len(game.replay_log))
+    game.replay_mode = True
+
+def load_replay_board():
+    global board
+    replay_data,replay_board = rm.load_replay('replay.json')
+    board = replay_board
+    set_board(board)
+    game.replay_start = time.time()
+    return replay_data,replay_board
+
+def get_replay_dur():
+    return rm.replay_dur
+
+def save_replay(filename='replay.json'):
+    rm.save_replay(filename,board)
+    print('done')
+
+def process_replay_event(event):
+    global mx,my
+    mx,my = event['pos']
+    if event['action'] == "left_click":
+        handle_board_click()
+    else:
+        handle_board_right_click()
+
+
 
     
 def handle_keypress_c(seed):
