@@ -112,26 +112,26 @@ def handle_settings_back_button():
 def handle_easy_button():
     GSM.set_board(EASY_SETTINGS)
     game.reset()
-    game.resize()
+    #game.resize()
     reset_board()
 
 def handle_intermediate_button():
     GSM.set_board(INTERMEDIATE_SETTINGS)
     game.reset()
-    game.resize()
+    #game.resize()
     reset_board()
 
 def handle_expert_button():
     GSM.set_board(EXPERT_SETTINGS)
     game.reset()
-    game.resize()
+    #game.resize()
     reset_board()
 
 def handle_custom_button():
     custom_settings = (game.settings_menu.w_slider.get_current_value(),game.settings_menu.h_slider.get_current_value(),game.settings_menu.m_slider.get_current_value())
     GSM.set_board(custom_settings)
     game.reset()
-    game.resize()
+    #game.resize()
     reset_board()
 
 def handle_board_click(mines=False,seed=None):
