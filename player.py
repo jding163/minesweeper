@@ -45,15 +45,18 @@ def run_game(seed,strat,timeout):
     return result
 
 class Player():
+    executor = None
     def __init__(self,timeout=None):
         self.strategy = strat.SafestTile()
         self.timeout=timeout
+
+    def set_executor(executor):
+        Player.executor = executor
+
     def set_board(self,board):
         self.board = board
     def set_strategy(self,strat):
         self.strategy = strat
-    def set_game(self,game):
-        self.game = game
     
     def find_safest_among_locs(self,locs):
         min_prob = 1
@@ -186,31 +189,28 @@ class Player():
         collected_seeds = []
         timeouts = 0
         if parallel:
-            max_workers = multiprocessing.cpu_count() - 1
-            #max_workers = 6
-            with ProcessPoolExecutor(max_workers=max_workers) as executor:
 
-                futures = {executor.submit(run_game, s,self.strategy,timeout): s for s in seeds}
-                
-                for i, future in enumerate(as_completed(futures)):
-                    if i % 250 == 0:
-                        print(i)
-                        logging.info(i)
-                    result = future.result()
-                    results.append(result)
-                    #print(f"{i}: Seed {result['seed']}: {'Won' if result['won'] else 'Lost'} in {result['time']:.2f} seconds")
-                    result_seed = result['seed']
-                    if 'error' in result:
-                        err_msg = result['error']
-                        logging.error(f'Error at seed {result_seed}')
-                        logging.info(err_msg)
-                    if 'timeout' in result:
-                        logging.info(f'Timeout at seed {result_seed}')
-                        timeouts+=1
-                    if result['won']:
-                        won_seeds.append(result_seed)
-                    if result['collect']:
-                        collected_seeds.append(result_seed)
+            futures = {Player.executor.submit(run_game, s,self.strategy,timeout): s for s in seeds}
+            
+            for i, future in enumerate(as_completed(futures)):
+                if i % 250 == 0:
+                    print(i)
+                    logging.info(i)
+                result = future.result()
+                results.append(result)
+                #print(f"{i}: Seed {result['seed']}: {'Won' if result['won'] else 'Lost'} in {result['time']:.2f} seconds")
+                result_seed = result['seed']
+                if 'error' in result:
+                    err_msg = result['error']
+                    logging.error(f'Error at seed {result_seed}')
+                    logging.info(err_msg)
+                if 'timeout' in result:
+                    logging.info(f'Timeout at seed {result_seed}')
+                    timeouts+=1
+                if result['won']:
+                    won_seeds.append(result_seed)
+                if result['collect']:
+                    collected_seeds.append(result_seed)
         else:
             self.timeout = timeout
             for i in range(num_games):
@@ -285,9 +285,9 @@ class Player():
         # with open("seeds.txt", "w") as file:
         #     for seed in won_seeds:
         #         file.write(f'{seed}\n')
-        with open("seeds.txt", "w") as file:
-            for seed in collected_seeds:
-                file.write(f'{seed}\n')
+        # with open("seeds.txt", "w") as file:
+        #     for seed in collected_seeds:
+        #         file.write(f'{seed}\n')
 
         return results
     
@@ -320,11 +320,12 @@ def main():
     # b = Solver()
     # b.display = None
     #b=Solver()
-
+    executor = ProcessPoolExecutor(max_workers=multiprocessing.cpu_count()-1)
+    Player.set_executor(executor)
     p = Player(timeout=60)
-    #p.set_strategy(strat.SafestTile())
+    p.set_strategy(strat.SafestTile())
     #p.set_strategy(strat.SafestTileAndLikeliestOpening())
-    p.set_strategy(strat.SecSafety())
+    #p.set_strategy(strat.SecSafety())
 
     # with open('seeds1.txt', 'r') as f:
     #     seeds_list = [int(line.strip()) for line in f]
@@ -337,7 +338,7 @@ def main():
     #seed=5
     # res = p.play_game(seed=seed)
     # print(res)
-    w1 = p.play_games(100,seed=seed,parallel=False,timeout=30)
+    w1 = p.play_games(10000,seed=seed,parallel=True,timeout=30)
     # for w in w1:
     #     print(w)
 

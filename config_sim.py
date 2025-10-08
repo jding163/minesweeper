@@ -1,7 +1,6 @@
 import random
 from collections import Counter, defaultdict
 import time
-import copy
 from solver import Solver
 from line_profiler import profile
 from player import Player
@@ -10,7 +9,6 @@ import multiprocessing
 import numpy as np
 
 player = Player()
-
 def tiny_sample(seq, k):
     if len(seq) == 0:
         return []
@@ -32,12 +30,14 @@ def play_genned_board(board,first_click):
 
 def sim_moves_on_genned_boards(genned_boards,moves,workers=1):
     if workers == 1:
+        print('here')
         wins = sim_moves(genned_boards,moves)
     else:
+
         wins = {move:0 for move in moves}
         chunks = np.array_split(np.array(genned_boards, dtype=object), workers)
-        with ProcessPoolExecutor(max_workers=workers) as executor:
-            futures = [executor.submit(sim_moves, chunk, moves) for chunk in chunks]
+        with ProcessPoolExecutor(max_workers=workers) as pool:
+            futures = [pool.submit(sim_moves, chunk, moves) for chunk in chunks]
             for i,future in enumerate(as_completed(futures)):
                 print(f"Completed chunk {i+1}/{len(futures)}")
                 result = future.result()
@@ -168,7 +168,6 @@ def verify_sampling_distribution_from_samples(board, samples):
     for m in sorted(total_sols_dict.keys()):
         print(f"{m:10} | {empirical_probs_per_mine_count[m]:.5f} | {expected_probs_per_mine_count[m]:.5f} | {error_per_mine_count[m]:.5f}")
 
-    # Optional: print top few possibility errors per mine count
     for m in sorted(possibility_stats.keys()):
         print(f"\nTop possibility errors for mine count {m}:")
         sorted_poss = sorted(possibility_stats[m].items(), key=lambda x: x[1]['abs_error'], reverse=True)[:5]

@@ -11,10 +11,12 @@ import config_sim as cs
 import probability as prob
 import progress as prog
 from collections import defaultdict
+import pickle
 #import player as P
 
-test=True
 
+test=True
+executor=None
 board = None
 board_ui = None
 game = None
@@ -22,6 +24,7 @@ player = None
 mx = 0
 my = 0
 default=False
+future = None
 # def set_board_and_game(b, g):
 #     global board, game
 #     board = b
@@ -36,10 +39,13 @@ def set_board(b):
     player.set_board(b)
     board_ui = BoardUI(board)
 
+def set_executor(ex):
+    global executor
+    executor = ex
+
 def set_game(g):
     global game
     game = g
-    player.set_game(g)
 
 def set_first_click(first_click):
     global game
@@ -159,6 +165,7 @@ def handle_keypress_e():
 
 
 def handle_keypress_t(seed=None,timeout=None):
+    global executor
     if GSM.get_game_state() is False:
         handle_keypress_n()
     update_mouse_pos(0,0)
@@ -175,6 +182,7 @@ def handle_keypress_t(seed=None,timeout=None):
     start = time.time()
     if timeout is not None:
         player.board.deadline = start + timeout
+    #pickle.dumps(player)
 
     try:
         print(player.autoplay(risk=True))
@@ -214,6 +222,7 @@ def handle_keypress_l():
     board = Board.load_board('testboard.npz')
     board = Solver.from_board(board)
     set_board(board)
+    game.board = board
     set_first_click(False)
     GSM.set_game_state(True)
 
@@ -241,11 +250,27 @@ def handle_keypress_m():
 def handle_keypress_r():
     board.reveal_board()
     #print(sorted(board.mines,key=lambda coord: (coord[0], coord[1])))
-def handle_keypress_b():
-    global board
+
+def task_submit():
+    global executor,future
+    future = executor.submit(task)
+def task():
+    for i in range(100000):
+        sum = 0
+        for j in range(i):
+            sum += 1
+        if sum%1000 == 0:
+            print(sum)
+    # time.sleep(5)
+    # print(3)
+    return 3
+
+def run_move_sim(board,num_samples):
+    #time.sleep(5)
     GSM.set_game_state(False)
     if len(board.global_ps) == 0:
         board.solve_exhaustive()
+    moves = [(14,13),(14,9)]
 
     num_samples = 500
     samples = cs.sample_mines_per_group_x_times(board,num_samples)

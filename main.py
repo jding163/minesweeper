@@ -10,14 +10,20 @@ from player import Player
 import solver
 from solver import Solver
 import multiprocessing
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, as_completed
+import asyncio
+import multiprocessing
+import threading
+
+import copy
 
 pygame.init()
 clock = pygame.time.Clock()
 font = pygame.font.SysFont(None, 50)
 tile_font = pygame.font.Font(None, 12)  
+num_samples = 200
 
 
-#bruh
 def format_time(seconds):
     seconds = int(seconds)
     if seconds > 999:
@@ -47,22 +53,22 @@ class Game:
         )
         self.settings_menu = UI.SettingsMenu(self.ui_manager, self.screen)
         self.win_text = 'You win!'
+        self.future = None
+        self.executor = ProcessPoolExecutor(max_workers=6)
+        self.board = None
 
-
-
-
-    
     def check_if_game_won(self):
         return C.game_won()
     
     def check_if_game_over(self):
         return C.game_over()
+    
     def run(self):
         running = True
   
         # game loop 
         while running: 
-            
+
         # for loop through the event queue   
             #clock.tick(60)
             time_delta = clock.tick(60) / 1000.0
@@ -71,12 +77,17 @@ class Game:
             game_over = self.check_if_game_over()
             if game_over:
                 self.check_if_game_won()
-
-
             self.ui_manager.update(time_delta)
             self.ui_manager.draw_ui(self.screen)
             pygame.display.update()
+            if C.future is not None:
+                result = C.future.result()
+                print(result)
+                # for k,v in result.items():
+                #     print(f'{k}: {v/num_samples}')
 
+                C.future = None
+                
     def reset(self):
         GSM.set_game_state(True)
         self.first_click = True
@@ -221,29 +232,59 @@ class Game:
                 elif event.key == pygame.K_l:
                     C.handle_keypress_l()
                 elif event.key == pygame.K_b:
-                    C.handle_keypress_b()
+                    # if self.future is None:
+                    #future = self.executor.submit(C.handle_keypress_b,self.board,num_samples)
+                    #board_copy = copy.deepcopy(self.board)
+                    #t=threading.Thread(target=C.task)
+                    t = threading.Thread(target=C.run_move_sim,args=(self.board,num_samples))
+                    t.start()
+                    #C.task_submit()
+                    #future = C.handle_keypress_b(num_samples)
+                    #self.future = future
+                    # print(wins)
+                    #self.future = future
+
+                    # self.future = future
+                    #p = multiprocessing.Process(target=C.handle_keypress_b,args=(num_samples,))
+                    # p = threading.Thread(target=C.handle_keypress_b,args=(num_samples,))
+
+                    # p.start()
+                    #p.join()
+                    # wins = self.executor.submit(C.handle_keypress_b(num_samples))
+                    # print(wins)
+                    # result = future.result()
+                    # for k,v in result:
+                    #     print(f'{k}: {v/num_samples}')
+                    #t.join()
                 elif event.key == pygame.K_v:
                     C.handle_keypress_v()
                 elif event.key == pygame.K_c:
                     C.handle_keypress_c(8395227948706629321)
                 elif event.key == pygame.K_k:
                     C.handle_keypress_k()
-                    C.handle_keypress_k()
                 elif event.key == pygame.K_SPACE:
                     C.handle_keypress_space()
 def main():
     TileUI.font = tile_font
+    #executor = ProcessPoolExecutor(max_workers=multiprocessing.cpu_count() - 2)
+    #p_executor = ThreadPoolExecutor(max_workers=6)
+    p_executor = ProcessPoolExecutor(max_workers=6)
 
+    Player.set_executor(p_executor)
     b=Solver()
     p = Player()
     C.set_player(p)
     C.set_board(b)
+    C.set_executor(p_executor)
     g = Game()
     C.set_game(g)
-
+    g.board = b
     g.draw()
     g.run()
+    #t_executor.submit(g.run())
 
 if __name__ == "__main__":
-    multiprocessing.set_start_method("spawn") 
+    #multiprocessing.set_start_method("spawn") 
+    #asyncio.run(main())
     main()
+
