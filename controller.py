@@ -255,7 +255,7 @@ def handle_keypress_l(filename='testboard.npz'):
     game.board = board
     set_first_click(False)
     GSM.set_game_state(True)
-    print(rm.get_metadata(board))
+    #print(rm.get_metadata(board))
 
 
 def handle_keypress_k():
@@ -285,21 +285,22 @@ def handle_keypress_r():
 
 def task_submit():
     global executor,future
-    future = executor.submit(task)
+    #future = executor.submit(task)
+
 def task():
-    for i in range(100000):
-        sum = 0
-        for j in range(i):
-            sum += 1
-        if sum%1000 == 0:
-            print(sum)
-    # time.sleep(5)
-    # print(3)
+    # for i in range(100000):
+    #     sum = 0
+    #     for j in range(i):
+    #         sum += 1
+    #     if sum%1000 == 0:
+    #         print(sum)
+    time.sleep(3)
+    print(3)
     return 3
 
 def run_move_sim(board,num_samples):
     #time.sleep(5)
-    GSM.set_game_state(False)
+    #GSM.set_game_state(False)
     if len(board.global_ps) == 0:
         board.solve_exhaustive()
     moves = [(14,13),(14,9)]
@@ -314,12 +315,15 @@ def run_move_sim(board,num_samples):
         genned_board = cs.gen_board_from_sample(board,sample,nonfrontier_tiles_list)
         genned_boards.append(genned_board)
     moves = [(14,13),(14,9)]
-    wins = cs.sim_moves_on_genned_boards(genned_boards,moves,workers=3)
-    for k,v in wins.items():
-        print(f'{k}: {v/num_samples * 100}')
-    print('total time:',time.time()-start)
-    GSM.set_game_state(True)
+    workers = 3
+    wins = executor.submit(cs.sim_moves_on_genned_boards, genned_boards, moves, workers)
+    #wins = cs.sim_moves_on_genned_boards(genned_boards,moves,workers=1)
+    # for k,v in wins.items():
+    #     print(f'{k}: {v/num_samples * 100}')
+    # print('total time:',time.time()-start)
+    # GSM.set_game_state(True)
     #set_board(board)
+    #print(wins)
 
 def handle_keypress_x():
     rm.save_replay('replay.json',board)

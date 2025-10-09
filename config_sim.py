@@ -30,7 +30,6 @@ def play_genned_board(board,first_click):
 
 def sim_moves_on_genned_boards(genned_boards,moves,workers=1):
     if workers == 1:
-        print('here')
         wins = sim_moves(genned_boards,moves)
     else:
 
@@ -43,6 +42,8 @@ def sim_moves_on_genned_boards(genned_boards,moves,workers=1):
                 result = future.result()
                 for move in moves:
                     wins[move] += result[move]
+    print('done')
+    print(wins)
     return wins
 
 def sim_moves(genned_boards,moves):

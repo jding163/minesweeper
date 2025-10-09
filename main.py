@@ -98,14 +98,14 @@ class Game:
             self.elapsed_time = time.time()-self.replay_start
             self.time_text = format_time(self.elapsed_time)
             self.replay_slider.set_current_value(elapsed * UI.ReplaySlider.slider_scale)
-            print(self.replay_slider.current_value)
+            #print(self.replay_slider.current_value)
 
 
         else:
             self.replay_mode = False
             #self.reset_replay_info()
             print('Replay complete')
-            print(self.replay_slider.value_range)
+            #print(self.replay_slider.value_range)
 
     def seek_replay(self,target):
         C.load_replay_board()
@@ -151,13 +151,13 @@ class Game:
             self.ui_manager.update(time_delta)
             self.ui_manager.draw_ui(self.screen)
             pygame.display.update()
-            if C.future is not None:
-                result = C.future.result()
-                print(result)
-                # for k,v in result.items():
-                #     print(f'{k}: {v/num_samples}')
+            # if C.future is not None:
+            #     result = C.future.result()
+            #     print(result)
+            #     # for k,v in result.items():
+            #     #     print(f'{k}: {v/num_samples}')
 
-                C.future = None
+            #     C.future = None
                 
     def reset(self):
         GSM.set_game_state(True)
@@ -313,14 +313,17 @@ class Game:
                 elif event.key == pygame.K_p:
                     C.handle_keypress_p()
                 elif event.key == pygame.K_l:
-                    C.handle_keypress_l(filename='replay.npz')
+                    C.handle_keypress_l()
+                    #C.handle_keypress_l(filename='replay.npz')
                 elif event.key == pygame.K_b:
                     # if self.future is None:
                     #future = self.executor.submit(C.handle_keypress_b,self.board,num_samples)
                     #board_copy = copy.deepcopy(self.board)
                     #t=threading.Thread(target=C.task)
-                    t = threading.Thread(target=C.run_move_sim,args=(self.board,num_samples))
-                    t.start()
+                    # t = threading.Thread(target=C.run_move_sim,args=(self.board,num_samples))
+                    # t.start()
+                    C.run_move_sim(self.board,num_samples)
+                    #C.task()
                     #C.task_submit()
                     #future = C.handle_keypress_b(num_samples)
                     #self.future = future
@@ -355,8 +358,8 @@ class Game:
 def main():
     TileUI.font = tile_font
     #executor = ProcessPoolExecutor(max_workers=multiprocessing.cpu_count() - 2)
-    #p_executor = ThreadPoolExecutor(max_workers=6)
-    p_executor = ProcessPoolExecutor(max_workers=6)
+    p_executor = ThreadPoolExecutor(max_workers=3)
+    #p_executor = ProcessPoolExecutor(max_workers=3)
 
     Player.set_executor(p_executor)
     b=Solver()
