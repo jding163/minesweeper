@@ -39,6 +39,7 @@ def set_board(b):
     player.set_board(b)
     board_ui = BoardUI(board)
 
+
 def set_executor(ex):
     global executor
     executor = ex
@@ -245,8 +246,10 @@ def handle_keypress_y():
 
 def handle_keypress_l(filename='testboard.npz'):
     GSM.set_game_state(False)
-    game = get_game()
     game.start_time = time.time()
+    #game.reset()
+    #GSM.update_dims(board.dims)
+    #GSM.update_minecount(board.minecount)
     #board = Board.load_board('testboard.npz')
     # board = Board.load_board('replay.npz')
     board = Board.load_board(filename)
@@ -255,6 +258,7 @@ def handle_keypress_l(filename='testboard.npz'):
     game.board = board
     set_first_click(False)
     GSM.set_game_state(True)
+
     #print(rm.get_metadata(board))
 
 

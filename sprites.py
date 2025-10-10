@@ -141,11 +141,24 @@ class BoardUI():
 
 class Board:
     seed = None
-    def __init__(self,empty=False):
-        if not empty:
+    def __init__(self,empty=False,dims=None,minecount=None):
+        if dims is not None:
+            self.dims = dims
+            self.rows = dims[0]
+            self.cols = dims[1]
+            GSM.update_dims(dims)
+        else:
             self.rows = GSM.rows
             self.cols = GSM.cols
             self.dims = (self.rows,self.cols)
+        if minecount is not None:
+            self.minecount = minecount
+            GSM.update_minecount(minecount)
+        else:
+            self.minecount = 0
+        if not empty:
+
+
             self.num_revealed = 0
             self.flag_count = 0
             self.mines = []
@@ -157,7 +170,6 @@ class Board:
 
             self.unfinished_clues = set()
             self.flagged_tiles = set()
-            self.minecount = 0
             self.game_over = False
             self.cloned = False
 
@@ -182,8 +194,9 @@ class Board:
 
     def load_board(filename):
         data = np.load(filename)
-        board = Board(empty=True)
-        board.num_mine_tracker = data["num_mine_tracker"]
+        nmt = data['num_mine_tracker']
+        board = Board(dims=nmt.shape)
+        board.num_mine_tracker = nmt
         board.tile_state_tracker = data["tile_state_tracker"]
         board.adj_flag_tracker = data["adj_flag_tracker"]
 
@@ -214,6 +227,7 @@ class Board:
         mine_rows,mine_cols = np.where(board.num_mine_tracker == 9)
         board.mines = list(zip(mine_rows.tolist(), mine_cols.tolist()))
         board.minecount = len(board.mines)
+        GSM.update_minecount(board.minecount)
 
         tile_neighbors = []
         for row in range(board.rows):

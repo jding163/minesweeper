@@ -58,8 +58,11 @@ class ReplayManager:
         ReplayManager.replay_log = events
         ReplayManager.replay_dur = events[-1]['time']
 
-        GSM.update_dims((metadata['rows'],metadata['cols']))
-        board = Board()
+        # GSM.update_dims((metadata['rows'],metadata['cols']))
+        # GSM.update_minecount(metadata['minecount'])
+        dims = (metadata['rows'],metadata['cols'])
+        minecount = metadata['minecount']
+        board = Board(dims=dims,minecount=minecount)
         first_click = events[0]['pos']
         if metadata['mode'] == 'seeded':
             board.populate(first_click,seed=metadata['seed'])

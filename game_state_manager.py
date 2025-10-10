@@ -42,4 +42,10 @@ class GSM:
         GSM.cols = dims[1]
 
 
+    @staticmethod
+    def update_minecount(minecount):
+        GSM.mine_count = minecount
+
+
+
 
