@@ -38,7 +38,8 @@ class ReplayManager:
         metadata = ReplayMetadata(board.rows,board.cols,board.minecount,mode,board.seed,sorted(board.mines))
         return metadata
     def save_replay(filename,board):
-        ReplayManager.replay_dur = ReplayManager.replay_log[-1]['time']
+        print(ReplayManager.replay_log[-1])
+        ReplayManager.replay_dur = ReplayManager.replay_log[-1].time
         metadata = ReplayManager.get_metadata(board)
         ReplayManager.metadata = metadata
         data = {

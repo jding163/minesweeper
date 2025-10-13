@@ -94,9 +94,15 @@ def toggle_replay():
     if game.replay_paused: #resume
         pause_dur = time.time() - game.replay_paused_time
         game.replay_start += pause_dur
+        print(game.replay_paused_time)
+        print(pause_dur)
+        print(game.replay_start)
     else: #pause
         game.replay_paused_time = time.time()
     game.replay_paused = not game.replay_paused
+
+
+    #print(game.replay_paused)
 
 
 def handle_pause_button():
@@ -339,13 +345,23 @@ def handle_keypress_z():
     # replay_data,replay_board = rm.load_replay('replay.json')
     # board = replay_board
     # set_board(board)
+    game.replay_mode = not game.replay_mode
 
-    replay_data, _ = load_replay_board()
-    game.replay_index = 0
+    if game.replay_mode:
 
-    game.replay_log = replay_data
-    # print(len(game.replay_log))
-    game.replay_mode = True
+        replay_data, _ = load_replay_board()
+        game.replay_paused_time = game.replay_start
+
+        #print(replay_data)
+        game.replay_index = 0
+
+        game.replay_log = replay_data
+        # print(len(game.replay_log))
+
+    else:
+        handle_keypress_n()
+        game.reset_replay_info()
+    #print(game.replay_start)
 
 def load_replay_board():
     global board
@@ -360,7 +376,7 @@ def get_replay_dur():
 
 def save_replay(filename='replay.json'):
     rm.save_replay(filename,board)
-    print('done')
+    print('saved')
 
 def process_replay_event(event):
     global mx,my

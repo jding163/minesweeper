@@ -68,48 +68,68 @@ class Game:
         self.scrubbing_replay = False
         self.replay_paused = False
         self.replay_paused_time = 0
+        self.replay_time = 0
 
 
 
     def reset_replay_info(self):
         self.replay_index = 0
         self.replay_log = []
-        self.replay_start = 0      
-
-    def render_replay(self):
+        self.replay_start = 0     
+        self.replay_time = 0 
+    def render_replay(self,time_delta):
         self.first_click=False
         GSM.set_game_state(False)
         if self.replay_index == 0:
             self.replay_slider.update_range((0,(rm.replay_dur+0.02) * UI.ReplaySlider.slider_scale))
 
-        if self.replay_paused:
-            return
+        if not self.replay_paused:
+            self.replay_time += time_delta
 
-        elif self.replay_index < len(self.replay_log):
-            elapsed = time.time() - self.replay_start
-            replay_event = self.replay_log[self.replay_index]
-            # print(self.replay_index)
-            # print(len(self.replay_log))
+        
+        while (self.replay_index < len(self.replay_log) and 
+               self.replay_log[self.replay_index]['time'] <= self.replay_time):
+            C.process_replay_event(self.replay_log[self.replay_index])
+            self.replay_index += 1
+        self.time_text = format_time(self.replay_time)
+        self.replay_slider.set_current_value(self.replay_time * UI.ReplaySlider.slider_scale)
+        if self.replay_index >= len(self.replay_log):
+            self.replay_paused = True
+        # print(self.replay_index)
+        # print(len(self.replay_log))
+        # if self.replay_paused:
+        #     return
 
-            if elapsed >= replay_event['time']:
-                C.process_replay_event(replay_event)
-                self.replay_index += 1
-                print(replay_event)
-            self.elapsed_time = time.time()-self.replay_start
-            self.time_text = format_time(self.elapsed_time)
-            self.replay_slider.set_current_value(elapsed * UI.ReplaySlider.slider_scale)
+        # elif self.replay_index < len(self.replay_log):
+        #     elapsed = time.time() - self.replay_start
+        #     replay_event = self.replay_log[self.replay_index]
+        #     # print(self.replay_index)
+        #     # print(len(self.replay_log))
+
+        #     if elapsed >= replay_event['time']:
+        #         C.process_replay_event(replay_event)
+        #         self.replay_index += 1
+        #         #print(replay_event)
+        #     self.elapsed_time = time.time()-self.replay_start
+        #     # print('start:',self.replay_start)
+        #     # print('elapsed:',self.elapsed_time)
+        #     self.time_text = format_time(self.elapsed_time)
+        #     self.replay_slider.set_current_value(elapsed * UI.ReplaySlider.slider_scale)
             #print(self.replay_slider.current_value)
 
 
-        else:
-            self.replay_mode = False
-            #self.reset_replay_info()
-            print('Replay complete')
-            #print(self.replay_slider.value_range)
+        # else:
+        #     #self.replay_mode = False
+        #     #self.reset_replay_info()
+        #     #print('Replay complete')
+        #     self.replay_paused = True
+        #     #print(self.replay_paused)
+        #     #print(self.replay_slider.value_range)
 
     def seek_replay(self,target):
         C.load_replay_board()
         self.replay_index = 0
+        self.replay_time = 0
         for event in self.replay_log:
             if event['time'] <= target:
                 self.replay_index += 1
@@ -137,16 +157,18 @@ class Game:
 
             self.events()
             if self.replay_mode:
-                self.render_replay()
-            self.draw()
-            game_over = self.check_if_game_over()
-            if game_over:
-                self.check_if_game_won()
-                if not self.replay_saved:
-                    C.save_replay()
-                    self.replay_saved = True
-            self.game_over = game_over
-
+                self.render_replay(time_delta)
+                self.replay_saved = True
+            else:
+            
+                game_over = self.check_if_game_over()
+                if game_over:
+                    self.check_if_game_won()
+                    if not self.replay_saved:
+                        C.save_replay()
+                        self.replay_saved = True
+                self.game_over = game_over
+            self.draw() 
 
             self.ui_manager.update(time_delta)
             self.ui_manager.draw_ui(self.screen)
@@ -168,6 +190,8 @@ class Game:
         self.flag_text = str(GSM.mine_count)
         self.settings_menu.hide()
         self.replay_saved = False
+        self.replay_paused_time = 0
+
     # def resize(self):
     #     return
     #     self.screen = pygame.display.set_mode((GSM.width,GSM.height+HEADER_HEIGHT))
@@ -191,11 +215,18 @@ class Game:
         flag_rect = flag_surface.get_rect()
         self.screen.blit(flag_surface, flag_rect)
 
+        if self.replay_mode:
+            self.replay_slider.show()
+            self.pause_button.show()
+        else:
+            self.replay_slider.hide()
+            self.pause_button.hide()
+            if self.check_if_game_won():
+                win_surface = font.render(self.win_text, True, BLACK)
+                win_rect = win_surface.get_rect(center=(GSM.width//2,GSM.height//2))
+                self.screen.blit(win_surface, win_rect)
 
-        if self.check_if_game_won():
-            win_surface = font.render(self.win_text, True, BLACK)
-            win_rect = win_surface.get_rect(center=(GSM.width//2,GSM.height//2))
-            self.screen.blit(win_surface, win_rect)
+
 
         self.ui_manager.draw_ui(self.screen)
         pygame.display.flip()
@@ -229,8 +260,11 @@ class Game:
             elif event.type == pygame_gui.UI_HORIZONTAL_SLIDER_MOVED:
                 if event.ui_object_id == 'replay_slider':
                     self.scrubbing_replay = True
+                    seconds_since_start = self.replay_slider.get_current_value()/UI.ReplaySlider.slider_scale
 
-                    self.seek_replay(self.replay_slider.get_current_value()/UI.ReplaySlider.slider_scale)
+                    self.seek_replay(seconds_since_start)
+                    self.replay_time = seconds_since_start
+                    self.time_text = format_time(seconds_since_start)
                 else:
                     C.handle_customization_sliders(event)
                     C.update_minecount_slider()
