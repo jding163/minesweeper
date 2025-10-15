@@ -189,9 +189,9 @@ def handle_keypress_q():
 def handle_keypress_w():
     #board.solve_exhaustive(instant_break=True)
     start=time.time()
-    #board.solve_exhaustive()
-    board.solve_exhaustive_and_open()
-    Board.display_probs = 1
+    board.solve_exhaustive()
+    #board.solve_exhaustive_and_open()
+    BoardUI.display_probs = 1
     print(time.time()-start)
 
 def handle_keypress_e():
@@ -274,7 +274,7 @@ def handle_keypress_k():
 
 
 def handle_keypress_o():
-    Board.display_probs = 2
+    BoardUI.display_probs = 2
 
 def handle_keypress_n():
     game.reset()

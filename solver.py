@@ -681,7 +681,6 @@ class Solver(Board):
         self.nonfrontier_tiles = nonfrontier_locs
         self.nf_rep_loc = min(nonfrontier_locs) if len(nonfrontier_locs) > 0 else None
         if len(groups_list) == 0 and mines_left==0:
-
             safe_locs = []
             for loc in nonfrontier_locs:
                 

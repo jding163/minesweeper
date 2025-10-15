@@ -3,6 +3,7 @@ from dataclasses import asdict
 from typing import Optional, Literal
 import json
 from sprites import Board
+from solver import Solver
 from game_state_manager import GSM
 
 @dataclass
@@ -64,6 +65,8 @@ class ReplayManager:
         dims = (metadata['rows'],metadata['cols'])
         minecount = metadata['minecount']
         board = Board(dims=dims,minecount=minecount)
+        board = Board(dims=dims,minecount=minecount)
+
         first_click = events[0]['pos']
         if metadata['mode'] == 'seeded':
             board.populate(first_click,seed=metadata['seed'])
@@ -72,4 +75,6 @@ class ReplayManager:
 
         
         #board = Board.load_board(board_file)
-        return events,board
+        solver_board = Solver.from_board(board)
+        return events,solver_board
+        #return events,board

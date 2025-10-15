@@ -66,7 +66,7 @@ class Game:
         self.replay_start = 0
         self.replay_saved = False
         self.scrubbing_replay = False
-        self.replay_paused = False
+        self.replay_paused = True
         self.replay_paused_time = 0
         self.replay_time = 0
 
@@ -292,7 +292,7 @@ class Game:
                         #C.handle_board_click(seed=-1569694061328666230)
                         #C.handle_board_click(seed=3180935053634563155)
                         #C.handle_board_click(seed=569029668483675204)
-                        #C.handle_board_click(seed=4426209640626608113)
+                        #C.handle_board_click(seed=6813116530078921402)
 
                         C.handle_board_click()
                     
@@ -342,6 +342,8 @@ class Game:
                 elif event.key == pygame.K_i:
                     BoardUI.display_probs += 1
                     BoardUI.display_probs %= 4
+                    #print(BoardUI.display_probs)
+
                 elif event.key == pygame.K_o:
                     C.handle_keypress_o()
                 elif event.key == pygame.K_p:
