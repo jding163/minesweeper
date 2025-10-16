@@ -146,6 +146,10 @@ def handle_custom_button():
     #game.resize()
     reset_board()
 
+def update_mine_probs_after_click():
+    mask = (board.mine_probs != 0) & (board.mine_probs != 1)
+    board.mine_probs[mask] = -1.0
+
 def handle_board_click(mines=False,seed=None):
     in_bounds = mouse_pos_in_bounds()
     if not in_bounds:
@@ -163,6 +167,7 @@ def handle_board_click(mines=False,seed=None):
         board.chord((mx,my))
 
     board.reveal_tiles((mx,my))
+    update_mine_probs_after_click()
     if not game.replay_mode:
         rm.append_event(event_time, 'left_click',(mx,my))
 
@@ -175,6 +180,8 @@ def handle_board_right_click():
     event_time = time.time() - game.start_time
     if not game.first_click:
         board.toggle_flag_at_loc((mx,my))
+    update_mine_probs_after_click()
+
     if not game.replay_mode:
         rm.append_event(event_time, 'right_click',(mx,my))
 
