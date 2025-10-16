@@ -320,12 +320,13 @@ def main():
     # b = Solver()
     # b.display = None
     #b=Solver()
-    executor = ProcessPoolExecutor(max_workers=multiprocessing.cpu_count()-1)
+    max_workers = 3
+    executor = ProcessPoolExecutor(max_workers=max_workers)
     Player.set_executor(executor)
     p = Player(timeout=60)
-    p.set_strategy(strat.SafestTile())
+    #p.set_strategy(strat.SafestTile())
     #p.set_strategy(strat.SafestTileAndLikeliestOpening())
-    #p.set_strategy(strat.SecSafety())
+    p.set_strategy(strat.SecSafety())
 
     # with open('seeds1.txt', 'r') as f:
     #     seeds_list = [int(line.strip()) for line in f]
@@ -338,7 +339,7 @@ def main():
     #seed=5
     # res = p.play_game(seed=seed)
     # print(res)
-    w1 = p.play_games(10000,seed=seed,parallel=True,timeout=30)
+    w1 = p.play_games(100,seed=seed,parallel=True,timeout=30)
     # for w in w1:
     #     print(w)
 

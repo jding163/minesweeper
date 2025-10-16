@@ -240,10 +240,19 @@ class Solver(Board):
                 flags_found = True
         return flags_found
     
+    # def predict_flags(self):
+    #     flags_found = False
+    #     for loc in list(self.unfinished_clues):
+    #         if self.flag_neighbors(loc):
+    #             flags_found = True
+    #     return flags_found
     
     def chord_board(self):
         for loc in list(self.unfinished_clues):
             self.chord(loc)
+
+
+    # def find_trivial_moves(self):
 
     def solve_trivial_and_open(self):
         init_mines = self.flag_count
@@ -584,6 +593,8 @@ class Solver(Board):
         prob_loc_is_mine = avg_mines_in_group/group_size
         return prob_loc_is_mine
     
+    # @return: safe_locs,mine_locs,safest_prob,total_sols
+
     def calc_probs_for_board(self,regions,groups_list,nonfrontier_locs,update_self=True):
         safe_locs = []
         mine_locs = []
@@ -613,6 +624,7 @@ class Solver(Board):
             if update_self:
                 self.total_sols = total_sols
                 self.total_sols_dict = total_sols_dict
+            # invalid board
             if total_sols == 0:
                 return [],[],1,0
             for group_info in groups_list:
@@ -651,10 +663,14 @@ class Solver(Board):
                 elif prob_at_loc == 1:
                     mine_locs.append(loc)
             safest_prob = min(safest_prob,prob_at_loc)
-
+        # print(safe_locs)
+        # print(mine_locs)
+        # print(safest_prob)
+        # print(total_sols)
         return safe_locs,mine_locs,safest_prob,total_sols
     
     def solve_exhaustive(self):
+        self.mine_probs[:] = -1
         self.regions_list = self.get_updated_regions_list()
         groups_list= self.find_possibilities(self.regions_list)
         ff_groups = []

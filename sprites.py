@@ -78,9 +78,10 @@ class TileUI:
         if state == UNKNOWN:
             display.blit(image_dict[tile_unknown_path],loc)
             if display_probs == 1:
-                prob_text = TileUI.font.render(f"{self.mine_prob * 100:.1f}", True, (0, 0, 0))  # Black text
-                text_rect = prob_text.get_rect(center=(self.x + TILESIZE // 2, self.y + TILESIZE // 2))
-                display.blit(prob_text, text_rect)
+                if self.mine_prob >= 0:
+                    prob_text = TileUI.font.render(f"{self.mine_prob * 100:.1f}", True, (0, 0, 0))  # Black text
+                    text_rect = prob_text.get_rect(center=(self.x + TILESIZE // 2, self.y + TILESIZE // 2))
+                    display.blit(prob_text, text_rect)
             elif display_probs == 2:
                 prob_text = TileUI.font.render(f"{self.opening_prob * 100:.1f}", True, (0, 0, 0))  # Black text
                 text_rect = prob_text.get_rect(center=(self.x + TILESIZE // 2, self.y + TILESIZE // 2))
@@ -183,8 +184,11 @@ class Board:
             self.num_mine_tracker = np.zeros((self.dims),dtype=int)
             self.tile_state_tracker = np.zeros((self.dims),dtype=int)
             self.adj_flag_tracker = np.zeros((self.dims),dtype=int)
-            self.mine_probs = np.zeros((self.dims))
-            self.opening_probs = np.zeros((self.dims))
+            self.mine_probs = np.full((self.dims),-1,dtype=float)
+            self.opening_probs = np.full((self.dims),-1,dtype=float)
+            
+            # self.mine_probs = np.zeros((self.dims))
+            # self.opening_probs = np.zeros((self.dims))
 
     def save_board(self,filename):
         np.savez_compressed(filename,
@@ -203,8 +207,10 @@ class Board:
         board.dims = board.num_mine_tracker.shape
         board.rows = board.dims[0]
         board.cols = board.dims[1]
-        board.mine_probs = np.zeros((board.dims))
-        board.opening_probs = np.zeros((board.dims))
+        board.mine_probs = np.full((board.dims),-1,dtype=float)
+        board.opening_probs = np.full((board.dims),-1,dtype=float)
+        # board.mine_probs = np.zeros((board.dims))
+        # board.opening_probs = np.zeros((board.dims))
 
 
         # to calculate
