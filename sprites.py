@@ -56,7 +56,6 @@ def get_neighbors(loc):
 
 class TileUI:
     font = None
-    game_over = False
     death_click=None
     def __init__(self, x, y,num):
         self.x = x * TILESIZE
@@ -98,7 +97,7 @@ class TileUI:
             else:
                display.blit(image_dict[tile_number_paths[self.num - 1]],loc)   
         else: #flagged
-            if not TileUI.game_over or is_mine:
+            if not GSM.game_over() or is_mine:
                 display.blit(image_dict[tile_flag_path],loc)
             else:
                 display.blit(image_dict[tile_not_mine_path],loc)
@@ -130,7 +129,6 @@ class BoardUI():
                 tile.num = self.board.num_mine_tracker[r,c]
                 tile.mine_prob=self.board.mine_probs[r,c]
                 tile.opening_prob=self.board.opening_probs[r,c]
-        TileUI.game_over = self.board.game_over
         TileUI.death_click = self.board.death_click
     def draw(self,screen):
         self.sync()
@@ -171,7 +169,6 @@ class Board:
 
             self.unfinished_clues = set()
             self.flagged_tiles = set()
-            self.game_over = False
             self.cloned = False
 
 
@@ -242,7 +239,6 @@ class Board:
                 neighbors = get_neighbors((row,col))
                 tile_neighbors[row].append(neighbors)
         board.tile_neighbors = tile_neighbors
-        board.game_over = False
 
         mask = ((board.adj_flag_tracker != board.num_mine_tracker) & (board.tile_state_tracker == REVEALED))
         board.unfinished_clues = {(int(r), int(c)) 
@@ -252,7 +248,6 @@ class Board:
         board.first_click=None
         board.seed = None
         board.death_click=None
-
         return board
     
 
@@ -274,7 +269,6 @@ class Board:
         self.unfinished_clues=set(board.unfinished_clues)
         self.flagged_tiles=set(board.flagged_tiles)
         self.cloned=True
-        self.game_over = board.game_over
 
         self.tile_neighbors = board.tile_neighbors.copy()
         if copy_num_mine_tracker:
@@ -373,7 +367,7 @@ class Board:
         if self.num_mine_tracker[loc] == 9:
             self.death_click = loc
             self.reveal_mines()
-            self.game_over = True
+            GSM.set_game_state(GSM.over)
         else:
             self.num_revealed += 1
             self.revealed_tiles.add(loc)
@@ -410,6 +404,5 @@ class Board:
             self.populate((0,0))
         self.tile_state_tracker[:] = REVEALED
         self.num_revealed = self.rows*self.cols - self.minecount
-        self.game_over = True
 
             

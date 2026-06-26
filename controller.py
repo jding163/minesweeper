@@ -81,11 +81,10 @@ def game_won():
     if won and GSM.get_game_state() == GSM.running:
         board.reveal_mines()
         GSM.set_game_state(GSM.over)
-        board.game_over = True
     return won
 
 def game_over():
-    game_over = board.game_over
+    game_over = board.is_complete()
     if game_over:
         GSM.set_game_state(GSM.over)
     return game_over
@@ -154,8 +153,6 @@ def update_mine_probs_after_click():
     board.mine_probs[mask] = -1.0
 
 def handle_board_click(mines=False,seed=None):
-    print(GSM.get_game_state())
-    print(GSM.input_disabled())
 
     if GSM.input_disabled():
         return
@@ -182,8 +179,6 @@ def handle_board_click(mines=False,seed=None):
 
 
 def handle_board_right_click():
-    print(GSM.get_game_state())
-    print(GSM.input_disabled())
     if GSM.input_disabled():
         return
     in_bounds = mouse_pos_in_bounds()

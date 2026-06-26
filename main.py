@@ -173,13 +173,6 @@ class Game:
             self.ui_manager.update(time_delta)
             self.ui_manager.draw_ui(self.screen)
             pygame.display.update()
-            # if C.future is not None:
-            #     result = C.future.result()
-            #     print(result)
-            #     # for k,v in result.items():
-            #     #     print(f'{k}: {v/num_samples}')
-
-            #     C.future = None
                 
     def reset(self):
         GSM.set_game_state(GSM.fresh)
@@ -203,6 +196,8 @@ class Game:
     def draw(self):
         self.screen.fill((255,255,255))
         C.draw_board(self.screen)
+        if GSM.get_game_state() == GSM.over:
+            pass
         if GSM.get_game_state() == GSM.running and not self.first_click:
             self.elapsed_time = time.time()-self.start_time
             self.time_text = format_time(self.elapsed_time)

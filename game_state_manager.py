@@ -35,8 +35,8 @@ class GSM:
             GSM.set_game_state(GSM.over)
         return won
     @staticmethod
-    def game_over(board):
-        return GSM.get_game_state() == GSM.over or GSM.game_won(board) 
+    def game_over():
+        return GSM.get_game_state() == GSM.over
     @staticmethod
     def update_dims(dims):
         GSM.rows = dims[0]

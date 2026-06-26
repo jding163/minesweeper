@@ -149,7 +149,6 @@ class Solver(Board):
         solver.unfinished_clues = board.unfinished_clues
         solver.flagged_tiles = board.flagged_tiles
         solver.minecount = board.minecount
-        solver.game_over = board.game_over
         solver.cloned = board.cloned
         solver.tile_neighbors = board.tile_neighbors
         solver.num_mine_tracker = board.num_mine_tracker
