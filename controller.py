@@ -78,16 +78,16 @@ def get_flag_count():
 
 def game_won():
     won = board.is_complete() and board.verify_win()
-    if won and GSM.get_game_state():
+    if won and GSM.get_game_state() == GSM.running:
         board.reveal_mines()
-        GSM.set_game_state(False)
+        GSM.set_game_state(GSM.over)
         board.game_over = True
     return won
 
 def game_over():
     game_over = board.game_over
     if game_over:
-        GSM.set_game_state(False)
+        GSM.set_game_state(GSM.over)
     return game_over
 
 def toggle_replay():
@@ -109,17 +109,20 @@ def handle_pause_button():
     toggle_replay()
 
 def handle_settings_button():
-    game.elapsed_time = time.time() - game.start_time
+    if not GSM.settings_open:
+        game.elapsed_time = time.time() - game.start_time
 
-    game.settings_menu.show()
-    GSM.settings_open = True
-    GSM.set_game_state(False)
+        game.settings_menu.show()
+        GSM.settings_open = True
+        GSM.set_game_state(GSM.paused)
+    else:
+        handle_settings_back_button()
 
 
 def handle_settings_back_button():
     game.start_time = time.time() - game.elapsed_time
     game.settings_menu.hide()
-    GSM.set_game_state(True)
+    GSM.set_game_state(GSM.prev_game_state)
 
 def handle_easy_button():
     GSM.set_board(EASY_SETTINGS)
@@ -151,6 +154,11 @@ def update_mine_probs_after_click():
     board.mine_probs[mask] = -1.0
 
 def handle_board_click(mines=False,seed=None):
+    print(GSM.get_game_state())
+    print(GSM.input_disabled())
+
+    if GSM.input_disabled():
+        return
     in_bounds = mouse_pos_in_bounds()
     if not in_bounds:
         return
@@ -161,6 +169,7 @@ def handle_board_click(mines=False,seed=None):
 
         game.start_time = time.time()
         event_time = 0
+        GSM.set_game_state(GSM.running)
     else:
         event_time = time.time() - game.start_time
     if board.tile_state_tracker[mx,my] == REVEALED:
@@ -173,15 +182,17 @@ def handle_board_click(mines=False,seed=None):
 
 
 def handle_board_right_click():
+    print(GSM.get_game_state())
+    print(GSM.input_disabled())
+    if GSM.input_disabled():
+        return
     in_bounds = mouse_pos_in_bounds()
-
     if not in_bounds:
         return
     event_time = time.time() - game.start_time
     if not game.first_click:
         board.toggle_flag_at_loc((mx,my))
     update_mine_probs_after_click()
-
     if not game.replay_mode:
         rm.append_event(event_time, 'right_click',(mx,my))
 
@@ -208,8 +219,9 @@ def handle_keypress_e():
 
 def handle_keypress_t(seed=None,timeout=None):
     global executor
-    if GSM.get_game_state() is False:
+    if GSM.get_game_state() == GSM.over:
         handle_keypress_n()
+    GSM.set_game_state(GSM.fresh)
     update_mouse_pos(0,0)
 
     if seed is None:
@@ -258,7 +270,7 @@ def handle_keypress_y():
     player.play_one_step()
 
 def handle_keypress_l(filename='testboard.npz'):
-    GSM.set_game_state(False)
+    GSM.set_game_state(GSM.paused)
     game.start_time = time.time()
     #game.reset()
     #GSM.update_dims(board.dims)
@@ -270,7 +282,7 @@ def handle_keypress_l(filename='testboard.npz'):
     set_board(board)
     game.board = board
     set_first_click(False)
-    GSM.set_game_state(True)
+    GSM.set_game_state(GSM.running)
 
     #print(rm.get_metadata(board))
 
@@ -300,24 +312,9 @@ def handle_keypress_r():
     board.reveal_board()
     #print(sorted(board.mines,key=lambda coord: (coord[0], coord[1])))
 
-def task_submit():
-    global executor,future
-    #future = executor.submit(task)
-
-def task():
-    # for i in range(100000):
-    #     sum = 0
-    #     for j in range(i):
-    #         sum += 1
-    #     if sum%1000 == 0:
-    #         print(sum)
-    time.sleep(3)
-    print(3)
-    return 3
 
 def run_move_sim(board,num_samples):
-    #time.sleep(5)
-    #GSM.set_game_state(False)
+
     if len(board.global_ps) == 0:
         board.solve_exhaustive()
     moves = [(14,13),(14,9)]
@@ -338,7 +335,6 @@ def run_move_sim(board,num_samples):
     # for k,v in wins.items():
     #     print(f'{k}: {v/num_samples * 100}')
     # print('total time:',time.time()-start)
-    # GSM.set_game_state(True)
     #set_board(board)
     #print(wins)
 

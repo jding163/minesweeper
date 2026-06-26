@@ -182,7 +182,7 @@ class Game:
             #     C.future = None
                 
     def reset(self):
-        GSM.set_game_state(True)
+        GSM.set_game_state(GSM.fresh)
         self.first_click = True
         self.start_time = 0
         self.elapsed_time = 0
@@ -203,7 +203,7 @@ class Game:
     def draw(self):
         self.screen.fill((255,255,255))
         C.draw_board(self.screen)
-        if GSM.get_game_state() and not self.first_click:
+        if GSM.get_game_state() == GSM.running and not self.first_click:
             self.elapsed_time = time.time()-self.start_time
             self.time_text = format_time(self.elapsed_time)
         time_surface = font.render(self.time_text, True, BLACK)
@@ -283,21 +283,21 @@ class Game:
                 if self.ui_manager.get_focus_set():
                     continue
 
-                if GSM.get_game_state():
-                    if event.button == 1:
-                        #C.handle_board_click(mines=custom_mines)
-                        #test -8425763037098422648, -8433645031250545356,-3837008816949211577
-                        #C.handle_board_click(seed=-1443323327528190823)
+                # if not GSM.input_disabled():
+                if event.button == 1:
+                    #C.handle_board_click(mines=custom_mines)
+                    #test -8425763037098422648, -8433645031250545356,-3837008816949211577
+                    #C.handle_board_click(seed=-1443323327528190823)
 
-                        #C.handle_board_click(seed=-1569694061328666230)
-                        #C.handle_board_click(seed=3180935053634563155)
-                        #C.handle_board_click(seed=569029668483675204)
-                        #C.handle_board_click(seed=6813116530078921402)
+                    #C.handle_board_click(seed=-1569694061328666230)
+                    #C.handle_board_click(seed=3180935053634563155)
+                    #C.handle_board_click(seed=569029668483675204)
+                    #C.handle_board_click(seed=6813116530078921402)
 
-                        C.handle_board_click()
-                    
-                    elif event.button == 3:
-                        C.handle_board_right_click()
+                    C.handle_board_click()
+                
+                elif event.button == 3:
+                    C.handle_board_right_click()
                 
             elif event.type == pygame.MOUSEBUTTONUP:
                 if self.scrubbing_replay:
@@ -352,32 +352,7 @@ class Game:
                     C.handle_keypress_l()
                     #C.handle_keypress_l(filename='replay.npz')
                 elif event.key == pygame.K_b:
-                    # if self.future is None:
-                    #future = self.executor.submit(C.handle_keypress_b,self.board,num_samples)
-                    #board_copy = copy.deepcopy(self.board)
-                    #t=threading.Thread(target=C.task)
-                    # t = threading.Thread(target=C.run_move_sim,args=(self.board,num_samples))
-                    # t.start()
                     C.run_move_sim(self.board,num_samples)
-                    #C.task()
-                    #C.task_submit()
-                    #future = C.handle_keypress_b(num_samples)
-                    #self.future = future
-                    # print(wins)
-                    #self.future = future
-
-                    # self.future = future
-                    #p = multiprocessing.Process(target=C.handle_keypress_b,args=(num_samples,))
-                    # p = threading.Thread(target=C.handle_keypress_b,args=(num_samples,))
-
-                    # p.start()
-                    #p.join()
-                    # wins = self.executor.submit(C.handle_keypress_b(num_samples))
-                    # print(wins)
-                    # result = future.result()
-                    # for k,v in result:
-                    #     print(f'{k}: {v/num_samples}')
-                    #t.join()
                 elif event.key == pygame.K_v:
                     C.handle_keypress_v()
                 elif event.key == pygame.K_x:
