@@ -93,6 +93,8 @@ def toggle_replay():
     if game.replay_paused: #resume
         pause_dur = time.time() - game.replay_paused_time
         game.replay_start += pause_dur
+        BoardUI.display_probs = 0
+
         print(game.replay_paused_time)
         print(pause_dur)
         print(game.replay_start)
@@ -101,7 +103,6 @@ def toggle_replay():
     game.replay_paused = not game.replay_paused
 
 
-    #print(game.replay_paused)
 
 
 def handle_pause_button():
@@ -154,9 +155,8 @@ def handle_custom_button():
     custom_settings = (game.settings_menu.w_slider.get_current_value(),game.settings_menu.h_slider.get_current_value(),game.settings_menu.m_slider.get_current_value())
     GSM.set_board(custom_settings)
     game.reset()
-    #game.resize()
     reset_board()
-    handle_settings_back_button()
+    GSM.settings_open = False
 
 
 def update_mine_probs_after_click():
