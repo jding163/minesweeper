@@ -668,7 +668,7 @@ class Solver(Board):
         # print(total_sols)
         return safe_locs,mine_locs,safest_prob,total_sols
     
-    def solve_exhaustive(self):
+    def solve_exhaustive(self,force=False):
         self.mine_probs[:] = -1
         self.regions_list = self.get_updated_regions_list()
         groups_list= self.find_possibilities(self.regions_list)
@@ -707,7 +707,7 @@ class Solver(Board):
         #         #Solver.collected_seeds.append(self.seed)
         #         self.collected = True
         safe_locs, mine_locs = self.search_possibilities(self.regions_list,groups_list)
-        if len(safe_locs) > 0:
+        if len(safe_locs) > 0 and not force:
             for loc in safe_locs:
                 self.mine_probs[loc]= 0
             for loc in mine_locs:

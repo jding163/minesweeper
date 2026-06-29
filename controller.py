@@ -116,30 +116,39 @@ def handle_settings_button():
         GSM.set_game_state(GSM.paused)
     else:
         handle_settings_back_button()
+        
 
 
 def handle_settings_back_button():
     game.start_time = time.time() - game.elapsed_time
     game.settings_menu.hide()
     GSM.set_game_state(GSM.prev_game_state)
+    GSM.settings_open = False
 
 def handle_easy_button():
     GSM.set_board(EASY_SETTINGS)
     game.reset()
     #game.resize()
     reset_board()
+    GSM.settings_open = False
+
+
 
 def handle_intermediate_button():
     GSM.set_board(INTERMEDIATE_SETTINGS)
     game.reset()
     #game.resize()
     reset_board()
+    GSM.settings_open = False
 
 def handle_expert_button():
     GSM.set_board(EXPERT_SETTINGS)
     game.reset()
     #game.resize()
     reset_board()
+    GSM.settings_open = False
+
+
 
 def handle_custom_button():
     custom_settings = (game.settings_menu.w_slider.get_current_value(),game.settings_menu.h_slider.get_current_value(),game.settings_menu.m_slider.get_current_value())
@@ -147,6 +156,8 @@ def handle_custom_button():
     game.reset()
     #game.resize()
     reset_board()
+    handle_settings_back_button()
+
 
 def update_mine_probs_after_click():
     mask = (board.mine_probs != 0) & (board.mine_probs != 1)
@@ -202,7 +213,7 @@ def handle_keypress_q():
 def handle_keypress_w():
     #board.solve_exhaustive(instant_break=True)
     start=time.time()
-    board.solve_exhaustive()
+    board.solve_exhaustive(force=True)
     #board.solve_exhaustive_and_open()
     BoardUI.display_probs = 1
     print(time.time()-start)
