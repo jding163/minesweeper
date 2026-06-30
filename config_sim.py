@@ -28,15 +28,20 @@ def play_genned_board(board,first_click):
     result = player.autoplay()
     return result
 
-def sim_moves_on_genned_boards(genned_boards,moves,workers=1):
+def split_evenly(n, x):
+    q, r = divmod(n, x)
+    return [q + 1] * r + [q] * (x - r)
+
+def sim_moves_on_genned_boards(board,num_samples,moves,workers=1):
     if workers == 1:
-        wins = sim_moves(genned_boards,moves)
+        wins = sim_moves(board,num_samples,moves)
     else:
 
         wins = {move:0 for move in moves}
-        chunks = np.array_split(np.array(genned_boards, dtype=object), workers)
+        chunks = split_evenly(num_samples,workers)
+        print(chunks)
         with ProcessPoolExecutor(max_workers=workers) as pool:
-            futures = [pool.submit(sim_moves, chunk, moves) for chunk in chunks]
+            futures = [pool.submit(sim_moves, board,chunk, moves) for chunk in chunks]
             for i,future in enumerate(as_completed(futures)):
                 print(f"Completed chunk {i+1}/{len(futures)}")
                 result = future.result()
@@ -46,7 +51,16 @@ def sim_moves_on_genned_boards(genned_boards,moves,workers=1):
     print(wins)
     return wins
 
-def sim_moves(genned_boards,moves):
+
+def sim_moves(board,num_samples,moves):
+    nonfrontier_tiles_list = sorted(board.nonfrontier_tiles)
+    samples = sample_mines_per_group_x_times(board,num_samples)
+    genned_boards = []
+    for sample in samples:
+        genned_board = gen_board_from_sample(board,sample,nonfrontier_tiles_list)
+        genned_boards.append(genned_board)
+    print(len(samples),len(genned_boards))
+
     sim_board = Solver()
     wins = {}
     for move in moves:

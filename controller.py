@@ -325,21 +325,21 @@ def run_move_sim(board,num_samples):
         board.solve_exhaustive(force=True)
 
     num_samples = 1000
-    samples = cs.sample_mines_per_group_x_times(board,num_samples)
     # cs.verify_sampling_distribution_from_samples(board,samples)
     start = time.time()
-    nonfrontier_tiles_list = sorted(board.nonfrontier_tiles)
-    genned_boards = []
-    for sample in samples:
-        genned_board = cs.gen_board_from_sample(board,sample,nonfrontier_tiles_list)
-        genned_boards.append(genned_board)
+    # nonfrontier_tiles_list = sorted(board.nonfrontier_tiles)
+    # genned_boards = []
+    # for sample in samples:
+    #     genned_board = cs.gen_board_from_sample(board,sample,nonfrontier_tiles_list)
+    #     genned_boards.append(genned_board)
     moves = [(2,11),(2,12),(2,13),(2,14),(2,15),(3,11),(3,12),(3,13),(3,14),(3,15)]
     workers = 3
-    wins = executor.submit(cs.sim_moves_on_genned_boards, genned_boards, moves, workers)
+    future = executor.submit(cs.sim_moves_on_genned_boards, board,num_samples, moves, workers)
+    result = future.result()
     #wins = cs.sim_moves_on_genned_boards(genned_boards,moves,workers=1)
     # for k,v in wins.items():
     #     print(f'{k}: {v/num_samples * 100}')
-    # print('total time:',time.time()-start)
+    print('total time:',time.time()-start)
     #set_board(board)
     #print(wins)
 
