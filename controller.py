@@ -294,8 +294,8 @@ def handle_keypress_l(filename='testboard.npz'):
 
 
 def handle_keypress_k():
-    # player.board.save_board('testboard')
-    player.board.save_board('replay')
+    player.board.save_board('testboard')
+    # player.board.save_board('replay')
 
 
 def handle_keypress_o():
@@ -306,7 +306,7 @@ def handle_keypress_n():
     reset_board()
 def handle_keypress_m():
     #reqs = {(0,0):1,(0,4):1,(2,1):1,(2,3):1}
-    reqs = {(0,0):1,(0,15):1}
+    reqs = {(0,14):3,(0,15):1}
     #reqs = {(0,0):3}
     #reqs = {(12,4):1,(16,4):1,(12,8):1,(16,8):1}
     first_click=(0,0)
@@ -322,10 +322,9 @@ def handle_keypress_r():
 def run_move_sim(board,num_samples):
 
     if len(board.global_ps) == 0:
-        board.solve_exhaustive()
-    moves = [(14,13),(14,9)]
+        board.solve_exhaustive(force=True)
 
-    num_samples = 500
+    num_samples = 1000
     samples = cs.sample_mines_per_group_x_times(board,num_samples)
     # cs.verify_sampling_distribution_from_samples(board,samples)
     start = time.time()
@@ -334,7 +333,7 @@ def run_move_sim(board,num_samples):
     for sample in samples:
         genned_board = cs.gen_board_from_sample(board,sample,nonfrontier_tiles_list)
         genned_boards.append(genned_board)
-    moves = [(14,13),(14,9)]
+    moves = [(2,11),(2,12),(2,13),(2,14),(2,15),(3,11),(3,12),(3,13),(3,14),(3,15)]
     workers = 3
     wins = executor.submit(cs.sim_moves_on_genned_boards, genned_boards, moves, workers)
     #wins = cs.sim_moves_on_genned_boards(genned_boards,moves,workers=1)
