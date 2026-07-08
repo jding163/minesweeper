@@ -39,7 +39,6 @@ def sim_moves_on_genned_boards(board,num_samples,moves,workers=1):
 
         wins = {move:0 for move in moves}
         chunks = split_evenly(num_samples,workers)
-        print(chunks)
         with ProcessPoolExecutor(max_workers=workers) as pool:
             futures = [pool.submit(sim_moves, board,chunk, moves) for chunk in chunks]
             for i,future in enumerate(as_completed(futures)):
@@ -54,24 +53,26 @@ def sim_moves_on_genned_boards(board,num_samples,moves,workers=1):
 
 def sim_moves(board,num_samples,moves):
     nonfrontier_tiles_list = sorted(board.nonfrontier_tiles)
-    samples = sample_mines_per_group_x_times(board,num_samples)
-    genned_boards = []
-    for sample in samples:
-        genned_board = gen_board_from_sample(board,sample,nonfrontier_tiles_list)
-        genned_boards.append(genned_board)
-    print(len(samples),len(genned_boards))
-
     sim_board = Solver()
-    wins = {}
-    for move in moves:
-        won_at_loc = 0
-        for b in genned_boards:
+    wins = {move:0 for move in moves}
+    global_ps = board.global_ps
+    total_sols_dict = board.total_sols_dict
+    ps_by_mine_count = defaultdict(list)
+    for p in global_ps:
+        mine_count = sum(p.mines_per_group)
+        ps_by_mine_count[mine_count].append(p)
+    mc_keys = list(total_sols_dict.keys())
+    mc_weights = list(total_sols_dict.values())
+    while num_samples > 0:
+        sample = sample_mines_per_group(ps_by_mine_count,mc_keys,mc_weights)
+        b = gen_board_from_sample(board,sample,nonfrontier_tiles_list)
+        for move in moves:
             sim_board.clone_board(b,copy_num_mine_tracker=True)
             sim_board.copy_solver_info(b)
             result = play_genned_board(sim_board,move)
             if result:
-                won_at_loc+=1
-        wins[move] = won_at_loc
+                wins[move] += 1
+        num_samples -= 1
     return wins
 
 def gen_board_from_sample(board,sample,nonfrontier_tiles_list):
@@ -104,6 +105,7 @@ def sample_mines_per_group(ps_by_mine_count,mc_keys,mc_weights):
     ps = ps_by_mine_count[mc]
     p_weights = [p.num_cases for p in ps]
     chosen_p = random.choices(ps,weights=p_weights,k=1)[0]
+    # print(ps)
     return chosen_p
 
 def sample_mines_per_group_x_times(board,x):

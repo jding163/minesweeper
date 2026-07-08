@@ -260,7 +260,7 @@ def handle_keypress_s():
     player.play_games(10,seed=5,parallel=True)
 def handle_keypress_d():
     player.set_strategy(strat.SecSafety())
-    player.play_games(100,seed=5,parallel=False)
+    player.play_games(3333,seed=5,parallel=False)
     # solver.print_frontier_summary()
 def handle_keypress_f():
     player.board.find_possibilities()
@@ -324,7 +324,7 @@ def run_move_sim(board,num_samples):
     if len(board.global_ps) == 0:
         board.solve_exhaustive(force=True)
 
-    num_samples = 1000
+    num_samples = 500
     # cs.verify_sampling_distribution_from_samples(board,samples)
     start = time.time()
     # nonfrontier_tiles_list = sorted(board.nonfrontier_tiles)
@@ -333,6 +333,7 @@ def run_move_sim(board,num_samples):
     #     genned_board = cs.gen_board_from_sample(board,sample,nonfrontier_tiles_list)
     #     genned_boards.append(genned_board)
     moves = [(2,11),(2,12),(2,13),(2,14),(2,15),(3,11),(3,12),(3,13),(3,14),(3,15)]
+    #moves = [(2,13)]
     workers = 3
     future = executor.submit(cs.sim_moves_on_genned_boards, board,num_samples, moves, workers)
     result = future.result()
