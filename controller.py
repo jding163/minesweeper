@@ -335,7 +335,8 @@ def run_move_sim(board,num_samples):
     moves = [(2,11),(2,12),(2,13),(2,14),(2,15),(3,11),(3,12),(3,13),(3,14),(3,15)]
     #moves = [(2,13)]
     workers = 3
-    future = executor.submit(cs.sim_moves_on_genned_boards, board,num_samples, moves, workers)
+    seed=123456
+    future = executor.submit(cs.sim_moves_on_genned_boards, board,num_samples, moves, workers,seed=seed)
     result = future.result()
     #wins = cs.sim_moves_on_genned_boards(genned_boards,moves,workers=1)
     # for k,v in wins.items():
