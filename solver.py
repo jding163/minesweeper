@@ -1,5 +1,5 @@
 from sprites import *
-from collections import defaultdict
+from collections import defaultdict, Counter
 import math
 import dataclasses
 from itertools import product
@@ -27,7 +27,6 @@ def compare_builds(board,frontier_locs):
             # mask = (~frontier_mask) & unknown_mask
             # nonfrontier_rows, nonfrontier_cols = np.where(mask)
             # nonfrontier_locs1 = set((int(r), int(c)) for r, c in zip(nonfrontier_rows, nonfrontier_cols))        
-            # assert nonfrontier_locs1 == nonfrontier_locs, str(len(nonfrontier_locs1)) + ' ' + str(len(nonfrontier_locs))
     start = time.perf_counter()
     unknown_mask = (board.tile_state_tracker == UNKNOWN)  # bool array
     frontier_mask = np.zeros((board.rows, board.cols), dtype=bool)
@@ -107,6 +106,12 @@ class Region():
         self.ps = None
         self.group_ids = set()
         self.ic = False
+
+    def __eq__(self, other):
+        if not isinstance(other, Region):
+            return NotImplemented
+        return (frozenset(self.locs) == frozenset(other.locs) and
+                frozenset(self.locs_to_check) == frozenset(other.locs_to_check))
 
 
 
@@ -252,7 +257,6 @@ class Solver(Board):
 
 
     # def find_trivial_moves(self):
-
     def solve_trivial_and_open(self):
         init_mines = self.flag_count
         init_revealed = self.num_revealed
@@ -313,10 +317,9 @@ class Solver(Board):
         self.unfinished_clues.discard(loc)
         self.unrevealed_tiles.add(loc)
         self.revealed_tiles.remove(loc)
-
+    @profile
     def get_sol_counts_at_loc_for_val(self,loc,val):
-        if loc == (29,15):
-            pass
+        saved_total_sols = self.total_sols
         orig_val_at_loc = self.assign_tile_value(loc,val)
         regions = self.get_updated_regions_list()
         regions_to_solve = []
@@ -342,11 +345,10 @@ class Solver(Board):
                 frontier_locs.extend(region.locs)
             frontier_locs = set(frontier_locs)
             nonfrontier_locs = set(ul for ul in self.unrevealed_tiles if ul not in frontier_locs)
-            safe_locs, _,best_prob,total_count= self.calc_probs_for_board(regions_to_solve,groups_list,nonfrontier_locs,update_self=False) 
+            safe_locs, _,best_prob,total_count = self.calc_probs_for_board(regions_to_solve,groups_list,nonfrontier_locs,update_self=False)
             num_safe = len(safe_locs)
         self.unassign_tile_value(loc,orig_val_at_loc)
-        # print(loc)
-        # print(best_prob)
+        self.total_sols = saved_total_sols
         return SolverHeuristics(total_count=total_count,best_prob=best_prob, num_safe=num_safe,has_ff=has_ff)
 
 
@@ -422,6 +424,8 @@ class Solver(Board):
                 updated_mines_per_group[new_start_index + i] = p.mines_per_group[old_start_index + i]
             new_p = dataclasses.replace(p, mines_per_group=updated_mines_per_group)
             new_ps.append(new_p)
+
+        region.group_ids = set(range(new_start_index, new_start_index + region.num_groups))
 
         return new_start_index, new_ps
     def find_possibilities(self,regions_to_solve):
@@ -548,126 +552,114 @@ class Solver(Board):
 
         all_combinations = product(*p_lists)
         merged_possibilities = [
-            merge_possibilities(list(combo),board=self)
-            for combo in all_combinations
+            merge_possibilities(list(combo),board=self) for combo in all_combinations
         ]
         return merged_possibilities
+    
+    @profile
+    def calc_prob_at_board_test(self, regions, groups_list, nonfrontier_locs):
+        a = {}
+        num_nf = len(nonfrontier_locs)
+        mines_left = self.minecount - self.flag_count
+        nf_loc = next(iter(nonfrontier_locs), None)
+        all_global_sols = {}
+        if len(regions) > 0:
+            for region in regions:
+                region.freq_dict = defaultdict(int)
+                for p in region.ps:
+                    region.freq_dict[p.total_mines] += p.num_cases
 
-    def calc_prob_at_loc(self,loc,groups_list,nonfrontier_locs,total_sols,total_sols_dict,num_local_sols_at_count,ps_with_num_mines):
-        if self.tile_state_tracker[loc] != UNKNOWN:
-            return 0
-        
+            all_global_sols = convolve_freqs([region.freq_dict for region in regions])
+        else:
+            all_global_sols = {0: 1}
+        all_global_sols = {k:v for k,v in all_global_sols.items() if k <= mines_left}
+        for mc in all_global_sols:
+            all_global_sols[mc] *= math.comb(num_nf, mines_left - mc)
+        sum_global_sols = sum(all_global_sols.values())
+        if sum_global_sols == 0:
+            return {}, 0
 
-        #total_sols = sum(total_sols_dict.values())
-        if loc in nonfrontier_locs:
-            prob_dist = {mc: num_sols_for_mc / total_sols for mc, num_sols_for_mc in total_sols_dict.items()}
-            mines_left = len(self.mines) - self.flag_count
+        if len(regions) > 0:
+            for region in regions:
+                freqs_to_convolve = [other.freq_dict for other in regions if other != region]
+                if not freqs_to_convolve:
+                    cfreqs = {0:1}
+                else:
+                    cfreqs = convolve_freqs(freqs_to_convolve)
+                # group: minecount of region: expected mines
+                mpg = defaultdict(lambda:defaultdict(int))
+                for p in region.ps:
+                    t = p.total_mines
+                    for g in region.group_ids:
+                        mpg[g][t] += p.num_cases * p.mines_per_group[g]
+                for g in mpg:
+                    num_sols = 0
+                    for mines_here in mpg[g]:
+                        if mines_here == 0:
+                            continue
+                        num_sols_at_mc = 0
+                        for mines_other in cfreqs:
+                            mines_to_place = mines_left - mines_other - mines_here
+                            if mines_to_place >= 0:
+                                num_sols_at_mc += cfreqs[mines_other] * math.comb(num_nf, mines_to_place)
+                        num_sols_at_mc *= mpg[g][mines_here]
+                        num_sols += num_sols_at_mc
+                    a[groups_list[g].tile_locs[0]] = num_sols / sum_global_sols / len(groups_list[g].tile_locs)
 
-            prob_nf = prob.calc_prob_for_nonfrontier_tiles(prob_dist,mines_left,len(nonfrontier_locs))
-            
-
-            return prob_nf
-        
-        group_id = -1
-        group_size = -1
-        for id,info in enumerate(groups_list):
-            if loc in info.tile_locs:
-                group_size = len(info.tile_locs)
-                group_id = id
-                break
-
-
-        avg_mines_in_group = 0
-        for num_mines, num_cases in num_local_sols_at_count.items():
-            num_sols_at_num_mines = total_sols_dict[num_mines]
-            matching_ps = ps_with_num_mines[num_mines]
-            avg_mines_in_group_at_num_mines = 0
-            for p in matching_ps:
-                frac = p.num_cases/num_cases
+        if num_nf > 0:
+            prob_dist = {mc: num_sols_for_mc / sum_global_sols for mc, num_sols_for_mc in all_global_sols.items()}
+            a[nf_loc] = prob.calc_prob_for_nonfrontier_tiles(prob_dist, mines_left, num_nf)
+        return a, sum_global_sols
 
 
 
-                avg_mines_in_group_at_num_mines += frac * p.mines_per_group[group_id]
-            avg_mines_in_group += (num_sols_at_num_mines/total_sols) * avg_mines_in_group_at_num_mines
-        prob_loc_is_mine = avg_mines_in_group/group_size
-        return prob_loc_is_mine
     
     # @return: safe_locs,mine_locs,safest_prob,total_sols
+    @profile
+    def calc_probs_for_board(self, regions, groups_list, nonfrontier_locs, update_self=True):
+        a, total_sols = self.calc_prob_at_board_test(regions, groups_list, nonfrontier_locs)
 
-    def calc_probs_for_board(self,regions,groups_list,nonfrontier_locs,update_self=True):
+        # invalid board: no valid global solutions
+        if total_sols == 0:
+            return [], [], 1, 0
+
         safe_locs = []
         mine_locs = []
-        total_sols_dict = defaultdict(int)
-        num_local_sols_at_count = defaultdict(int)
-        ps_with_num_mines = defaultdict(list)
-        mines_left = self.minecount-self.flag_count
+        safest_prob = 1.0
 
-
-        safest_prob = 1
-        if len(regions)>0:
-            ps = self.merge_all_possibilities(regions)
-            ps = [p for p in ps if p.total_mines <= mines_left]
-
-            if update_self:
-                self.global_ps = ps
-            for p in ps:
-                num_local_sols_at_count[p.total_mines] += p.num_cases
-
-                ps_with_num_mines[p.total_mines].append(p)
-            total_sols = 0
-
-            for num_mines in ps_with_num_mines.keys():
-                total_sols_at_num_mines = num_local_sols_at_count[num_mines] * math.comb(len(nonfrontier_locs),mines_left-num_mines)
-                total_sols_dict[num_mines] = total_sols_at_num_mines
-                total_sols += total_sols_at_num_mines
-            if update_self:
-                self.total_sols = total_sols
-                self.total_sols_dict = total_sols_dict
-            # invalid board
-            if total_sols == 0:
-                return [],[],1,0
-            for group_info in groups_list:
-                group_locs = group_info.tile_locs
-                rep_loc = group_locs[0]
-                prob_at_loc = self.calc_prob_at_loc(rep_loc,groups_list,nonfrontier_locs,total_sols,total_sols_dict,num_local_sols_at_count,ps_with_num_mines)
-                for loc in group_locs:
-                    if update_self:
-                        self.mine_probs[loc] = prob_at_loc
-                    if prob_at_loc == 0:
-                        safe_locs.append(loc)
-                    elif prob_at_loc == 1:
-                        mine_locs.append(loc)
-                safest_prob = min(safest_prob,prob_at_loc)
-        else:
-            total_sols = math.comb(len(nonfrontier_locs),mines_left)
-            if update_self:
-                self.total_sols = total_sols
-                self.total_sols_dict = {mines_left:total_sols}
+        for group_info in groups_list:
+            rep_loc = group_info.tile_locs[0]
+            prob_at_loc = a[rep_loc]
+            for loc in group_info.tile_locs:
+                if update_self:
+                    self.mine_probs[loc] = prob_at_loc
+                if math.isclose(prob_at_loc, 0.0, abs_tol=1e-12):
+                    safe_locs.append(loc)
+                elif math.isclose(prob_at_loc, 1.0, abs_tol=1e-12):
+                    mine_locs.append(loc)
+            safest_prob = min(safest_prob, prob_at_loc)
 
         if len(nonfrontier_locs) > 0:
-            
-            nf_loc = None
-            for nf_l in nonfrontier_locs:
-                nf_loc = nf_l
-                break
-            prob_at_loc = self.calc_prob_at_loc(nf_loc,groups_list,nonfrontier_locs,total_sols,total_sols_dict,num_local_sols_at_count,ps_with_num_mines)
+            nf_keys = [loc for loc in a if loc in nonfrontier_locs]
+            nf_rep = nf_keys[0] if nf_keys else min(nonfrontier_locs)
+            prob_at_loc = a[nf_rep]
             for loc in nonfrontier_locs:
                 if update_self:
                     self.mine_probs[loc] = prob_at_loc
-
-
-
-                if prob_at_loc == 0:
+                if math.isclose(prob_at_loc, 0.0, abs_tol=1e-12):
                     safe_locs.append(loc)
-                elif prob_at_loc == 1:
+                elif math.isclose(prob_at_loc, 1.0, abs_tol=1e-12):
                     mine_locs.append(loc)
-            safest_prob = min(safest_prob,prob_at_loc)
-        # print(safe_locs)
-        # print(mine_locs)
-        # print(safest_prob)
-        # print(total_sols)
-        return safe_locs,mine_locs,safest_prob,total_sols
-    
+            safest_prob = min(safest_prob, prob_at_loc)
+
+        if update_self:
+            self.total_sols = total_sols
+            self.total_sols_dict = {}
+            self.global_ps = []
+
+        return safe_locs, mine_locs, safest_prob, total_sols
+
+    @profile
     def solve_exhaustive(self,force=False):
         self.mine_probs[:] = -1
         self.regions_list = self.get_updated_regions_list()
@@ -702,10 +694,6 @@ class Solver(Board):
                 self.mine_probs[loc] = 0
                 safe_locs.append(loc)
             return safe_locs,[]
-        # if len(groups_list) == 0 and len(nonfrontier_locs) <= 5 and len(nonfrontier_locs) > 2:
-        #     if not self.collected:
-        #         #Solver.collected_seeds.append(self.seed)
-        #         self.collected = True
         safe_locs, mine_locs = self.search_possibilities(self.regions_list,groups_list)
         if len(safe_locs) > 0 and not force:
             for loc in safe_locs:
@@ -714,7 +702,7 @@ class Solver(Board):
                 self.mine_probs[loc]= 1
 
         else:
-            safe_locs, mine_locs,_,total_sols= self.calc_probs_for_board(self.regions_list,groups_list,nonfrontier_locs) 
+            safe_locs, mine_locs,_,total_sols = self.calc_probs_for_board(self.regions_list,groups_list,nonfrontier_locs)
             self.total_sols = total_sols
         return safe_locs,mine_locs
             
@@ -820,6 +808,31 @@ def merge_sets(sets):
         merged.append(base)
     return sorted(merged,key=len)
 
+
+# freqs is a list of dicts
+def convolve_freqs(freqs):
+    if len(freqs) == 0:
+        return {}
+    total_freqs = Counter()
+    for tm,tc in freqs[0].items():
+        convolve_freqs_helper(freqs,1,tm,tc,total_freqs)
+    return total_freqs
+
+def convolve_freqs_helper(freqs, index, total_mines, total_count, total_freqs):
+    if index == len(freqs):
+        total_freqs[total_mines] += total_count
+    else:
+        for tm,tc in freqs[index].items():
+            new_tm = total_mines + tm
+            new_tc = total_count * tc
+            convolve_freqs_helper(freqs,index+1,new_tm,new_tc,total_freqs)
+# return a new freqs dict that has freqs_to_remove deconvolved from all_freqs
+def deconvolve_freqs(all_freqs, freqs_to_remove):
+    new_freqs = Counter()
+    for tm,tc in all_freqs.items():
+        for tm_r, tc_r in freqs_to_remove.items():
+            new_freqs[tm-tm_r] += tc/tc_r
+    return new_freqs
 
 
 def get_groupings_by_clue(groups_list, unfinished_clues_list, clue_index_dict):

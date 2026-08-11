@@ -29,7 +29,6 @@ class SafestTile(Strategy):
     def __str__(self):
         return 'SafestTile'
     def find_move(self,board):
-        #update_nonfrontier_tile_probs(board)
 
         min_prob = 1
         min_loc = (-1,-1)

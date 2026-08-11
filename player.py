@@ -11,6 +11,7 @@ import time
 from line_profiler import profile
 import logging
 import statistics
+import math
 from solver import TimeoutException
 import fifty_fifty_detection as ffd
 
@@ -126,13 +127,11 @@ class Player():
                 break
         return False
 
-    @profile
     def play_game(self,seed=None):
         #C.handle_keypress_n()  # full reset
         self.board = Solver()
         if self.timeout is not None:
             self.board.deadline = time.time() + self.timeout
-
         self.board.populate((0,0),seed=seed)
         start_time = time.time()
 
@@ -185,6 +184,7 @@ class Player():
 
         results = []
         won_seeds = []
+        lost_seeds = []
         error_seeds = []
         collected_seeds = []
         timeouts = 0
@@ -204,11 +204,14 @@ class Player():
                     err_msg = result['error']
                     logging.error(f'Error at seed {result_seed}')
                     logging.info(err_msg)
+                    error_seeds.append(result_seed)
                 if 'timeout' in result:
                     logging.info(f'Timeout at seed {result_seed}')
                     timeouts+=1
                 if result['won']:
                     won_seeds.append(result_seed)
+                else:
+                    lost_seeds.append(result_seed)
                 if result['collect']:
                     collected_seeds.append(result_seed)
         else:
@@ -244,13 +247,18 @@ class Player():
                 result['collect'] = self.board.collected
 
                 results.append(result)
+
                 if result['won'] == True:
                     won_seeds.append(seeds[i])
+                else:
+                    lost_seeds.append(seeds[i])
                 result_seed = result['seed']
                 if 'error' in result:
                     err_msg = result['error']
                     logging.error(f'Error at seed {result_seed}')
                     logging.info(err_msg)
+                    error_seeds.append(result_seed)
+
                 if 'timeout' in result:
                     logging.info(f'Timeout at seed {result_seed}')
                     timeouts+=1
@@ -266,7 +274,7 @@ class Player():
         total_time = sum(r['time'] for r in results if 'error' not in r)
         avg_time = total_time / total_games if total_games > 0 else 0
         avg_time_win = (sum(r['time'] for r in results if r['won']) / total_wins) if total_wins > 0 else 0
-        median_win = statistics.median(r['time'] for r in results if r['won'])
+        #median_win = statistics.median(r['time'] for r in results if r['won']) if total_wins > 0 else 0
 
         print("\n--- Statistics Summary ---")
         print(f'Strategy used: {self.strategy}')
@@ -278,9 +286,9 @@ class Player():
         print(f"Winrate: {total_wins / total_games:.2%}")
         print(f"Average time per game: {avg_time:.2f} seconds")
         print(f"Average time per win: {avg_time_win:.2f} seconds")
-        print(f"Median win: {median_win:.2f}")
+        #print(f"Median win: {median_win:.2f}")
         print('timeouts:',timeouts)
-
+        print(error_seeds)
 
         # with open("seeds.txt", "w") as file:
         #     for seed in won_seeds:
@@ -324,7 +332,7 @@ def main():
     executor = ProcessPoolExecutor(max_workers=max_workers)
     Player.set_executor(executor)
     p = Player(timeout=60)
-    #p.set_strategy(strat.SafestTile())
+    # p.set_strategy(strat.SafestTile())
     #p.set_strategy(strat.SafestTileAndLikeliestOpening())
     p.set_strategy(strat.SecSafety())
 
@@ -339,7 +347,7 @@ def main():
     #seed=5
     # res = p.play_game(seed=seed)
     # print(res)
-    w1 = p.play_games(100,seed=seed,parallel=True,timeout=30)
+    w1 = p.play_games(100,seed=seed,parallel=False,timeout=None)
     # for w in w1:
     #     print(w)
 

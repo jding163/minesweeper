@@ -58,7 +58,6 @@ def sim_moves_on_genned_boards(board,num_samples,moves,workers=1,batch_size=15,s
     print(wins)
     return wins
 
-
 def sim_moves(board,num_samples,moves,seed=None):
     if seed is not None:
         random.seed(seed)

@@ -1,5 +1,4 @@
 from game_state_manager import GSM
-from collections import Counter
 import copy
 import math
 from math import comb
@@ -65,9 +64,6 @@ def calc_global_prob_for_group(merged_regions,group,sols_per_mines_in_frontier):
     overall_average = numerator / denominator if denominator > 0 else 0
 
     global_prob = overall_average/len(group)
-    #print('gp:',global_prob)
-    # print(board.sols_per_mines_in_frontier)
-    # print(total_sols)
     return global_prob
 
 # @dataclass 
@@ -77,9 +73,11 @@ def calc_global_prob_for_group(merged_regions,group,sols_per_mines_in_frontier):
 #     num_safe: int
 #     has_ff: bool
 def calc_prob_opening_for_loc(board,loc):
-
+    orig_total_sols = board.total_sols
     info = board.get_sol_counts_at_loc_for_val(loc,0)
-    num_sols = board.total_sols
+    num_sols = orig_total_sols
+    if num_sols == 0:
+        return 0
     prob_opening = info.total_count/num_sols
     return prob_opening
 
@@ -95,23 +93,6 @@ def find_matching_indices(locs, targets):
 
     return result
 
-# freqs is a list of dicts
-def convolve_freqs(freqs):
-    if len(freqs) == 0:
-        return {}
-    total_freqs = Counter()
-    for tm,tc in freqs[0].items():
-        convolve_freqs_helper(freqs,1,tm,tc,total_freqs)
-    return total_freqs
-
-def convolve_freqs_helper(freqs, index, total_mines, total_count, total_freqs):
-    if index == len(freqs):
-        total_freqs[total_mines] += total_count
-    else:
-        for tm,tc in freqs[index].items():
-            new_tm = total_mines + tm
-            new_tc = total_count * tc
-            convolve_freqs_helper(freqs,index+1,new_tm,new_tc,total_freqs)
 def calc_prob_for_nonfrontier_tiles(prob_dist, mines_left, num_nonfrontier_tiles):
     total_prob = 0
     if len(prob_dist) == 0:
@@ -145,6 +126,7 @@ def calc_prob_for_nonfrontier_tiles(prob_dist, mines_left, num_nonfrontier_tiles
 # note that this calculation is NOT the chance that (x,y) is an opening assuming (x,y) is safe; it assumes 
 # that (x,y) may or may not be a mine
 def calc_local_prob_of_opening_at_loc(board,loc):
+    from solver import convolve_freqs
     curr_tile = board.tiles[loc[0]][loc[1]]
     if curr_tile.is_revealed()  or curr_tile.is_flagged():
         return
@@ -220,6 +202,7 @@ def calc_prob_of_opening_for_board(board):
 
 
 def update_nonfrontier_tile_probs(board):
+    from solver import convolve_freqs
     #determine probs for non-border tiles
     if len(board.nonfrontier_tiles) > 0:
 
@@ -245,7 +228,6 @@ def update_nonfrontier_tile_probs(board):
 # y = neighbors in group
 # z = number of mines in group
 # want to find distribution of counts on how many of the y tiles are mines
-
 def hypergeometric_counts(x, y, z):
     counts = {}
     min_k = max(0, z - (x - y))

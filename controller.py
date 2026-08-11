@@ -216,7 +216,7 @@ def handle_keypress_w():
     board.solve_exhaustive(force=True)
     #board.solve_exhaustive_and_open()
     BoardUI.display_probs = 1
-    print(time.time()-start)
+    # print(time.time()-start)
 
 def handle_keypress_e():
     player.set_strategy(strat.SecSafety())
@@ -234,7 +234,7 @@ def handle_keypress_t(seed=None,timeout=None):
         handle_board_click()
     else:
         handle_board_click(seed=seed)
-    #player.set_strategy(strat.SafestTile())
+    # player.set_strategy(strat.SafestTile())
     #player.set_strategy(strat.SafestTileAndLikeliestOpening())
 
     player.set_strategy(strat.SecSafety())
@@ -260,7 +260,7 @@ def handle_keypress_s():
     player.play_games(10,seed=5,parallel=True)
 def handle_keypress_d():
     player.set_strategy(strat.SecSafety())
-    player.play_games(3333,seed=5,parallel=False)
+    player.play_games(100,seed=5,parallel=False)
     # solver.print_frontier_summary()
 def handle_keypress_f():
     player.board.find_possibilities()
@@ -305,8 +305,8 @@ def handle_keypress_n():
     game.reset()
     reset_board()
 def handle_keypress_m():
-    #reqs = {(0,0):1,(0,4):1,(2,1):1,(2,3):1}
-    reqs = {(0,14):3,(0,15):1}
+    reqs = {(0,0):1}
+    # reqs = {(0,14):3,(0,15):1}
     #reqs = {(0,0):3}
     #reqs = {(12,4):1,(16,4):1,(12,8):1,(16,8):1}
     first_click=(0,0)
@@ -324,7 +324,7 @@ def run_move_sim(board,num_samples):
     if len(board.global_ps) == 0:
         board.solve_exhaustive(force=True)
 
-    num_samples = 500
+    num_samples = 50
     # cs.verify_sampling_distribution_from_samples(board,samples)
     start = time.time()
     # nonfrontier_tiles_list = sorted(board.nonfrontier_tiles)
@@ -334,7 +334,7 @@ def run_move_sim(board,num_samples):
     #     genned_boards.append(genned_board)
     moves = [(2,11),(2,12),(2,13),(2,14),(2,15),(3,11),(3,12),(3,13),(3,14),(3,15)]
     #moves = [(2,13)]
-    workers = 3
+    workers = 1
     seed=123456
     future = executor.submit(cs.sim_moves_on_genned_boards, board,num_samples, moves, workers,seed=seed)
     result = future.result()

@@ -281,15 +281,23 @@ class Game:
                 # if not GSM.input_disabled():
                 if event.button == 1:
                     #C.handle_board_click(mines=custom_mines)
-                    #test -8425763037098422648, -8433645031250545356,-3837008816949211577
-                    #C.handle_board_click(seed=-1443323327528190823)
+                    #test [2315728546880468680, 
+                    # 3954673263561913540, 
+                    # 6341336492286951254, 
+                    # 1010449320610234402, 
+                    # 2982063696803266124, 
+                    # 5945904950375328756, 
+                    # 4778630343925149448, 
+                    # 3103735836831775269, 
+                    # 5174923775427120880, 
+                    # 8752343860328387348, 
+                    # 2950726992408739602, 
+                    # 3704944176424518728, 
+                    # 4818019032247190816, 
+                    # 6427893799520374548]
+                    C.handle_board_click(seed=2315728546880468680)
 
-                    #C.handle_board_click(seed=-1569694061328666230)
-                    #C.handle_board_click(seed=3180935053634563155)
-                    #C.handle_board_click(seed=569029668483675204)
-                    #C.handle_board_click(seed=6813116530078921402)
-
-                    C.handle_board_click()
+                    # C.handle_board_click()
                 
                 elif event.button == 3:
                     C.handle_board_right_click()

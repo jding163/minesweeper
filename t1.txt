@@ -1,48 +1,14 @@
-pygame-ce 2.5.5 (SDL 2.32.6, Python 3.11.8)
-0
-
---- Statistics Summary ---
-Strategy used: SecSafety
-Total games: 100
-Total time: 33.342971086502075
-Wins: 47
-Losses: 53
-Errors: 0
-Winrate: 47.00%
-Average time per game: 0.33 seconds
-Average time per win: 0.50 seconds
-Median win: 0.12
-timeouts: 0
-Wrote profile results to player.py.lprof
-Timer unit: 1e-06 s
-
-Total time: 33.3333 s
-File: player.py
-Function: play_game at line 112
-
-Line #      Hits         Time  Per Hit   % Time  Line Contents
-==============================================================
-   112                                               @profile
-   113                                               def play_game(self,seed=None):
-   114                                                   #C.handle_keypress_n()  # full reset
-   115                                                   #GSM.set_game_state(True)
-   116       100     312772.0   3127.7      0.9          self.board = Solver()
-   117       100         69.0      0.7      0.0          if self.timeout is not None:
-   118       100        124.0      1.2      0.0              self.board.deadline = time.time() + self.timeout
-   119                                           
-   120       100     141371.0   1413.7      0.4          self.board.populate((0,0),seed=seed)
-   121       100         59.0      0.6      0.0          start_time = time.time()
-   122                                           
-   123       100       3172.0     31.7      0.0          self.board.reveal_tiles((0,0))
-   124       100   32873740.0 328737.4     98.6          self.autoplay()
-   125                                           
-   126                                           
-   127       100        119.0      1.2      0.0          end_time = time.time()
-   128       100         46.0      0.5      0.0          duration = end_time - start_time
-   129                                           
-   130       100         77.0      0.8      0.0          return {
-   131       100         26.0      0.3      0.0              'seed': seed,
-   132       100       1748.0     17.5      0.0              'won': self.board.is_complete() and self.board.verify_win(),
-   133       100         22.0      0.2      0.0              'time': duration
-   134                                                   }
-
+Possibility(total_mines=1, num_cases=3, mines_per_group=[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+Possibility(total_mines=2, num_cases=4, mines_per_group=[0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+Possibility(total_mines=3, num_cases=6, mines_per_group=[0, 1, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+Possibility(total_mines=9, num_cases=40, mines_per_group=[0, 0, 0, 0, 1, 2, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 1])
+Possibility(total_mines=8, num_cases=20, mines_per_group=[0, 0, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 1, 0])
+Possibility(total_mines=8, num_cases=5, mines_per_group=[0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 1, 1, 0, 0, 0, 1, 0, 1, 1])
+Possibility(total_mines=7, num_cases=1, mines_per_group=[0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0])
+Possibility(total_mines=8, num_cases=10, mines_per_group=[0, 0, 0, 0, 0, 2, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 1])
+Possibility(total_mines=7, num_cases=5, mines_per_group=[0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0])
+Possibility(total_mines=7, num_cases=10, mines_per_group=[0, 0, 0, 0, 0, 2, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 1])
+Possibility(total_mines=6, num_cases=5, mines_per_group=[0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0])
+(0, 1): 0.3333333333
+(35, 10): 0.1301566792
+(38, 10): 0.3293272379
