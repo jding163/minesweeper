@@ -18,7 +18,6 @@ from replay_manager import ReplayManager as rm
 test=True
 executor=None
 board = None
-board_ui = None
 game = None
 player = None
 mx = 0
@@ -33,11 +32,11 @@ future = None
 def set_player(p):
     global player
     player = p
+
 def set_board(b):
-    global board,board_ui
+    global board
     board = b
     player.set_board(b)
-    board_ui = BoardUI(board)
 
 
 def set_executor(ex):
@@ -68,9 +67,6 @@ def reset_board():
     b = Solver()
 
     set_board(b)
-
-def draw_board(screen):
-    board_ui.draw(screen)
 
 def get_flag_count():
     return board.flag_count
@@ -107,57 +103,6 @@ def toggle_replay():
 
 def handle_pause_button():
     toggle_replay()
-
-def handle_settings_button():
-    if not GSM.settings_open:
-        game.elapsed_time = time.time() - game.start_time
-
-        game.settings_menu.show()
-        GSM.settings_open = True
-        GSM.set_game_state(GSM.paused)
-    else:
-        handle_settings_back_button()
-        
-
-
-def handle_settings_back_button():
-    game.start_time = time.time() - game.elapsed_time
-    game.settings_menu.hide()
-    GSM.set_game_state(GSM.prev_game_state)
-    GSM.settings_open = False
-
-def handle_easy_button():
-    GSM.set_board(EASY_SETTINGS)
-    game.reset()
-    #game.resize()
-    reset_board()
-    GSM.settings_open = False
-
-
-
-def handle_intermediate_button():
-    GSM.set_board(INTERMEDIATE_SETTINGS)
-    game.reset()
-    #game.resize()
-    reset_board()
-    GSM.settings_open = False
-
-def handle_expert_button():
-    GSM.set_board(EXPERT_SETTINGS)
-    game.reset()
-    #game.resize()
-    reset_board()
-    GSM.settings_open = False
-
-
-
-def handle_custom_button():
-    custom_settings = (game.settings_menu.w_slider.get_current_value(),game.settings_menu.h_slider.get_current_value(),game.settings_menu.m_slider.get_current_value())
-    GSM.set_board(custom_settings)
-    game.reset()
-    reset_board()
-    GSM.settings_open = False
-
 
 def update_mine_probs_after_click():
     mask = (board.mine_probs != 0) & (board.mine_probs != 1)
@@ -420,17 +365,6 @@ def handle_keypress_space():
     else:
         handle_board_click()
     
-def handle_customization_sliders(event):
-    event.ui_element.update_text()
-def handle_customization_text(event):
-    event.ui_element.update_value()
-
-def update_minecount_slider():
-    prev_minecount = game.settings_menu.m_slider.get_current_value()
-    new_max = game.settings_menu.w_slider.get_current_value() * game.settings_menu.h_slider.get_current_value()
-    game.settings_menu.m_slider.value_range = (1,new_max)
-    game.settings_menu.m_slider.set_current_value(prev_minecount) if prev_minecount <= new_max else game.settings_menu.m_slider.set_current_value(new_max)
-    game.settings_menu.m_slider.update_text()
 
 def update_game_after_first_click():
     game.first_click = False

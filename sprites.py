@@ -130,13 +130,47 @@ class BoardUI():
                 tile.mine_prob=self.board.mine_probs[r,c]
                 tile.opening_prob=self.board.opening_probs[r,c]
         TileUI.death_click = self.board.death_click
-    def draw(self,screen):
+    def draw(self, screen, offset=(0, 0)):
         self.sync()
         for row in self.tiles:
-            for tile in row: 
-                tile.draw(self.display,BoardUI.display_probs)
+            for tile in row:
+                tile.draw(self.display, BoardUI.display_probs)
 
-        screen.blit(self.display, (0, HEADER_HEIGHT))
+        # Viewport is the fixed on-screen area for the board.
+        viewport = pygame.Surface((BOARD_VIEWPORT_WIDTH, BOARD_VIEWPORT_HEIGHT))
+        viewport.fill((255, 255, 255))
+        viewport.blit(self.display, (-offset[0], -offset[1]))
+        screen.blit(viewport, (LEFT_PANEL_WIDTH, HEADER_HEIGHT))
+
+        # Optional scroll indicators for oversized boards.
+        board_w = self.board.rows * TILESIZE
+        board_h = self.board.cols * TILESIZE
+        if board_w > BOARD_VIEWPORT_WIDTH or board_h > BOARD_VIEWPORT_HEIGHT:
+            self._draw_scroll_indicators(screen, offset, board_w, board_h)
+
+    def _draw_scroll_indicators(self, screen, offset, board_w, board_h):
+        origin_x = LEFT_PANEL_WIDTH
+        origin_y = HEADER_HEIGHT
+
+        if board_w > BOARD_VIEWPORT_WIDTH:
+            bar_w = BOARD_VIEWPORT_WIDTH
+            thumb_w = max(20, int(BOARD_VIEWPORT_WIDTH * BOARD_VIEWPORT_WIDTH / board_w))
+            max_x = board_w - BOARD_VIEWPORT_WIDTH
+            thumb_x = 0 if max_x == 0 else int(offset[0] * (bar_w - thumb_w) / max_x)
+            pygame.draw.rect(screen, (180, 180, 180),
+                             (origin_x, origin_y + BOARD_VIEWPORT_HEIGHT - 6, bar_w, 6))
+            pygame.draw.rect(screen, (100, 100, 100),
+                             (origin_x + thumb_x, origin_y + BOARD_VIEWPORT_HEIGHT - 6, thumb_w, 6))
+
+        if board_h > BOARD_VIEWPORT_HEIGHT:
+            bar_h = BOARD_VIEWPORT_HEIGHT
+            thumb_h = max(20, int(BOARD_VIEWPORT_HEIGHT * BOARD_VIEWPORT_HEIGHT / board_h))
+            max_y = board_h - BOARD_VIEWPORT_HEIGHT
+            thumb_y = 0 if max_y == 0 else int(offset[1] * (bar_h - thumb_h) / max_y)
+            pygame.draw.rect(screen, (180, 180, 180),
+                             (origin_x + BOARD_VIEWPORT_WIDTH - 6, origin_y, 6, bar_h))
+            pygame.draw.rect(screen, (100, 100, 100),
+                             (origin_x + BOARD_VIEWPORT_WIDTH - 6, origin_y + thumb_y, 6, thumb_h))
 
 class Board:
     seed = None

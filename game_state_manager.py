@@ -27,6 +27,8 @@ class GSM:
         GSM.rows = settings[0]
         GSM.cols = settings[1]
         GSM.mine_count = settings[2]
+        GSM.width = GSM.rows * TILESIZE
+        GSM.height = GSM.cols * TILESIZE
     @staticmethod
     def game_won(board):
         won = board.is_complete() and board.verify_win()
