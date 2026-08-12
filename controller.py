@@ -305,13 +305,15 @@ def handle_keypress_n():
     game.reset()
     reset_board()
 def handle_keypress_m():
-    reqs = {(0,0):1}
-    # reqs = {(0,14):3,(0,15):1}
+    # reqs = {(0,0):1}
+    reqs = {(0,14):3,(0,15):1,(0,0):1}
     #reqs = {(0,0):3}
     #reqs = {(12,4):1,(16,4):1,(12,8):1,(16,8):1}
     first_click=(0,0)
     #first_click = (12,4)
     print(player.find_matching_board_state(reqs,first_click=first_click))
+    for req in reqs:
+        board.reveal_tiles(req)
 
 
 def handle_keypress_r():
@@ -321,10 +323,10 @@ def handle_keypress_r():
 
 def run_move_sim(board,num_samples):
 
-    if len(board.global_ps) == 0:
+    if board.total_sols == 0:
         board.solve_exhaustive(force=True)
 
-    num_samples = 50
+    num_samples = 500
     # cs.verify_sampling_distribution_from_samples(board,samples)
     start = time.time()
     # nonfrontier_tiles_list = sorted(board.nonfrontier_tiles)
@@ -334,7 +336,7 @@ def run_move_sim(board,num_samples):
     #     genned_boards.append(genned_board)
     moves = [(2,11),(2,12),(2,13),(2,14),(2,15),(3,11),(3,12),(3,13),(3,14),(3,15)]
     #moves = [(2,13)]
-    workers = 1
+    workers = 4
     seed=123456
     future = executor.submit(cs.sim_moves_on_genned_boards, board,num_samples, moves, workers,seed=seed)
     result = future.result()
@@ -342,6 +344,7 @@ def run_move_sim(board,num_samples):
     # for k,v in wins.items():
     #     print(f'{k}: {v/num_samples * 100}')
     print('total time:',time.time()-start)
+    # cs.validate_sampler(board)
     #set_board(board)
     #print(wins)
 

@@ -5,3 +5,4 @@ __pycache__/
 *.pyc
 *.lprof
 .venv
+a.py

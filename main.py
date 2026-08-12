@@ -295,9 +295,9 @@ class Game:
                     # 3704944176424518728, 
                     # 4818019032247190816, 
                     # 6427893799520374548]
-                    C.handle_board_click(seed=2315728546880468680)
+                    #C.handle_board_click(seed=2315728546880468680)
 
-                    # C.handle_board_click()
+                    C.handle_board_click()
                 
                 elif event.button == 3:
                     C.handle_board_right_click()
@@ -355,7 +355,7 @@ class Game:
                     C.handle_keypress_l()
                     #C.handle_keypress_l(filename='replay.npz')
                 elif event.key == pygame.K_b:
-                    C.run_move_sim(self.board,num_samples)
+                    C.run_move_sim(C.board,num_samples)
                 elif event.key == pygame.K_v:
                     C.handle_keypress_v()
                 elif event.key == pygame.K_x:

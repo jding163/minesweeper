@@ -129,9 +129,7 @@ class Solver(Board):
             self.ic_regions = []
             self.ff_groups = []
             self.ff_influence_locs = []
-            self.global_ps = []
             self.total_sols = 0
-            self.total_sols_dict = {}
 
 
         #self.populate(first_click)
@@ -171,9 +169,7 @@ class Solver(Board):
         self.ic_regions=board.ic_regions
         self.ff_groups=board.ff_groups
         self.ff_influence_locs=board.ff_influence_locs
-        self.global_ps=board.global_ps
         self.total_sols=board.total_sols
-        self.total_sols_dict=board.total_sols_dict
 
 
 
@@ -654,8 +650,6 @@ class Solver(Board):
 
         if update_self:
             self.total_sols = total_sols
-            self.total_sols_dict = {}
-            self.global_ps = []
 
         return safe_locs, mine_locs, safest_prob, total_sols
 
