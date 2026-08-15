@@ -215,6 +215,9 @@ class Game:
                 if self.scrubbing_replay:
                     self.scrubbing_replay = False
 
+            elif event.type == pygame.MOUSEWHEEL:
+                self.scroll_board(event.x * TILESIZE, event.y * TILESIZE)
+
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_r:
                     C.handle_keypress_r()
@@ -264,14 +267,6 @@ class Game:
                     self.save_board()
                 elif event.key == pygame.K_SPACE:
                     C.handle_keypress_space()
-                elif event.key == pygame.K_LEFT:
-                    self.scroll_board(-TILESIZE, 0)
-                elif event.key == pygame.K_RIGHT:
-                    self.scroll_board(TILESIZE, 0)
-                elif event.key == pygame.K_UP:
-                    self.scroll_board(0, -TILESIZE)
-                elif event.key == pygame.K_DOWN:
-                    self.scroll_board(0, TILESIZE)
 
     # --- Panel callbacks -------------------------------------------------
 

@@ -6,3 +6,6 @@ __pycache__/
 *.lprof
 .venv
 a.py
+benchmark_reveal.txt
+benchmark_reveal.py
+benchmark_old_vs_new.py

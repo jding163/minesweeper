@@ -5,7 +5,6 @@ from settings import *
 import random
 from game_state_manager import GSM
 import sys
-
 from line_profiler import profile
 import numpy as np
 
@@ -388,10 +387,8 @@ class Board:
         rows,cols = neighbors.T
         not_mines_mask = self.num_mine_tracker[rows, cols] != 9
         self.num_mine_tracker[rows[not_mines_mask], cols[not_mines_mask]] += 1
-            
 
-        
-    def reveal_tiles(self,loc):
+    def reveal_tile(self,loc):
         if self.tile_state_tracker[loc] != UNKNOWN:
             return
         
@@ -407,10 +404,82 @@ class Board:
             self.revealed_tiles.add(loc)
             if self.num_mine_tracker[loc] > 0:
                 self.unfinished_clues.add(loc)
-            else:
-                self.reveal_neighbors(loc)
+        
+    def reveal_tiles(self, loc):
+        # Nothing to do unless the tile is currently hidden.
+        if self.tile_state_tracker[loc] != UNKNOWN:
+            return
 
+        # Snapshot the unknown mask so we can bulk-update bookkeeping once
+        # the flood fill is finished, instead of touching sets per tile.
+        was_unknown = (self.tile_state_tracker == UNKNOWN).copy()
 
+        # Reveal the clicked tile (handles mines / game over).
+        self.reveal_tile(loc)
+
+        # Only zero tiles trigger a flood fill.
+        if self.num_mine_tracker[loc] != 0:
+            return
+
+        # Fast Python flood fill. A list stack avoids per-tile method-call
+        # overhead; marking state immediately prevents duplicate visits.
+        # Every neighbor of a zero is guaranteed to be a non-mine.
+        tile_state = self.tile_state_tracker
+        num_mine = self.num_mine_tracker
+        tile_neighbors = self.tile_neighbors
+        UNKNOWN_CONST = UNKNOWN
+
+        stack = [loc]
+        while stack:
+            current = stack.pop()
+            for nloc in tile_neighbors[current[0]][current[1]]:
+                if tile_state[nloc] == UNKNOWN_CONST:
+                    tile_state[nloc] = REVEALED
+                    if num_mine[nloc] == 0:
+                        stack.append(nloc)
+
+        # Extract every tile that became revealed during this call.
+        newly_revealed = (tile_state == REVEALED) & was_unknown
+        newly_revealed[loc] = False  # loc was already counted by reveal_tile
+        if not np.any(newly_revealed):
+            return
+
+        new_r, new_c = np.where(newly_revealed)
+        locs = list(zip(new_r.tolist(), new_c.tolist()))
+        self.unrevealed_tiles.difference_update(locs)
+        self.revealed_tiles.update(locs)
+        self.num_revealed += len(locs)
+
+        # Number tiles on the border become new clues for the solver.
+        number_mask = num_mine[new_r, new_c] > 0
+        num_r = new_r[number_mask]
+        num_c = new_c[number_mask]
+        self.unfinished_clues.update(zip(num_r.tolist(), num_c.tolist()))
+    def reveal_tiles_old(self,loc):
+        tile_state_tracker = self.tile_state_tracker
+        num_mine_tracker = self.num_mine_tracker
+
+        if tile_state_tracker[loc] != UNKNOWN:
+            return
+        self.reveal_tile(loc)
+
+        if num_mine_tracker[loc] == 0:
+
+            tile_neighbors = self.tile_neighbors
+
+            loc_neighbors = tile_neighbors[loc[0]][loc[1]]
+
+            q = [nei for nei in loc_neighbors if tile_state_tracker[nei] == UNKNOWN]
+            while q:
+                loc_to_open = q.pop()
+                self.reveal_tile(loc_to_open)
+                if num_mine_tracker[loc_to_open] == 0:
+                    loc_neighbors = tile_neighbors[loc_to_open[0]][loc_to_open[1]]
+
+                    for nloc in loc_neighbors:
+                        if tile_state_tracker[nloc] == UNKNOWN:
+                            tile_state_tracker[nloc] = REVEALED
+                            q.append(nloc)
     # precondition: an opening was clicked, current tile is already revealed
     def reveal_neighbors(self,loc):
         neighbors = self.lookup_neighbors(loc)
