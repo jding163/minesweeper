@@ -21,10 +21,10 @@ max_size = sys.maxsize
 min_size = 0
 
 
-def run_game(seed,strat,timeout):
-    player = Player(timeout=timeout)  
+def run_game(seed, strat, timeout, dims=None, minecount=None):
+    player = Player(timeout=timeout, dims=dims, minecount=minecount)
     player.set_strategy(strat)
-    
+
     try:
         result = player.play_game(seed=seed)
     except TimeoutException as e:
@@ -46,9 +46,11 @@ def run_game(seed,strat,timeout):
 
 class Player():
     executor = None
-    def __init__(self,timeout=None):
+    def __init__(self, timeout=None, dims=None, minecount=None):
         self.strategy = strat.SafestTile()
-        self.timeout=timeout
+        self.timeout = timeout
+        self.dims = dims
+        self.minecount = minecount
 
     def set_executor(executor):
         Player.executor = executor
@@ -130,12 +132,15 @@ class Player():
                 break
         return False
 
-    def play_game(self,seed=None):
-        #C.handle_keypress_n()  # full reset
+    def play_game(self, seed=None):
+        if self.dims is not None:
+            rows, cols = self.dims
+            minecount = self.minecount if self.minecount is not None else GSM.mine_count
+            GSM.set_board((rows, cols, minecount))
         self.board = Solver()
         if self.timeout is not None:
             self.board.deadline = time.time() + self.timeout
-        self.board.populate((0,0),seed=seed)
+        self.board.populate((0,0), seed=seed)
         start_time = time.time()
 
         self.board.reveal_tiles((0,0))
@@ -193,10 +198,10 @@ class Player():
         timeouts = 0
         if parallel:
 
-            futures = {Player.executor.submit(run_game, s,self.strategy,timeout): s for s in seeds}
+            futures = {Player.executor.submit(run_game, s, self.strategy, timeout, self.dims, self.minecount): s for s in seeds}
             
             for i, future in enumerate(as_completed(futures)):
-                if i % 250 == 0:
+                if i % 100 == 0:
                     print(i)
                     logging.info(i)
                 result = future.result()
@@ -222,7 +227,7 @@ class Player():
             for i in range(num_games):
                 #print(i)
                 
-                if i % 250 == 0:
+                if i % 100 == 0:
                     print(i)
                     logging.info(i)
                 seed=seeds[i]
@@ -335,6 +340,7 @@ def main():
     executor = ProcessPoolExecutor(max_workers=max_workers)
     Player.set_executor(executor)
     p = Player(timeout=60)
+    # p = Player(timeout=60,dims=(20,20),minecount=128)
     # p.set_strategy(strat.SafestTile())
     #p.set_strategy(strat.SafestTileAndLikeliestOpening())
     p.set_strategy(strat.SecSafety())
@@ -350,7 +356,7 @@ def main():
     #seed=5
     # res = p.play_game(seed=seed)
     # print(res)
-    w1 = p.play_games(100,seed=seed,parallel=True,timeout=None)
+    w1 = p.play_games(100,seed=seed,parallel=False,timeout=None)
     # for w in w1:
     #     print(w)
 
