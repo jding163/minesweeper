@@ -69,7 +69,7 @@ class Player():
                 min_loc = loc
         return min_loc
     def get_suggestion(self):
-        # No tiles revealed yet: the solver has no constraints, so suggest a default first click.
+        # on a fresh board, suggest corner
         if len(self.board.revealed_tiles) == 0:
             return [], [], [self.board.default_first_click()]
 

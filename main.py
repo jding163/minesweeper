@@ -187,10 +187,16 @@ class Game:
             self.ui_manager.process_events(event)
 
             if self.left_panel.handle_event(event):
+                if event.type == pygame_gui.UI_BUTTON_PRESSED:
+                    self.ui_manager.set_focus_set(None)
                 continue
             if self.middle_panel.handle_event(event):
+                if event.type == pygame_gui.UI_BUTTON_PRESSED:
+                    self.ui_manager.set_focus_set(None)
                 continue
             if self.right_panel.handle_event(event):
+                if event.type == pygame_gui.UI_BUTTON_PRESSED:
+                    self.ui_manager.set_focus_set(None)
                 continue
 
             if event.type == pygame.MOUSEBUTTONDOWN:
