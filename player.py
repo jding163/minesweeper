@@ -331,7 +331,7 @@ def main():
     # b = Solver()
     # b.display = None
     #b=Solver()
-    max_workers = 3
+    max_workers = 5
     executor = ProcessPoolExecutor(max_workers=max_workers)
     Player.set_executor(executor)
     p = Player(timeout=60)
@@ -350,7 +350,7 @@ def main():
     #seed=5
     # res = p.play_game(seed=seed)
     # print(res)
-    w1 = p.play_games(100,seed=seed,parallel=False,timeout=None)
+    w1 = p.play_games(100,seed=seed,parallel=True,timeout=None)
     # for w in w1:
     #     print(w)
 
