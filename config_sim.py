@@ -4,11 +4,9 @@ from collections import Counter, defaultdict
 import time
 from solver import Solver, convolve_freqs
 from line_profiler import profile
-from player import Player
 from concurrent.futures import ProcessPoolExecutor, as_completed
 import numpy as np
 
-player = Player()
 def tiny_sample(seq, k):
     if len(seq) == 0:
         return []
@@ -22,7 +20,10 @@ def tiny_sample(seq, k):
         chosen_indices.add(random.randrange(n))
     return [seq[i] for i in chosen_indices]
 
-def play_genned_board(board,first_click):
+def play_genned_board(board, first_click, player=None):
+    if player is None:
+        from player import Player
+        player = Player()
     player.board = board
     board.reveal_tiles(first_click)
     result = player.autoplay()
@@ -196,7 +197,9 @@ def validate_sampler(board, num_samples=10000, seed=None, verbose=True):
 def sim_moves(board, num_samples, moves, seed=None):
     if seed is not None:
         random.seed(seed)
+    from player import Player
     sim_board = Solver()
+    player = Player()
     wins = {move: 0 for move in moves}
     while num_samples > 0:
         b = gen_board(board)
@@ -205,7 +208,7 @@ def sim_moves(board, num_samples, moves, seed=None):
         for move in moves:
             sim_board.clone_board(b, copy_num_mine_tracker=True)
             sim_board.copy_solver_info(b)
-            result = play_genned_board(sim_board, move)
+            result = play_genned_board(sim_board, move, player=player)
             if result:
                 wins[move] += 1
         num_samples -= 1

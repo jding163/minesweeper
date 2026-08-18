@@ -245,22 +245,8 @@ class SecSafety(Strategy):
         candidates=list(candidates)
         if len(candidates) == 1:
             return candidates[0]
-        # for c in candidates:
-        #     print(c.loc)
-        #     print(c.prob_mine_local)
         candidates = sorted(candidates)
-        # if not board.collected and len(board.ff_influence_locs) > 0:
-        #     for l in board.ff_influence_locs:
-        #         print(l)
-        #     board.collected=True
         best_loc = prog.find_loc_with_best_progress_over_locs(board,candidates)
-        # if not board.collected:
-        #     best_loc1 = prog.find_loc_with_best_progress_over_locs(board,candidate_locs,ff_influence_weight=1)
-        #     if best_loc != best_loc1:
-        #         board.collected=True
-        #         print(best_loc)
-        #         print(best_loc1)
-        logging.info(best_loc)
         return best_loc
 
     def find_move_from_locs(self, board,locs):

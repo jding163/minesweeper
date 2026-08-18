@@ -1,5 +1,4 @@
 from solver import Solver
-import controller as C
 import time
 from game_state_manager import GSM
 import sys
@@ -14,11 +13,11 @@ import statistics
 import math
 from solver import TimeoutException
 import fifty_fifty_detection as ffd
+import controller as C
 
 
 
 max_size = sys.maxsize
-#min_size = -sys.maxsize - 1
 min_size = 0
 
 
