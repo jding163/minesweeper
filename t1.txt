@@ -1,14 +1,230 @@
-Possibility(total_mines=1, num_cases=3, mines_per_group=[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
-Possibility(total_mines=2, num_cases=4, mines_per_group=[0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
-Possibility(total_mines=3, num_cases=6, mines_per_group=[0, 1, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
-Possibility(total_mines=9, num_cases=40, mines_per_group=[0, 0, 0, 0, 1, 2, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 1])
-Possibility(total_mines=8, num_cases=20, mines_per_group=[0, 0, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 1, 0])
-Possibility(total_mines=8, num_cases=5, mines_per_group=[0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 1, 1, 0, 0, 0, 1, 0, 1, 1])
-Possibility(total_mines=7, num_cases=1, mines_per_group=[0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0])
-Possibility(total_mines=8, num_cases=10, mines_per_group=[0, 0, 0, 0, 0, 2, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 1])
-Possibility(total_mines=7, num_cases=5, mines_per_group=[0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0])
-Possibility(total_mines=7, num_cases=10, mines_per_group=[0, 0, 0, 0, 0, 2, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 1])
-Possibility(total_mines=6, num_cases=5, mines_per_group=[0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0])
-(0, 1): 0.3333333333
-(35, 10): 0.1301566792
-(38, 10): 0.3293272379
+pygame-ce 2.5.5 (SDL 2.32.6, Python 3.11.8)
+0
+
+--- Statistics Summary ---
+Strategy used: SecSafety
+Total games: 100
+Total time: 35.89909887313843
+Wins: 47
+Losses: 53
+Errors: 0
+Winrate: 47.00%
+Average time per game: 0.36 seconds
+Average time per win: 0.52 seconds
+timeouts: 0
+[]
+Wrote profile results to player.py.lprof
+Timer unit: 1e-06 s
+
+Total time: 30.905 s
+File: /Users/jeremyding/Desktop/projects/minesweeper/solver.py
+Function: get_sol_counts_at_loc_for_val at line 316
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   316                                               @profile
+   317                                               def get_sol_counts_at_loc_for_val(self,loc,val):
+   318      8221       2407.0      0.3      0.0          saved_total_sols = self.total_sols
+   319      8221      19633.0      2.4      0.1          orig_val_at_loc = self.assign_tile_value(loc,val)
+   320      8221    3011437.0    366.3      9.7          regions = self.get_updated_regions_list()
+   321      8221       2569.0      0.3      0.0          regions_to_solve = []
+   322     22959       9877.0      0.4      0.0          for region in regions:
+   323     14738       6027.0      0.4      0.0              if region.ps == None:
+   324      8300       3229.0      0.4      0.0                  regions_to_solve.append(region)
+   325                                                       else:
+   326      6438      45920.0      7.1      0.1                  regions_to_solve.append(copy.copy(region))
+   327      8221       2293.0      0.3      0.0          total_count = 0
+   328      8221       1907.0      0.2      0.0          best_prob = 1
+   329      8221       1817.0      0.2      0.0          num_safe = 0
+   330      8221       1645.0      0.2      0.0          has_ff = False
+   331      8221       1579.0      0.2      0.0          solvable = True
+   332                                           
+   333      8221   17571381.0   2137.4     56.9          groups_list= self.find_possibilities(regions_to_solve)
+   334     20454       7709.0      0.4      0.0          for region in regions_to_solve:
+   335     14306       6225.0      0.4      0.0              if len(region.ps) == 0:
+   336      2073        544.0      0.3      0.0                  solvable = False
+   337      2073        598.0      0.3      0.0                  break
+   338      8221       2598.0      0.3      0.0          if solvable:
+   339      6148       1689.0      0.3      0.0              frontier_locs = []
+   340     17169       5605.0      0.3      0.0              for region in regions_to_solve:
+   341     11021       5744.0      0.5      0.0                  frontier_locs.extend(region.locs)
+   342      6148       6925.0      1.1      0.0              frontier_locs = set(frontier_locs)
+   343      6148     426736.0     69.4      1.4              nonfrontier_locs = set(ul for ul in self.unrevealed_tiles if ul not in frontier_locs)
+   344      6148    9719079.0   1580.9     31.4              safe_locs, _,best_prob,total_count = self.calc_probs_for_board(regions_to_solve,groups_list,nonfrontier_locs,update_self=False)
+   345      6148       2597.0      0.4      0.0              num_safe = len(safe_locs)
+   346      8221      21309.0      2.6      0.1          self.unassign_tile_value(loc,orig_val_at_loc)
+   347      8221       3236.0      0.4      0.0          self.total_sols = saved_total_sols
+   348      8221      12639.0      1.5      0.0          return SolverHeuristics(total_count=total_count,best_prob=best_prob, num_safe=num_safe,has_ff=has_ff)
+
+Total time: 2.70745 s
+File: /Users/jeremyding/Desktop/projects/minesweeper/solver.py
+Function: calc_prob_at_board_test at line 555
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   555                                               @profile
+   556                                               def calc_prob_at_board_test(self, regions, groups_list, nonfrontier_locs):
+   557      6526       1708.0      0.3      0.1          a = {}
+   558      6526       2706.0      0.4      0.1          num_nf = len(nonfrontier_locs)
+   559      6526       3322.0      0.5      0.1          mines_left = self.minecount - self.flag_count
+   560      6526       4078.0      0.6      0.2          nf_loc = next(iter(nonfrontier_locs), None)
+   561      6526       1623.0      0.2      0.1          all_global_sols = {}
+   562      6526       2630.0      0.4      0.1          if len(regions) > 0:
+   563     18139       6151.0      0.3      0.2              for region in regions:
+   564     11616       6334.0      0.5      0.2                  region.freq_dict = defaultdict(int)
+   565     78331      24379.0      0.3      0.9                  for p in region.ps:
+   566     66715      31704.0      0.5      1.2                      region.freq_dict[p.total_mines] += p.num_cases
+   567                                           
+   568      6523      68037.0     10.4      2.5              all_global_sols = convolve_freqs([region.freq_dict for region in regions])
+   569                                                   else:
+   570         3          1.0      0.3      0.0              all_global_sols = {0: 1}
+   571      6526      12347.0      1.9      0.5          all_global_sols = {k:v for k,v in all_global_sols.items() if k <= mines_left}
+   572     23372       8474.0      0.4      0.3          for mc in all_global_sols:
+   573     16846      36524.0      2.2      1.3              all_global_sols[mc] *= math.comb(num_nf, mines_left - mc)
+   574      6526       5260.0      0.8      0.2          sum_global_sols = sum(all_global_sols.values())
+   575      6526       2137.0      0.3      0.1          if sum_global_sols == 0:
+   576        94         33.0      0.4      0.0              return {}, 0
+   577                                           
+   578      6432       2444.0      0.4      0.1          if len(regions) > 0:
+   579     17923       6383.0      0.4      0.2              for region in regions:
+   580     11494      63537.0      5.5      2.3                  freqs_to_convolve = [other.freq_dict for other in regions if other != region]
+   581     11494       3205.0      0.3      0.1                  if not freqs_to_convolve:
+   582      3193       1223.0      0.4      0.0                      cfreqs = {0:1}
+   583                                                           else:
+   584      8301      63320.0      7.6      2.3                      cfreqs = convolve_freqs(freqs_to_convolve)
+   585                                                           # group: minecount of region: expected mines
+   586     11494       7779.0      0.7      0.3                  mpg = defaultdict(lambda:defaultdict(int))
+   587     77874      23094.0      0.3      0.9                  for p in region.ps:
+   588     66380      17106.0      0.3      0.6                      t = p.total_mines
+   589   1074729     305941.0      0.3     11.3                      for g in region.group_ids:
+   590   1008349     517004.0      0.5     19.1                          mpg[g][t] += p.num_cases * p.mines_per_group[g]
+   591    100999      31757.0      0.3      1.2                  for g in mpg:
+   592     89505      21105.0      0.2      0.8                      num_sols = 0
+   593    303757     116471.0      0.4      4.3                      for mines_here in mpg[g]:
+   594    214252      62285.0      0.3      2.3                          if mines_here == 0:
+   595       354         77.0      0.2      0.0                              continue
+   596    213898      47854.0      0.2      1.8                          num_sols_at_mc = 0
+   597    617795     227288.0      0.4      8.4                          for mines_other in cfreqs:
+   598    403897     120859.0      0.3      4.5                              mines_to_place = mines_left - mines_other - mines_here
+   599    403897     101820.0      0.3      3.8                              if mines_to_place >= 0:
+   600    401369     493606.0      1.2     18.2                                  num_sols_at_mc += cfreqs[mines_other] * math.comb(num_nf, mines_to_place)
+   601    213898      79971.0      0.4      3.0                          num_sols_at_mc *= mpg[g][mines_here]
+   602    213898      62411.0      0.3      2.3                          num_sols += num_sols_at_mc
+   603     89505      71545.0      0.8      2.6                      a[groups_list[g].tile_locs[0]] = num_sols / sum_global_sols / len(groups_list[g].tile_locs)
+   604                                           
+   605      6432       2307.0      0.4      0.1          if num_nf > 0:
+   606      6389      12730.0      2.0      0.5              prob_dist = {mc: num_sols_for_mc / sum_global_sols for mc, num_sols_for_mc in all_global_sols.items()}
+   607      6389      23883.0      3.7      0.9              a[nf_loc] = prob.calc_prob_for_nonfrontier_tiles(prob_dist, mines_left, num_nf)
+   608      6432       3001.0      0.5      0.1          return a, sum_global_sols
+
+Total time: 7.55764 s
+File: /Users/jeremyding/Desktop/projects/minesweeper/solver.py
+Function: calc_probs_for_board at line 614
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   614                                               @profile
+   615                                               def calc_probs_for_board(self, regions, groups_list, nonfrontier_locs, update_self=True):
+   616      6526    4450991.0    682.0     58.9          a, total_sols = self.calc_prob_at_board_test(regions, groups_list, nonfrontier_locs)
+   617                                           
+   618                                                   # invalid board: no valid global solutions
+   619      6526       2136.0      0.3      0.0          if total_sols == 0:
+   620        94         35.0      0.4      0.0              return [], [], 1, 0
+   621                                           
+   622      6432       1689.0      0.3      0.0          safe_locs = []
+   623      6432       1468.0      0.2      0.0          mine_locs = []
+   624      6432       1631.0      0.3      0.0          safest_prob = 1.0
+   625                                           
+   626     95937      28974.0      0.3      0.4          for group_info in groups_list:
+   627     89505      26782.0      0.3      0.4              rep_loc = group_info.tile_locs[0]
+   628     89505      23954.0      0.3      0.3              prob_at_loc = a[rep_loc]
+   629    215331      97820.0      0.5      1.3              for loc in group_info.tile_locs:
+   630    125826      32022.0      0.3      0.4                  if update_self:
+   631      5863       2281.0      0.4      0.0                      self.mine_probs[loc] = prob_at_loc
+   632    125826      56360.0      0.4      0.7                  if math.isclose(prob_at_loc, 0.0, abs_tol=1e-12):
+   633     13140       4852.0      0.4      0.1                      safe_locs.append(loc)
+   634    112686      42244.0      0.4      0.6                  elif math.isclose(prob_at_loc, 1.0, abs_tol=1e-12):
+   635      5281       2016.0      0.4      0.0                      mine_locs.append(loc)
+   636     89505      38600.0      0.4      0.5              safest_prob = min(safest_prob, prob_at_loc)
+   637                                           
+   638      6432       2968.0      0.5      0.0          if len(nonfrontier_locs) > 0:
+   639      6389      17524.0      2.7      0.2              nf_keys = [loc for loc in a if loc in nonfrontier_locs]
+   640      6389       2487.0      0.4      0.0              nf_rep = nf_keys[0] if nf_keys else min(nonfrontier_locs)
+   641      6389       1819.0      0.3      0.0              prob_at_loc = a[nf_rep]
+   642   1876982     796929.0      0.4     10.5              for loc in nonfrontier_locs:
+   643   1870593     449523.0      0.2      5.9                  if update_self:
+   644    100536      32882.0      0.3      0.4                      self.mine_probs[loc] = prob_at_loc
+   645   1870593     770874.0      0.4     10.2                  if math.isclose(prob_at_loc, 0.0, abs_tol=1e-12):
+   646       345        111.0      0.3      0.0                      safe_locs.append(loc)
+   647   1870248     659997.0      0.4      8.7                  elif math.isclose(prob_at_loc, 1.0, abs_tol=1e-12):
+   648        17          3.0      0.2      0.0                      mine_locs.append(loc)
+   649      6389       3129.0      0.5      0.0              safest_prob = min(safest_prob, prob_at_loc)
+   650                                           
+   651      6432       1844.0      0.3      0.0          if update_self:
+   652       378        214.0      0.6      0.0              self.total_sols = total_sols
+   653                                           
+   654      6432       3476.0      0.5      0.0          return safe_locs, mine_locs, safest_prob, total_sols
+
+Total time: 3.62223 s
+File: /Users/jeremyding/Desktop/projects/minesweeper/solver.py
+Function: solve_exhaustive at line 656
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   656                                               @profile
+   657                                               def solve_exhaustive(self,force=False):
+   658       866       2326.0      2.7      0.1          self.mine_probs[:] = -1
+   659       866     334688.0    386.5      9.2          self.regions_list = self.get_updated_regions_list()
+   660       866    2516789.0   2906.2     69.5          groups_list= self.find_possibilities(self.regions_list)
+   661       866        305.0      0.4      0.0          ff_groups = []
+   662       866        189.0      0.2      0.0          ic_regions = []
+   663       866        174.0      0.2      0.0          ff_influence_locs = []
+   664      2435       1172.0      0.5      0.0          for region in self.regions_list:
+   665      1569      16346.0     10.4      0.5              ff_groups_in_region,ff_influence_locs_in_region = ffd.is_two_tile_ff_in_region(self,region)
+   666      1637        603.0      0.4      0.0              for ff_group in ff_groups_in_region:
+   667        68         29.0      0.4      0.0                  ff_groups.append(ff_group)
+   668      1590        528.0      0.3      0.0              for loc in ff_influence_locs_in_region:
+   669        21         10.0      0.5      0.0                  ff_influence_locs.append(loc)
+   670      1569       7583.0      4.8      0.2              if ffd.is_region_info_complete(self,region):
+   671        90         41.0      0.5      0.0                  ic_regions.append(region)
+   672       866        429.0      0.5      0.0          self.ic_regions = ic_regions
+   673       866        316.0      0.4      0.0          self.ff_groups = ff_groups
+   674       866        267.0      0.3      0.0          self.ff_influence_locs = ff_influence_locs
+   675       866       1890.0      2.2      0.1          self.groups_list = groups_list
+   676       866        389.0      0.4      0.0          mines_left = self.minecount-self.flag_count
+   677       866        230.0      0.3      0.0          frontier_locs = []
+   678      2435        832.0      0.3      0.0          for region in self.regions_list:
+   679      1569        838.0      0.5      0.0              frontier_locs.extend(region.locs)
+   680       866       1071.0      1.2      0.0          frontier_locs = set(frontier_locs)  
+   681       866      53110.0     61.3      1.5          nonfrontier_locs = set(ul for ul in self.unrevealed_tiles if ul not in frontier_locs)
+   682       866       2355.0      2.7      0.1          self.nonfrontier_tiles = nonfrontier_locs
+   683       866       8982.0     10.4      0.2          self.nf_rep_loc = min(nonfrontier_locs) if len(nonfrontier_locs) > 0 else None
+   684       866        294.0      0.3      0.0          if len(groups_list) == 0 and mines_left==0:
+   685         1          0.0      0.0      0.0              safe_locs = []
+   686         3          2.0      0.7      0.0              for loc in nonfrontier_locs:
+   687                                                           
+   688         2          1.0      0.5      0.0                  self.mine_probs[loc] = 0
+   689         2          2.0      1.0      0.0                  safe_locs.append(loc)
+   690         1          0.0      0.0      0.0              return safe_locs,[]
+   691       865      36165.0     41.8      1.0          safe_locs, mine_locs = self.search_possibilities(self.regions_list,groups_list)
+   692       865        384.0      0.4      0.0          if len(safe_locs) > 0 and not force:
+   693      2683        833.0      0.3      0.0              for loc in safe_locs:
+   694      2196       1082.0      0.5      0.0                  self.mine_probs[loc]= 0
+   695      1501        492.0      0.3      0.0              for loc in mine_locs:
+   696      1014        379.0      0.4      0.0                  self.mine_probs[loc]= 1
+   697                                           
+   698                                                   else:
+   699       378     630565.0   1668.2     17.4              safe_locs, mine_locs,_,total_sols = self.calc_probs_for_board(self.regions_list,groups_list,nonfrontier_locs)
+   700       378        140.0      0.4      0.0              self.total_sols = total_sols
+   701       865        397.0      0.5      0.0          return safe_locs,mine_locs
+
+Total time: 0.282585 s
+File: /Users/jeremyding/Desktop/projects/minesweeper/sprites.py
+Function: lookup_neighbors at line 317
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+   317                                               @profile
+   318                                               def lookup_neighbors(self,loc):
+   319    875264     282585.0      0.3    100.0          return self.tile_neighbors[loc[0]][loc[1]]
+

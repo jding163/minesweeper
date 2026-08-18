@@ -370,52 +370,11 @@ class RightPanel:
         self.suggest_button = make_button('Suggestion', 'suggest_button')
         self.autoplay_button = make_button('Autoplay', 'autoplay_button')
         self.probs_button = make_button('Toggle Probs', 'probs_button')
-        self.sim_button = make_button('Run Sim', 'sim_button')
+        # self.sim_button = make_button('Run Sim', 'sim_button')
         self.new_button = make_button('New Game', 'new_button')
         self.save_button = make_button('Save Board', 'save_button')
         self.load_button = make_button('Load Board', 'load_button')
         self.reveal_button = make_button('Reveal All', 'reveal_button')
-
-        y += 15
-        self.scroll_label = pygame_gui.elements.UILabel(
-            relative_rect=pygame.Rect((PANEL_PADDING, y), (RIGHT_PANEL_WIDTH - 2 * PANEL_PADDING, TILESIZE)),
-            text='Scroll',
-            manager=self.manager,
-            container=self.panel
-        )
-        y = self.scroll_label.relative_rect.bottom + 5
-
-        btn_w = (RIGHT_PANEL_WIDTH - 2 * PANEL_PADDING - 10) // 2
-        self.scroll_up_button = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect((PANEL_PADDING + btn_w // 2 + 5, y), (btn_w, TILESIZE)),
-            text='Up',
-            manager=self.manager,
-            container=self.panel,
-            object_id='scroll_up_button'
-        )
-        y = self.scroll_up_button.relative_rect.bottom + 5
-        self.scroll_left_button = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect((PANEL_PADDING, y), (btn_w, TILESIZE)),
-            text='Left',
-            manager=self.manager,
-            container=self.panel,
-            object_id='scroll_left_button'
-        )
-        self.scroll_right_button = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect((PANEL_PADDING + btn_w + 10, y), (btn_w, TILESIZE)),
-            text='Right',
-            manager=self.manager,
-            container=self.panel,
-            object_id='scroll_right_button'
-        )
-        y = self.scroll_left_button.relative_rect.bottom + 5
-        self.scroll_down_button = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect((PANEL_PADDING + btn_w // 2 + 5, y), (btn_w, TILESIZE)),
-            text='Down',
-            manager=self.manager,
-            container=self.panel,
-            object_id='scroll_down_button'
-        )
 
     def handle_event(self, event):
         if event.type != pygame_gui.UI_BUTTON_PRESSED:
@@ -426,15 +385,11 @@ class RightPanel:
             self.suggest_button: self.game.suggestion,
             self.autoplay_button: self.game.autoplay,
             self.probs_button: self.game.toggle_probs,
-            self.sim_button: self.game.run_sim,
+            # self.sim_button: self.game.run_sim,
             self.new_button: self.game.new_game,
             self.save_button: self.game.save_board,
             self.load_button: self.game.load_board,
             self.reveal_button: self.game.reveal_all,
-            self.scroll_up_button: lambda: self.game.scroll_board(0, -TILESIZE),
-            self.scroll_down_button: lambda: self.game.scroll_board(0, TILESIZE),
-            self.scroll_left_button: lambda: self.game.scroll_board(-TILESIZE, 0),
-            self.scroll_right_button: lambda: self.game.scroll_board(TILESIZE, 0),
         }
 
         cb = callbacks.get(event.ui_element)

@@ -65,8 +65,10 @@ def get_game():
 
 def reset_board():
     b = Solver()
-
+    Board.reset_suggestions()
     set_board(b)
+    BoardUI.display_probs = 0
+
 
 def get_flag_count():
     return board.flag_count
@@ -132,6 +134,7 @@ def handle_board_click(mines=False,seed=None):
     update_mine_probs_after_click()
     if not game.replay_mode:
         rm.append_event(event_time, 'left_click',(mx,my))
+    Board.suggestion_guess = None
 
 
 def handle_board_right_click():
@@ -164,8 +167,19 @@ def handle_keypress_w():
     # print(time.time()-start)
 
 def handle_keypress_e():
-    player.set_strategy(strat.SecSafety())
-    print(player.get_suggestion())
+    if TileUI.death_click == None:
+        player.set_strategy(strat.SecSafety())
+        safe_locs,mine_locs,best_moves = player.get_suggestion()
+        if safe_locs:
+            Board.suggestion_safe = set(safe_locs)
+        else:
+            Board.suggestion_guess = best_moves[0]
+            BoardUI.display_probs = 1
+
+        if mine_locs:
+            Board.suggestion_mine = set(mine_locs)
+
+
 
 
 def handle_keypress_t(seed=None,timeout=None):
@@ -242,9 +256,6 @@ def handle_keypress_k():
     player.board.save_board('testboard')
     # player.board.save_board('replay')
 
-
-def handle_keypress_o():
-    BoardUI.display_probs = 2
 
 def handle_keypress_n():
     game.reset()

@@ -69,12 +69,16 @@ class Player():
                 min_loc = loc
         return min_loc
     def get_suggestion(self):
+        # No tiles revealed yet: the solver has no constraints, so suggest a default first click.
+        if len(self.board.revealed_tiles) == 0:
+            return [], [], [self.board.default_first_click()]
+
         safe_locs, mine_locs=self.board.solve_exhaustive()
         if len(safe_locs) > 0:
-            return safe_locs,mine_locs
+            return safe_locs,mine_locs,[]
         else:
             best_move = self.find_best_move()
-            return [best_move],mine_locs
+            return [],mine_locs, [best_move]
 
     def find_best_move(self):
         if len(self.board.ff_groups) > 0:

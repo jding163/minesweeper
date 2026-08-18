@@ -299,7 +299,7 @@ class Game:
 
     def toggle_probs(self):
         BoardUI.display_probs += 1
-        BoardUI.display_probs %= 4
+        BoardUI.display_probs %= 2
 
     def run_sim(self):
         C.run_move_sim(self.board, num_samples)

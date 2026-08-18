@@ -12,7 +12,9 @@ import numpy as np
 # NUMBER = 1
 # OPENING = 2
 # MINE = 3
-
+GREEN_TRANSP = (0, 255, 0, 90)
+ORANGE_TRANSP = (255, 165, 0, 90)
+RED_TRANSP = (255, 0, 0, 80)
 
 tile_number_paths = []
 for i in range(1, 9):
@@ -43,6 +45,8 @@ image_dict[tile_exploded_path] = tile_exploded
 image_dict[tile_flag_path] = tile_flag
 image_dict[tile_not_mine_path] = tile_not_mine
 
+
+
 def get_neighbors(loc):
     neighbors = [(loc[0]-1,loc[1]-1),(loc[0]-1,loc[1]),(loc[0]-1,loc[1]+1),
                 (loc[0],loc[1]-1),(loc[0],loc[1]+1),
@@ -56,6 +60,7 @@ def get_neighbors(loc):
 class TileUI:
     font = None
     death_click=None
+
     def __init__(self, x, y,num):
         self.x = x * TILESIZE
         self.y = y * TILESIZE
@@ -75,15 +80,24 @@ class TileUI:
         
         if state == UNKNOWN:
             display.blit(image_dict[tile_unknown_path],loc)
+
             if display_probs == 1:
                 if self.mine_prob >= 0:
                     prob_text = TileUI.font.render(f"{self.mine_prob * 100:.1f}", True, (0, 0, 0))  # Black text
                     text_rect = prob_text.get_rect(center=(self.x + TILESIZE // 2, self.y + TILESIZE // 2))
                     display.blit(prob_text, text_rect)
-            elif display_probs == 2:
-                prob_text = TileUI.font.render(f"{self.opening_prob * 100:.1f}", True, (0, 0, 0))  # Black text
-                text_rect = prob_text.get_rect(center=(self.x + TILESIZE // 2, self.y + TILESIZE // 2))
-                display.blit(prob_text, text_rect)
+
+            # for now, inset does nothing, but I may make SUGGESTIONSIZE smaller later
+            inset = (TILESIZE - SUGGESTIONSIZE) // 2
+            suggest_pos = (self.x + inset, self.y + inset)
+            suggest_rect = pygame.Rect(suggest_pos, (SUGGESTIONSIZE, SUGGESTIONSIZE))
+            if TileUI.death_click == None:
+                if self.loc in Board.suggestion_safe:
+                    self.draw_suggestion(display, suggest_rect, suggest_pos, GREEN_TRANSP)
+                elif self.loc == Board.suggestion_guess:
+                    self.draw_suggestion(display, suggest_rect, suggest_pos, ORANGE_TRANSP)
+                elif self.loc in Board.suggestion_mine:
+                    self.draw_suggestion(display, suggest_rect, suggest_pos, RED_TRANSP)
 
         elif state == REVEALED:
             if is_mine:
@@ -101,13 +115,16 @@ class TileUI:
             else:
                 display.blit(image_dict[tile_not_mine_path],loc)
 
-        # always display coords for every cell
-        if display_probs == 3:
-            loc_text = TileUI.font.render(f"{self.loc}", True, (0, 0, 0))  # Black text
-            text_rect = loc_text.get_rect(center=(self.x + TILESIZE // 2, self.y + TILESIZE // 2))
-            display.blit(loc_text, text_rect)
+        # # always display coords for every cell
+        # if display_probs == 3:
+        #     loc_text = TileUI.font.render(f"{self.loc}", True, (0, 0, 0))  # Black text
+        #     text_rect = loc_text.get_rect(center=(self.x + TILESIZE // 2, self.y + TILESIZE // 2))
+        #     display.blit(loc_text, text_rect)
 
-
+    def draw_suggestion(self, display, rect, pos, color):
+        surf = pygame.Surface(rect.size, pygame.SRCALPHA)
+        pygame.draw.rect(surf, color, surf.get_rect())
+        display.blit(surf, pos)
 
 
 class BoardUI():
@@ -173,6 +190,9 @@ class BoardUI():
 
 class Board:
     seed = None
+    suggestion_safe = set()
+    suggestion_guess = None
+    suggestion_mine = set()
     def __init__(self,empty=False,dims=None,minecount=None):
         if dims is not None:
             self.dims = dims
@@ -214,7 +234,10 @@ class Board:
             self.num_mine_tracker = np.zeros((self.dims),dtype=int)
             self.tile_state_tracker = np.zeros((self.dims),dtype=int)
             self.adj_flag_tracker = np.zeros((self.dims),dtype=int)
-            self.mine_probs = np.full((self.dims),-1,dtype=float)
+            total_tiles = self.rows * self.cols
+            mine_count_for_density = self.minecount if self.minecount > 0 else GSM.mine_count
+            uniform_density = mine_count_for_density / total_tiles if total_tiles > 0 else 0.0
+            self.mine_probs = np.full((self.dims), uniform_density, dtype=float)
             self.opening_probs = np.full((self.dims),-1,dtype=float)
             
             # self.mine_probs = np.zeros((self.dims))
@@ -313,9 +336,15 @@ class Board:
         self.mine_probs = board.mine_probs.copy()
         self.opening_probs = board.opening_probs.copy()                
      
+    def reset_suggestions():
+        Board.suggestion_safe = set()
+        Board.suggestion_guess = None
+        Board.suggestion_mine = set()
 
+    def default_first_click(self):
+        return (0,0)
 
-    def lookup_neighbors(self,loc):
+    def lookup_neighbors(self,loc): 
         return self.tile_neighbors[loc[0]][loc[1]]
     
     def toggle_flag_at_loc(self,loc):
