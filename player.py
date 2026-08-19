@@ -14,7 +14,7 @@ import math
 from solver import TimeoutException
 import fifty_fifty_detection as ffd
 import controller as C
-
+import os
 
 
 max_size = sys.maxsize
@@ -336,13 +336,12 @@ def main():
     # b = Solver()
     # b.display = None
     #b=Solver()
-    max_workers = 5
+    max_workers = os.cpu_count()
     executor = ProcessPoolExecutor(max_workers=max_workers)
     Player.set_executor(executor)
     p = Player(timeout=60)
     # p = Player(timeout=60,dims=(20,20),minecount=128)
     # p.set_strategy(strat.SafestTile())
-    #p.set_strategy(strat.SafestTileAndLikeliestOpening())
     p.set_strategy(strat.SecSafety())
 
     # with open('seeds1.txt', 'r') as f:
@@ -356,7 +355,7 @@ def main():
     #seed=5
     # res = p.play_game(seed=seed)
     # print(res)
-    w1 = p.play_games(100,seed=seed,parallel=False,timeout=None)
+    w1 = p.play_games(1000,seed=seed,parallel=True,timeout=None)
     # for w in w1:
     #     print(w)
 

@@ -240,12 +240,6 @@ class Solver(Board):
                 flags_found = True
         return flags_found
     
-    # def predict_flags(self):
-    #     flags_found = False
-    #     for loc in list(self.unfinished_clues):
-    #         if self.flag_neighbors(loc):
-    #             flags_found = True
-    #     return flags_found
     
     def chord_board(self):
         for loc in list(self.unfinished_clues):

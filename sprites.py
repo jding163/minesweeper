@@ -367,9 +367,6 @@ class Board:
                 self.flagged_tiles.discard(loc)
                 self.unrevealed_tiles.add(loc)
 
-    
-
-
     def populate(self,first_click,custom_mines=False,seed=None):
         self.first_click = first_click
         self.unrevealed_tiles = [(row, col) for row in range(self.rows) for col in range(self.cols)]

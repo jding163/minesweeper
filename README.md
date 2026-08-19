@@ -1,7 +1,6 @@
 # Minesweeper — Exact-Probability Solver & Game
 
-A Minesweeper AI that computes **exact** per-tile mine probabilities — not Monte Carlo
-estimates — and plays expert difficulty (30×16, 99 mines) at a **~41% win rate**.
+A Minesweeper solver that computes exact per-tile mine probabilities and plays expert difficulty (30×16, 99 mines) at a ~40% win rate.
 Includes the full game (pygame), live probability overlays, a replay system, and a
 seeded benchmark harness.
 
@@ -12,8 +11,8 @@ mine count. Every game is seeded and fully replayable.
 
 | Strategy  | Games | Win rate | Errors | Timeouts | Avg time/game |
 |-----------|------:|---------:|-------:|---------:|--------------:|
-| SecSafety | 1,000 | **40.8%** | 0 | 0 | 0.07s |
-| SecSafety |   100 | 47.0% | 0 | 0 | 0.06s |
+| SecSafety | 1,000 | 40.8% | 0 | 0 | 0.11s |
+| SecSafety |   100 | 47.0% | 0 | 0 | 0.08s |
 
 Reproduce the 100-game row with `python player.py` (seed `-7778276623403`,
 `SecSafety` strategy, 100 games — the defaults in `player.py:main()`).
@@ -26,24 +25,29 @@ $ python player.py
 --- Statistics Summary ---
 Strategy used: SecSafety
 Total games: 100
-Total time: 6.361629009246826
+Total time: 7.89218282699585
 Wins: 47
 Losses: 53
 Errors: 0
 Winrate: 47.00%
-Average time per game: 0.06 seconds
-Average time per win: 0.09 seconds
+Average time per game: 0.08 seconds
+Average time per win: 0.11 seconds
 timeouts: 0
 ```
 
-Per-move cost is sub-millisecond in the common case; a full expert game completes in
-roughly 60–70ms of solver time. For context, published constraint-based solvers
-typically report win rates in the 30–40% range on expert under these rules, so exact
-(non-sampled) probabilities put this in a competitive range.
+With multithreading, I achieved the following performance with a 10-core 2021 Macbook Pro M1 Max on the same sample of games:
 
-<!-- TODO: add a short GIF of the UI: start expert game, let the solver play with
-     probability overlays visible, then a replay seek. ~15-20s max. -->
-<!-- ![solver playing expert with probability overlays](docs/demo.gif) -->
+--- Statistics Summary ---
+Strategy used: SecSafety
+Total games: 1000
+Total time: 11.452399015426636
+Wins: 408
+Losses: 592
+Errors: 0
+Winrate: 40.80%
+Average time per game: 0.11 seconds
+Average time per win: 0.13 seconds
+timeouts: 0
 
 ## How it works
 
@@ -62,27 +66,22 @@ computes the *exact* probability that every hidden tile contains a mine:
 4. **Exact global probabilities** — per-region mine-count frequency distributions
    are convolved, weighted by the combinatorial number of ways to place remaining
    mines on non-frontier tiles (`C(n, k)`), yielding exact per-tile probabilities
-   across the full solution ensemble (often >10⁹⁹ configurations).
+   across the full solution ensemble.
 5. **Move selection** (`strategy.py`, `progress.py`) — when no move is provably
    safe, the "secondary safety" strategy (`SecSafety`) evaluates each candidate
    click by one-step lookahead: the probability-weighted safety of the board
-   *after* the reveal, plus expected tiles cleared, with early termination against
-   the current best. Forced two-tile 50/50s and tiles that would *create* 50/50s
-   are detected specially (`fifty_fifty_detection.py`) — dying to such a tile
-   implies a coin-flip was unavoidable anyway.
+   after the reveal, plus expected tiles cleared (progress). 
+   
+6. **50/50 detection** - forced two-tile 50/50s are detected and resolved immediately, because they may provide useful info for the rest of the board (`fifty_fifty_detection.py`); additionally, evaluation scores of tiles that would create 50/50s are slightly boosted.
 
 Performance comes from caching: regions are memoized across moves and their
-enumerated possibilities reformatted in place rather than recomputed (3× speedup
-in the probability pass, 1.5× overall).
+enumerated possibilities reformatted in place rather than recomputed.
 
 ### Monte Carlo move evaluation
 
-`config_sim.py` can also *sample* boards uniformly from the exact solution
-ensemble (suffix-convolution weighting) and play out candidate moves in parallel
-across processes (`ProcessPoolExecutor`). `validate_sampler()` verifies the sampler
-empirically against the solver's exact probabilities (max error tracked per tile).
-Sampling is used for evaluation experiments only — never for the headline
-probabilities.
+`config_sim.py` can also sample boards uniformly from the exact solution
+ensemble and play out candidate moves in parallel
+across processes (`ProcessPoolExecutor`).  
 
 ## Features
 
@@ -100,18 +99,10 @@ probabilities.
 Verified on Python 3.12 (macOS, arm64).
 
 ```bash
-python3.12 -m venv .venv
+python3.11.8 -m venv .venv
 source .venv/bin/activate
 pip install pygame-ce numpy scipy line_profiler pytest pygame_gui
 ```
-
-Install `pygame-ce`, **not** upstream `pygame` — `pygame_gui` requires symbols
-(`DIRECTION_LTR`) that only exist in the CE fork. The two packages share the
-`pygame` namespace and overwrite each other if both are installed.
-
-> **Note:** `requirements.txt` currently pins *both* `pygame` and `pygame-ce`, so
-> `pip install -r requirements.txt` produces a broken environment depending on
-> install order. Use the explicit command above until that line is removed.
 
 ## Run
 
@@ -135,18 +126,6 @@ pytest                # unit tests
 | `k` / `l` | save / load board |
 | mouse or trackpad scroll | pan large boards |
 
-## Tests
-
-```bash
-pytest                             # config_sim unit tests
-python test_reveal_correctness.py  # standalone differential check
-```
-
-`test_reveal_correctness.py` compares the optimized iterative `reveal_tiles`
-against a reference copy of the original recursive implementation across several
-board sizes and seeds. It currently runs as a script rather than as part of the
-pytest suite.
-
 ## Project structure
 
 ```
@@ -161,14 +140,5 @@ sprites.py               board/tile state, reveal/flag mechanics
 UI.py, screens/          pygame interface, settings screen
 replay_manager.py        event-sourced replay recording/playback
 test_config_sim.py       pytest suite (sampler helpers)
-test_reveal_correctness.py  standalone reveal-correctness differential check
 ```
 
-## Roadmap
-
-- [ ] Wire `test_reveal_correctness.py` into the pytest suite
-- [ ] Fix the `pygame`/`pygame-ce` conflict in `requirements.txt`
-- [ ] Deeper lookahead (2+ plies) for endgame play
-- [ ] Opening-book optimization for the first-click region
-- [ ] Publish full benchmark data across strategies and difficulties
-- [ ] Package solver as a standalone library (no pygame dependency)
