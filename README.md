@@ -7,7 +7,7 @@ seeded benchmark harness.
 ## Benchmarks
 
 Standard expert board (30×16, 99 mines), first-click-safe, solver knows the total
-mine count. Every game is seeded and fully replayable.
+mine count. Every game is seeded and fully replayable. These results were achieved with a 10-core 2021 Macbook Pro M1 Max.
 
 | Strategy  | Games | Win rate | Errors | Timeouts | Avg time/game |
 |-----------|------:|---------:|-------:|---------:|--------------:|
@@ -20,35 +20,36 @@ Reproduce the 100-game row with `python player.py` (seed `-7778276623403`,
 Actual output:
 
 ```console
-$ python player.py
-
---- Statistics Summary ---
-Strategy used: SecSafety
-Total games: 100
-Total time: 7.89218282699585
-Wins: 47
-Losses: 53
-Errors: 0
-Winrate: 47.00%
-Average time per game: 0.08 seconds
-Average time per win: 0.11 seconds
-timeouts: 0
-```
-
-With multithreading, I achieved the following performance with a 10-core 2021 Macbook Pro M1 Max on the same sample of games:
+$ python player.py -s -7778276623403 --no-parallel
 
 --- Statistics Summary ---
 Strategy used: SecSafety
 Total games: 1000
-Total time: 11.452399015426636
+Total time: 85.05231595039368
 Wins: 408
 Losses: 592
 Errors: 0
 Winrate: 40.80%
-Average time per game: 0.11 seconds
+Average time per game: 0.08 seconds
+Average time per win: 0.10 seconds
+timeouts: 0
+```
+
+Result with multithreading enabled:
+```console
+$ python player.py -s -7778276623403
+--- Statistics Summary ---
+Strategy used: SecSafety
+Total games: 1000
+Total time: 11.28255319595337
+Wins: 408
+Losses: 592
+Errors: 0
+Winrate: 40.80%
+Average time per game: 0.10 seconds
 Average time per win: 0.13 seconds
 timeouts: 0
-
+```
 ## How it works
 
 The solver treats each board state as a constraint-satisfaction problem and

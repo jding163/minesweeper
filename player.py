@@ -15,8 +15,8 @@ from solver import TimeoutException
 import fifty_fifty_detection as ffd
 import controller as C
 import os
-
-
+import argparse
+from settings import ROWS, COLS, NUM_MINES                                                                                   
 max_size = sys.maxsize
 min_size = 0
 
@@ -296,15 +296,7 @@ class Player():
         print(f"Average time per win: {avg_time_win:.2f} seconds")
         #print(f"Median win: {median_win:.2f}")
         print('timeouts:',timeouts)
-        print(error_seeds)
-
-        # with open("seeds.txt", "w") as file:
-        #     for seed in won_seeds:
-        #         file.write(f'{seed}\n')
-        # with open("seeds.txt", "w") as file:
-        #     for seed in collected_seeds:
-        #         file.write(f'{seed}\n')
-
+        # print(error_seeds)
         return results
     
 # given a list of indices and length n, what is the largest # indices within any given interval of n
@@ -323,61 +315,48 @@ def calc_mastery(nums, n):
         max_count = max(max_count, count)
 
     return max_count
+def parse_args():
+    parser = argparse.ArgumentParser(description="Performance benchmarking")
+    parser.add_argument('--rows','-r',type=int,default=30,help="board rows")
+    parser.add_argument('--cols','-c',type=int,default=16,help="board columns")
+    parser.add_argument('--mines','-m',type=int,default=99,help="board minecount")
+    parser.add_argument('--games','-g',type=int,default=1000,help="number of games to play")
+    parser.add_argument('--seed','-s',type=int,default=None,help="random seed")
+    parser.add_argument('--workers','-w',type=int,default=os.cpu_count(),help="number of games to play")
+    parser.add_argument('--strategy',choices=['SecSafety','SafestTile'],default="SecSafety",help="strategy to use")
+    parser.add_argument('--timeout','-t',type=int,default=30,help="per-game timeout in seconds")
+    parser.add_argument('--parallel',action=argparse.BooleanOptionalAction,default=True,help="run games in parallel")
+    return parser.parse_args()
 
 
+
+# seed used for testing: -7778276623403
 def main():
-
+    args = parse_args()
     logging.basicConfig(
         filename='debug.log',            # File to write to
         filemode='w',                    # 'w' to overwrite, 'a' to append
         level=logging.DEBUG,             # Minimum logging level
         format='%(asctime)s - %(levelname)s - %(message)s'
     )
-    # b = Solver()
-    # b.display = None
-    #b=Solver()
-    max_workers = os.cpu_count()
-    executor = ProcessPoolExecutor(max_workers=max_workers)
+    rows,cols,mines = args.rows,args.cols,args.mines
+    dims = (rows,cols)
+
+    workers = max(args.workers,1)
+    timeout = args.timeout
+    executor = ProcessPoolExecutor(max_workers=workers)
+    strategy_class = getattr(strat,args.strategy)
     Player.set_executor(executor)
-    p = Player(timeout=60)
-    # p = Player(timeout=60,dims=(20,20),minecount=128)
-    # p.set_strategy(strat.SafestTile())
-    p.set_strategy(strat.SecSafety())
+    p = Player(timeout=timeout,dims=dims,minecount=mines)
+    p.set_strategy(strategy_class())
 
-    # with open('seeds1.txt', 'r') as f:
-    #     seeds_list = [int(line.strip()) for line in f]
-    # p.play_games(len(seeds_list),seeds_list=seeds_list,parallel=False)
-    # C.set_player(p)
-    # C.set_board(b)
-    seed=-7778276623403
-    #seed=-222204841234
-    #seed=29849475784
-    #seed=5
-    # res = p.play_game(seed=seed)
     # print(res)
-    w1 = p.play_games(1000,seed=seed,parallel=True,timeout=None)
-    # for w in w1:
-    #     print(w)
+    # seed=-7778276623403
+    games = args.games
+    parallel = args.parallel
+    seed = args.seed
+    w1 = p.play_games(games,seed=seed,parallel=parallel,timeout=timeout)
 
-
-    # set1 = set(w1)
-    # set2 = set(w2)
-
-    # in_both = list(set1 & set2)       # Intersection
-    # only_in_w1 = list(set1 - set2)    # Elements only in w1
-    # only_in_w2 = list(set2 - set1)    # Elements only in w2
-    # print('w1 wins:', len(w1))
-    # print('w2 wins:', len(w2))
-    # print("In both:", len(in_both))
-    # print("Only in w1:", len(only_in_w1))
-    # print("Only in w2:", len(only_in_w2))
-    # print('w1:')
-    # for item in only_in_w1:
-    #     print(item)
-    # print('w2:')
-    # for item in only_in_w2:
-    #     print(item)
-    # print('Best mastery:',calc_mastery(w1,100))
 
 
 
