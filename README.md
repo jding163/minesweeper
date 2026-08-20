@@ -14,8 +14,8 @@ mine count. Every game is seeded and fully replayable. These results were achiev
 | SecSafety | 1,000 | 40.8% | 0 | 0 | 0.11s |
 | SecSafety |   100 | 47.0% | 0 | 0 | 0.08s |
 
-Reproduce the 100-game row with `python player.py` (seed `-7778276623403`,
-`SecSafety` strategy, 100 games — the defaults in `player.py:main()`).
+Reproduce the 1000-game row with `python player.py` (seed `-7778276623403`,
+`SecSafety` strategy, 1000 games — the defaults in `player.py:main()`).
 
 Actual output:
 

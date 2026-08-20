@@ -391,9 +391,10 @@ class Board:
             self.unrevealed_tiles=set(self.unrevealed_tiles)
             self.mines = locs
         else:
-            self.mines = custom_mines
+            self.mines = list(custom_mines)
             GSM.mine_count = len(custom_mines)
             self.seed = None
+            self.unrevealed_tiles = set(self.unrevealed_tiles)
         for loc in self.mines:
             self.update_neighbors_with_minecount(loc)
             self.num_mine_tracker[loc] = 9
