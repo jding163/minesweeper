@@ -186,10 +186,11 @@ class Player():
         else:
             if seed is not None:
                 random.seed(seed)
+            else:
+                seed = random.randint(min_size,max_size)
+                random.seed(seed)
             seeds = [random.randint(min_size,max_size) for _ in range(num_games)]
         start_time = time.time()
-        #seeds = seeds[2350:2400]
-
         results = []
         won_seeds = []
         lost_seeds = []
@@ -286,6 +287,7 @@ class Player():
 
         print("\n--- Statistics Summary ---")
         print(f'Strategy used: {self.strategy}')
+        print(f'Seed: {seed}')
         print(f"Total games: {total_games}")
         print(f"Total time: {time.time()-start_time}")
         print(f"Wins: {total_wins}")

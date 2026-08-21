@@ -97,20 +97,46 @@ across processes (`ProcessPoolExecutor`).
 
 ## Setup
 
-Verified on Python 3.12 (macOS, arm64).
+Requires **Python 3.11 or newer**. Verified on Python 3.12 (macOS, arm64).
+
+Run the setup script once to create the virtual environment and install dependencies:
 
 ```bash
-python3.11.8 -m venv .venv
-source .venv/bin/activate
-pip install pygame-ce numpy scipy line_profiler pytest pygame_gui
+./setup.sh
 ```
+
+`setup.sh` will automatically use `python3.12` or `python3.11` if available, falling back to `python3` otherwise. If the fallback is too old, you'll get a clear error.
+
+Or do it manually with Python 3.11+:
+
+```bash
+python3.11 -m venv .venv
+.venv/bin/pip install -r requirements.txt
+```
+
+On Windows, use `.venv\Scripts\python.exe` and `.venv\Scripts\pip.exe` instead.
 
 ## Run
 
+Use the wrapper scripts to run the project with the correct virtual environment:
+
 ```bash
-python main.py        # play the game (pygame UI)
-python player.py      # headless benchmark: 100 seeded expert games, prints win rate
+./run.sh              # play the game (pygame UI)
+./play.sh             # headless benchmark: 100 seeded expert games, prints win rate
 pytest                # unit tests
+```
+
+All command-line flags are passed through, e.g.:
+
+```bash
+./play.sh -s -7778276623403 --no-parallel
+```
+
+If you prefer not to use the wrapper scripts, run the venv Python directly:
+
+```bash
+.venv/bin/python main.py
+.venv/bin/python player.py
 ```
 
 ### Controls
