@@ -134,7 +134,6 @@ class BoardUI():
     def __init__(self, board):
         self.tiles = [[TileUI(r,c,board.num_mine_tracker[r,c]) 
                        for c in range(board.cols)] for r in range(board.rows)]
-        print(self.tiles)
         self.board=board
         self.display = pygame.Surface((GSM.cols * TILESIZE, GSM.rows * TILESIZE))
 
@@ -379,24 +378,24 @@ class Board:
                 genned_seed=random.randint(0,sys.maxsize)
                 self.seed = genned_seed
                 random.seed(genned_seed)
+            locs = random.sample(self.unrevealed_tiles, GSM.mine_count+1)
+            if first_click in locs:
+                locs.remove(first_click)
+            else:
+                del locs[-1]
             if guarantee_opening:
-                protected = set([first_click])
-                protected.update(self.lookup_neighbors(first_click))
-                available = [loc for loc in self.unrevealed_tiles if loc not in protected]                                       
+                locs_set = set(locs)
+                neighbors = set(self.lookup_neighbors(first_click))
+                num_mines_to_move = len([nei for nei in neighbors if nei in locs_set])
+                available = [loc for loc in self.unrevealed_tiles if loc not in neighbors and loc not in locs_set]                                       
                 if len(available) < GSM.mine_count:                                                                              
                     raise ValueError(                                                                                            
                         f"Cannot guarantee opening: need {GSM.mine_count} mines "                                                
                         f"but only {len(available)} tiles available outside the "                                                
                         f"protected 3x3 area around {first_click}."                                                              
-                    )                                                                                                            
-                locs = random.sample(available, GSM.mine_count)
-            else:
-                locs = random.sample(self.unrevealed_tiles, GSM.mine_count+1)
-                if first_click in locs:
-                    locs.remove(first_click)
-                else:
-                    del locs[-1]
-            #del locs[-1]
+                    )
+                if num_mines_to_move > 0:                                                                                                            
+                    locs = [loc for loc in locs if loc not in neighbors] + random.sample(available,num_mines_to_move)
             self.unrevealed_tiles=set(self.unrevealed_tiles)
             self.mines = locs
         else:
@@ -494,24 +493,18 @@ class Board:
     def reveal_tiles_old(self,loc):
         tile_state_tracker = self.tile_state_tracker
         num_mine_tracker = self.num_mine_tracker
-
         if tile_state_tracker[loc] != UNKNOWN:
             return
         self.reveal_tile(loc)
-
         if num_mine_tracker[loc] == 0:
-
             tile_neighbors = self.tile_neighbors
-
             loc_neighbors = tile_neighbors[loc[0]][loc[1]]
-
             q = [nei for nei in loc_neighbors if tile_state_tracker[nei] == UNKNOWN]
             while q:
                 loc_to_open = q.pop()
                 self.reveal_tile(loc_to_open)
                 if num_mine_tracker[loc_to_open] == 0:
                     loc_neighbors = tile_neighbors[loc_to_open[0]][loc_to_open[1]]
-
                     for nloc in loc_neighbors:
                         if tile_state_tracker[nloc] == UNKNOWN:
                             tile_state_tracker[nloc] = REVEALED

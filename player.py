@@ -47,6 +47,7 @@ def run_game(seed, strat, timeout, dims=None, minecount=None,guarantee_opening=F
 class Player():
     print_intervals = True
     executor = None
+    max_workers = 1
     def __init__(self, timeout=60, dims=(ROWS, COLS), minecount=NUM_MINES):
         self.strategy = strat.SecSafety()
         self.timeout = timeout
@@ -55,6 +56,8 @@ class Player():
 
     def set_executor(executor):
         Player.executor = executor
+    def set_max_workers(max_workers):
+        Player.max_workers = max_workers
 
     def set_board(self,board):
         self.board = board
@@ -141,7 +144,7 @@ class Player():
         self.board = Solver()
         if self.timeout is not None:
             self.board.deadline = time.time() + self.timeout
-        first_click = (0,0) if not guarantee_opening else ((3,3))
+        first_click = (0,0) if not guarantee_opening else (3,3)
         # self.board.reveal_tiles((0,0))
         # self.board.reveal_tiles((1,1))
         # self.board.reveal_tiles((2,2))
@@ -288,9 +291,11 @@ class Player():
 
         print("\n--- Statistics Summary ---")
         print(f'Strategy used: {self.strategy}')
+        print(f'Opening on first click: {guarantee_opening}')
         print(f'Seed: {seed}')
         print(f"Total games: {total_games}")
         print(f"Total time: {time.time()-start_time}")
+        print(f"Workers used: {Player.max_workers}")
         print(f"Wins: {total_wins}")
         print(f"Losses: {total_losses}")
         print(f"Errors: {total_errors}")
@@ -298,7 +303,7 @@ class Player():
         print(f"Average time per game: {avg_time:.2f} seconds")
         print(f"Average time per win: {avg_time_win:.2f} seconds")
         #print(f"Median win: {median_win:.2f}")
-        print('timeouts:',timeouts)
+        print('Timeouts:',timeouts)
         # print(error_seeds)
         return results, seed
     
@@ -320,8 +325,8 @@ def calc_mastery(nums, n):
     return max_count
 def parse_args():
     parser = argparse.ArgumentParser(description="Performance benchmarking")
-    parser.add_argument('--rows','-r',type=int,default=30,help="board rows")
-    parser.add_argument('--cols','-c',type=int,default=16,help="board columns")
+    parser.add_argument('--rows','-r',type=int,default=16,help="board rows")
+    parser.add_argument('--cols','-c',type=int,default=30,help="board columns")
     parser.add_argument('--mines','-m',type=int,default=99,help="board minecount")
     parser.add_argument('--games','-g',type=int,default=1000,help="number of games to play")
     parser.add_argument('--seed','-s',type=int,default=None,help="random seed")
@@ -360,10 +365,13 @@ def main():
     # seed=-7778276623403
     games = args.games
     parallel = args.parallel
+    if parallel:
+        Player.set_max_workers(workers)
+    else:
+        Player.set_max_workers(1)
     seed = args.seed
     guarantee_opening = args.guarantee_opening
-    w1,s = p.play_games(games,seed=seed,parallel=parallel,timeout=timeout,guarantee_opening=guarantee_opening)
-    print(s)
+    w1,_ = p.play_games(games,seed=seed,parallel=parallel,timeout=timeout,guarantee_opening=guarantee_opening)
 
 
 

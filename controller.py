@@ -118,7 +118,7 @@ def handle_board_click(mines=False,seed=None):
     if not in_bounds:
         return
     if game.first_click:
-        board.populate((mx,my),custom_mines=mines,seed=seed)
+        board.populate((mx,my),custom_mines=mines,seed=seed,guarantee_opening=True)
         game.first_click = False
         rm.replay_log = []
 

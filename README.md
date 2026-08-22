@@ -1,6 +1,6 @@
-# Minesweeper — Exact-Probability Solver & Game
+# Minesweeper — Probability Solver & Game
 
-A Minesweeper solver that computes exact per-tile mine probabilities and plays expert difficulty (16×30, 99 mines) at a ~40% win rate.
+A Minesweeper solver that computes exact per-tile mine probabilities and plays expert difficulty (16×30, 99 mines) at a ~53.5% win rate with a guaranteed open first click and ~40.7% win rate with a guaranteed safe first click.
 Includes the full game (pygame), live probability overlays, a replay system, and a
 seeded benchmark harness.
 
@@ -9,46 +9,52 @@ seeded benchmark harness.
 Standard expert board (16×30, 99 mines), first-click-safe, solver knows the total
 mine count. Every game is seeded and fully replayable. These results were achieved with a 10-core 2021 Macbook Pro M1 Max.
 
-| Strategy  | Games | Win rate | Errors | Timeouts | Avg time/game |
-|-----------|------:|---------:|-------:|---------:|--------------:|
-| SecSafety | 1,000 | 40.8% | 0 | 0 | 0.11s |
-| SecSafety |   100 | 47.0% | 0 | 0 | 0.08s |
+| Opening | Games | Win rate | Avg time/game |
+|---------|------:|---------:|--------------:|
+| No      | 10,000 | 40.73%   | 0.11s |
+| No      |  1,000 | 42.00%   | 0.09s |
+| Yes     | 10,000 | 53.54%   | 0.12s |
+| Yes     |  1,000 | 54.90%   | 0.11s |
 
-Reproduce the 1000-game row with `python player.py` (seed `-7778276623403`,
-`SecSafety` strategy, 1000 games — the defaults in `player.py:main()`).
+Reproduce the top row with:
 
-Actual output:
-
-```console
-$ python player.py -s -7778276623403 --no-parallel
-
---- Statistics Summary ---
-Strategy used: SecSafety
-Total games: 1000
-Total time: 85.05231595039368
-Wins: 408
-Losses: 592
-Errors: 0
-Winrate: 40.80%
-Average time per game: 0.08 seconds
-Average time per win: 0.10 seconds
-timeouts: 0
+```bash
+./sim.sh -s 90743215016795749 -g 10000
 ```
 
-Result with multithreading enabled:
-```console
-$ python player.py -s -7778276623403
---- Statistics Summary ---
-Strategy used: SecSafety
-Total games: 1000
-Total time: 11.28255319595337
-Wins: 408
-Losses: 592
-Errors: 0
-Winrate: 40.80%
-Average time per game: 0.10 seconds
-Average time per win: 0.13 seconds
-timeouts: 0
+Or with guaranteed opening:
+
+```bash
+./sim.sh -s 90743215016795749 -g 10000 --guarantee-opening
+```
+
+### Opening on start vs. no opening
+
+Modern Minesweeper clients guarantee that the first click reveals an opening, so
+the clicked tile and its neighbors are mine-free. Older clients only guarantee that the first-click
+tile itself is safe.
+
+For this solver, the guaranteed-opening rule is worth roughly 12–14 percentage
+points of win rate on expert difficulty. The extra initial information lets the
+exact-probability engine resolve more tiles before it has to guess.
+
+### Single-threaded vs. multi-threaded performance
+
+The solver is CPU-bound, and most of the work is embarrassingly parallel across
+games. On a 10-core M1 Max, running 1,000 games multi-threaded is about 7–8×
+faster than single-threaded, with the same win rate:
+
+| Mode | Games | Total time | Avg time/game | Win rate |
+|------|------:|-----------:|--------------:|---------:|
+| Single-threaded (`--no-parallel`) | 1,000 | 85.05s | 0.08s | 40.80% |
+| Multi-threaded (default) | 1,000 | 11.28s | 0.10s | 40.80% |
+
+```bash
+# Single-threaded
+./sim.sh -s -7778276623403 -g 1000 --no-parallel
+
+# Multi-threaded
+./sim.sh -s -7778276623403 -g 1000
 ```
 ## How it works
 

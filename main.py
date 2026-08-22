@@ -215,7 +215,8 @@ class Game:
                     continue
 
                 if event.button == 1:
-                    C.handle_board_click()
+                    # C.handle_board_click()
+                    C.handle_board_click(seed=0)
                 elif event.button == 3:
                     C.handle_board_right_click()
 

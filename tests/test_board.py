@@ -109,6 +109,7 @@ class TestAdjacencyAndNumbers:
 
 
 class TestGuaranteedOpening:
+    
     def test_guarantee_opening_first_click_is_zero(self):
         r, c = 9, 9
         GSM.update_dims((r, c))
@@ -144,6 +145,16 @@ class TestGuaranteedOpening:
             for loc in protected:
                 assert loc not in board.mines
             assert board.num_mine_tracker[first_click] == 0
+    def test_guarantee_opening_keeps_consistent_minecount(self):
+        r, c = 16, 16
+        GSM.update_dims((r, c))
+        GSM.update_minecount(40)
+        first_click = (7, 7)
+        for seed in range(100):
+            board = Board()
+            board.populate(first_click, seed=seed, guarantee_opening=True)
+            assert len(board.mines) == GSM.mine_count
+
 
 class TestPersistence:
     def test_save_load_roundtrip(self, tmp_path):
