@@ -367,7 +367,7 @@ class Board:
                 self.flagged_tiles.discard(loc)
                 self.unrevealed_tiles.add(loc)
 
-    def populate(self,first_click,custom_mines=False,seed=None):
+    def populate(self,first_click,custom_mines=False,seed=None,guarantee_opening=False):
         self.first_click = first_click
         self.unrevealed_tiles = [(row, col) for row in range(self.rows) for col in range(self.cols)]
         if not custom_mines:
@@ -378,15 +378,24 @@ class Board:
             else:
                 genned_seed=random.randint(0,sys.maxsize)
                 self.seed = genned_seed
-
                 random.seed(genned_seed)
-                #print('seed: {}'.format(genned_seed))
-            locs = random.sample(self.unrevealed_tiles, GSM.mine_count+1)
-
-            if first_click in locs:
-                locs.remove(first_click)
+            if guarantee_opening:
+                protected = set([first_click])
+                protected.update(self.lookup_neighbors(first_click))
+                available = [loc for loc in self.unrevealed_tiles if loc not in protected]                                       
+                if len(available) < GSM.mine_count:                                                                              
+                    raise ValueError(                                                                                            
+                        f"Cannot guarantee opening: need {GSM.mine_count} mines "                                                
+                        f"but only {len(available)} tiles available outside the "                                                
+                        f"protected 3x3 area around {first_click}."                                                              
+                    )                                                                                                            
+                locs = random.sample(available, GSM.mine_count)
             else:
-                del locs[-1]
+                locs = random.sample(self.unrevealed_tiles, GSM.mine_count+1)
+                if first_click in locs:
+                    locs.remove(first_click)
+                else:
+                    del locs[-1]
             #del locs[-1]
             self.unrevealed_tiles=set(self.unrevealed_tiles)
             self.mines = locs

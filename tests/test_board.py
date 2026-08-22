@@ -44,11 +44,14 @@ class TestConstruction:
         r,c = 5,5
         GSM.update_dims((r, c))
         GSM.update_minecount(r*c-1)
+        first_click_mine = False
         for _ in range(100):
             board = Board()
             board.populate((0, 0), seed=123123123)
-            assert (0, 0) not in board.mines
-            assert board.num_mine_tracker[0, 0] != 9, board.num_mine_tracker
+            if (0, 0) in board.mines or board.num_mine_tracker[0, 0] == 9:
+                first_click_mine = True
+                break
+        assert first_click_mine == False
 
     def test_initial_state_all_unknown(self):
         r,c = 5,5
@@ -104,6 +107,43 @@ class TestAdjacencyAndNumbers:
             for c in range(board.cols):
                 assert board.tile_neighbors[r][c] == board.lookup_neighbors((r, c))
 
+
+class TestGuaranteedOpening:
+    def test_guarantee_opening_first_click_is_zero(self):
+        r, c = 9, 9
+        GSM.update_dims((r, c))
+        GSM.update_minecount(10)
+        board = Board()
+        board.populate((0, 0), seed=42, guarantee_opening=True)
+        assert board.num_mine_tracker[(0, 0)] == 0
+
+    def test_guarantee_opening_neighbors_are_safe(self):
+        r, c = 9, 9
+        GSM.update_dims((r, c))
+        GSM.update_minecount(10)
+        first_click = (4, 4)
+        board = Board()
+        board.populate(first_click, seed=42, guarantee_opening=True)
+
+        protected = set([first_click])
+        protected.update(board.lookup_neighbors(first_click))
+        for loc in protected:
+            assert loc not in board.mines
+            assert board.num_mine_tracker[loc] != 9
+
+    def test_guarantee_opening_consistent_across_seeds(self):
+        r, c = 16, 16
+        GSM.update_dims((r, c))
+        GSM.update_minecount(40)
+        first_click = (7, 7)
+        for seed in range(100):
+            board = Board()
+            board.populate(first_click, seed=seed, guarantee_opening=True)
+            protected = set([first_click])
+            protected.update(board.lookup_neighbors(first_click))
+            for loc in protected:
+                assert loc not in board.mines
+            assert board.num_mine_tracker[first_click] == 0
 
 class TestPersistence:
     def test_save_load_roundtrip(self, tmp_path):

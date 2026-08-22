@@ -21,12 +21,12 @@ max_size = sys.maxsize
 min_size = 0
 
 
-def run_game(seed, strat, timeout, dims=None, minecount=None):
+def run_game(seed, strat, timeout, dims=None, minecount=None,guarantee_opening=False):
     player = Player(timeout=timeout, dims=dims, minecount=minecount)
     player.set_strategy(strat)
 
     try:
-        result = player.play_game(seed=seed)
+        result = player.play_game(seed=seed,guarantee_opening=guarantee_opening)
     except TimeoutException as e:
         result= {
             'seed': seed,
@@ -46,8 +46,8 @@ def run_game(seed, strat, timeout, dims=None, minecount=None):
 
 class Player():
     executor = None
-    def __init__(self, timeout=None, dims=None, minecount=None):
-        self.strategy = strat.SafestTile()
+    def __init__(self, timeout=60, dims=(16,30), minecount=99):
+        self.strategy = strat.SecSafety()
         self.timeout = timeout
         self.dims = dims
         self.minecount = minecount
@@ -132,7 +132,7 @@ class Player():
                 break
         return False
 
-    def play_game(self, seed=None):
+    def play_game(self, seed=None,guarantee_opening=False):
         if self.dims is not None:
             rows, cols = self.dims
             minecount = self.minecount if self.minecount is not None else GSM.mine_count
@@ -140,10 +140,16 @@ class Player():
         self.board = Solver()
         if self.timeout is not None:
             self.board.deadline = time.time() + self.timeout
-        self.board.populate((0,0), seed=seed)
+        self.board.populate((0,0), seed=seed,guarantee_opening=guarantee_opening)
         start_time = time.time()
-
-        self.board.reveal_tiles((0,0))
+        if not guarantee_opening:
+            self.board.reveal_tiles((0,0))
+        else:
+            self.board.reveal_tiles((0,0))
+            self.board.reveal_tiles((1,1))
+            self.board.reveal_tiles((2,2))
+            self.board.reveal_tiles((3,3))
+            self.board.reveal_tiles((GSM.rows // 2, GSM.cols // 2))
         self.autoplay()
 
 
@@ -179,7 +185,7 @@ class Player():
             return seed
 
 
-    def play_games(self,num_games,seed=None,seeds_list=None,parallel=True,timeout=60):
+    def play_games(self,num_games,seed=None,seeds_list=None,parallel=True,timeout=60,guarantee_opening=False):
         won_seeds = []
         if seeds_list is not None:
             seeds = seeds_list
@@ -199,7 +205,7 @@ class Player():
         timeouts = 0
         if parallel:
 
-            futures = {Player.executor.submit(run_game, s, self.strategy, timeout, self.dims, self.minecount): s for s in seeds}
+            futures = {Player.executor.submit(run_game, s, self.strategy, timeout, self.dims, self.minecount,guarantee_opening): s for s in seeds}
             
             for i, future in enumerate(as_completed(futures)):
                 if i % 100 == 0:
@@ -207,7 +213,6 @@ class Player():
                     logging.info(i)
                 result = future.result()
                 results.append(result)
-                #print(f"{i}: Seed {result['seed']}: {'Won' if result['won'] else 'Lost'} in {result['time']:.2f} seconds")
                 result_seed = result['seed']
                 if 'error' in result:
                     err_msg = result['error']
@@ -225,16 +230,14 @@ class Player():
                     collected_seeds.append(result_seed)
         else:
             self.timeout = timeout
-            for i in range(num_games):
-                #print(i)
-                
+            for i in range(num_games):                
                 if i % 100 == 0:
                     print(i)
                     logging.info(i)
                 seed=seeds[i]
                 logging.info(f'starting game {i}: {seed}')
                 try:
-                    result = self.play_game(seed=seed)
+                    result = self.play_game(seed=seed,guarantee_opening=guarantee_opening)
                 except TimeoutException as e:
                     result = {
                         'seed': seed,
@@ -249,10 +252,6 @@ class Player():
                         'time': -1,
                         'error': str(e)
                     }
-                #logging.info(f'finished game {i}: {seed}')
-
-                # print(i)
-                # print(seeds[i])
                 result['collect'] = self.board.collected
 
                 results.append(result)
@@ -328,6 +327,9 @@ def parse_args():
     parser.add_argument('--strategy',choices=['SecSafety','SafestTile'],default="SecSafety",help="strategy to use")
     parser.add_argument('--timeout','-t',type=int,default=30,help="per-game timeout in seconds")
     parser.add_argument('--parallel',action=argparse.BooleanOptionalAction,default=True,help="run games in parallel")
+    parser.add_argument('--guarantee-opening', action=argparse.BooleanOptionalAction,                                            
+                      default=False,                                                                                           
+                      help="guarantee the first click is an opening") 
     return parser.parse_args()
 
 
@@ -357,7 +359,8 @@ def main():
     games = args.games
     parallel = args.parallel
     seed = args.seed
-    w1 = p.play_games(games,seed=seed,parallel=parallel,timeout=timeout)
+    guarantee_opening = args.guarantee_opening
+    w1 = p.play_games(games,seed=seed,parallel=parallel,timeout=timeout,guarantee_opening=guarantee_opening)
 
 
 
