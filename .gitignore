@@ -1,6 +1,3 @@
-# macOS
-.DS_Store
-
 # Python temp files
 __pycache__/
 *.py[cod]
@@ -15,3 +12,5 @@ benchmark_old_vs_new.py
 debug.log
 *.txt
 !requirements.txt
+.DS_Store
+test_reveal_correctness.py

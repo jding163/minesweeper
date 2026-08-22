@@ -207,6 +207,8 @@ class Game:
                 my = event.pos[1] - HEADER_HEIGHT + self.middle_panel.scroll_y
                 mx //= TILESIZE
                 my //= TILESIZE
+                # mx/my here are (column, row); controller expects (row, column)
+                mx, my = my, mx
                 C.update_mouse_pos(mx, my)
 
                 if not C.mouse_pos_in_bounds():
@@ -284,9 +286,10 @@ class Game:
         self.refresh_panels()
 
     def apply_custom(self):
+        # W controls board width (columns), H controls board height (rows).
         custom_settings = (
-            int(self.left_panel.w_slider.get_current_value()),
             int(self.left_panel.h_slider.get_current_value()),
+            int(self.left_panel.w_slider.get_current_value()),
             int(self.left_panel.m_slider.get_current_value())
         )
         self.set_difficulty(custom_settings)

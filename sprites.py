@@ -62,8 +62,9 @@ class TileUI:
     death_click=None
 
     def __init__(self, x, y,num):
-        self.x = x * TILESIZE
-        self.y = y * TILESIZE
+        # x = row, y = col; on screen, col is horizontal and row is vertical
+        self.x = y * TILESIZE
+        self.y = x * TILESIZE
         self.row = x
         self.col = y
         self.loc = (x,y)
@@ -133,8 +134,9 @@ class BoardUI():
     def __init__(self, board):
         self.tiles = [[TileUI(r,c,board.num_mine_tracker[r,c]) 
                        for c in range(board.cols)] for r in range(board.rows)]
+        print(self.tiles)
         self.board=board
-        self.display = pygame.Surface((GSM.rows * TILESIZE, GSM.cols * TILESIZE))
+        self.display = pygame.Surface((GSM.cols * TILESIZE, GSM.rows * TILESIZE))
 
     def sync(self):
         for r in range(self.board.rows):
@@ -152,15 +154,13 @@ class BoardUI():
             for tile in row:
                 tile.draw(self.display, BoardUI.display_probs)
 
-        # Viewport is the fixed on-screen area for the board.
         viewport = pygame.Surface((BOARD_VIEWPORT_WIDTH, BOARD_VIEWPORT_HEIGHT))
         viewport.fill((255, 255, 255))
         viewport.blit(self.display, (-offset[0], -offset[1]))
         screen.blit(viewport, (LEFT_PANEL_WIDTH, HEADER_HEIGHT))
 
-        # Optional scroll indicators for oversized boards.
-        board_w = self.board.rows * TILESIZE
-        board_h = self.board.cols * TILESIZE
+        board_w = self.board.cols * TILESIZE
+        board_h = self.board.rows * TILESIZE
         if board_w > BOARD_VIEWPORT_WIDTH or board_h > BOARD_VIEWPORT_HEIGHT:
             self._draw_scroll_indicators(screen, offset, board_w, board_h)
 

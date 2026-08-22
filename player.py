@@ -45,8 +45,9 @@ def run_game(seed, strat, timeout, dims=None, minecount=None,guarantee_opening=F
     return result
 
 class Player():
+    print_intervals = True
     executor = None
-    def __init__(self, timeout=60, dims=(16,30), minecount=99):
+    def __init__(self, timeout=60, dims=(ROWS, COLS), minecount=NUM_MINES):
         self.strategy = strat.SecSafety()
         self.timeout = timeout
         self.dims = dims
@@ -140,16 +141,17 @@ class Player():
         self.board = Solver()
         if self.timeout is not None:
             self.board.deadline = time.time() + self.timeout
-        self.board.populate((0,0), seed=seed,guarantee_opening=guarantee_opening)
+        first_click = (0,0) if not guarantee_opening else ((3,3))
+        # self.board.reveal_tiles((0,0))
+        # self.board.reveal_tiles((1,1))
+        # self.board.reveal_tiles((2,2))
+        # self.board.reveal_tiles((3,3))
+        # self.board.reveal_tiles((GSM.rows // 2, GSM.cols // 2))
+        self.board.populate(first_click, seed=seed,guarantee_opening=guarantee_opening)
+
         start_time = time.time()
-        if not guarantee_opening:
-            self.board.reveal_tiles((0,0))
-        else:
-            self.board.reveal_tiles((0,0))
-            self.board.reveal_tiles((1,1))
-            self.board.reveal_tiles((2,2))
-            self.board.reveal_tiles((3,3))
-            self.board.reveal_tiles((GSM.rows // 2, GSM.cols // 2))
+
+        self.board.reveal_tiles(first_click)
         self.autoplay()
 
 
@@ -208,7 +210,7 @@ class Player():
             futures = {Player.executor.submit(run_game, s, self.strategy, timeout, self.dims, self.minecount,guarantee_opening): s for s in seeds}
             
             for i, future in enumerate(as_completed(futures)):
-                if i % 100 == 0:
+                if Player.print_intervals and i % 100 == 0:
                     print(i)
                     logging.info(i)
                 result = future.result()
@@ -231,23 +233,23 @@ class Player():
         else:
             self.timeout = timeout
             for i in range(num_games):                
-                if i % 100 == 0:
+                if Player.print_intervals and i % 100 == 0:
                     print(i)
                     logging.info(i)
-                seed=seeds[i]
-                logging.info(f'starting game {i}: {seed}')
+                game_seed=seeds[i]
+                logging.info(f'starting game {i}: {game_seed}')
                 try:
-                    result = self.play_game(seed=seed,guarantee_opening=guarantee_opening)
+                    result = self.play_game(seed=game_seed,guarantee_opening=guarantee_opening)
                 except TimeoutException as e:
                     result = {
-                        'seed': seed,
+                        'seed': game_seed,
                         'won': False,
                         'time': timeout,
                         'timeout': True
                     }
                 except Exception as e:
                     result = {
-                        'seed': seed,
+                        'seed': game_seed,
                         'won': False,
                         'time': -1,
                         'error': str(e)
@@ -298,7 +300,7 @@ class Player():
         #print(f"Median win: {median_win:.2f}")
         print('timeouts:',timeouts)
         # print(error_seeds)
-        return results
+        return results, seed
     
 # given a list of indices and length n, what is the largest # indices within any given interval of n
 # n < len(wins)
@@ -360,7 +362,8 @@ def main():
     parallel = args.parallel
     seed = args.seed
     guarantee_opening = args.guarantee_opening
-    w1 = p.play_games(games,seed=seed,parallel=parallel,timeout=timeout,guarantee_opening=guarantee_opening)
+    w1,s = p.play_games(games,seed=seed,parallel=parallel,timeout=timeout,guarantee_opening=guarantee_opening)
+    print(s)
 
 
 

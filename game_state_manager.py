@@ -7,8 +7,8 @@ class GSM:
     prev_game_state = fresh
     rows = ROWS
     cols = COLS
-    width = rows * TILESIZE
-    height = cols * TILESIZE
+    width = cols * TILESIZE
+    height = rows * TILESIZE
     mine_count = NUM_MINES
     settings_open = False
     @staticmethod
@@ -27,8 +27,8 @@ class GSM:
         GSM.rows = settings[0]
         GSM.cols = settings[1]
         GSM.mine_count = settings[2]
-        GSM.width = GSM.rows * TILESIZE
-        GSM.height = GSM.cols * TILESIZE
+        GSM.width = GSM.cols * TILESIZE
+        GSM.height = GSM.rows * TILESIZE
     @staticmethod
     def game_won(board):
         won = board.is_complete() and board.verify_win()

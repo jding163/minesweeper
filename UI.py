@@ -120,7 +120,7 @@ class LeftPanel:
         )
         y = self.intermediate_button.relative_rect.bottom + 5
         self.expert_button = DifficultyButton(
-            self.manager, (PANEL_PADDING, y), 'Expert (30x16, 99)', 'expert_button',
+            self.manager, (PANEL_PADDING, y), 'Expert (16x30, 99)', 'expert_button',
             self.panel, EXPERT_SETTINGS
         )
         y = self.expert_button.relative_rect.bottom + 5
@@ -143,7 +143,7 @@ class LeftPanel:
         )
         self.w_slider = CustomSlider(
             (self.w_text.relative_rect.right + 5, y),
-            GSM.rows, DIM_BOUNDARIES, self.manager, self.panel, 'w_slider', self.w_text,
+            GSM.cols, DIM_BOUNDARIES, self.manager, self.panel, 'w_slider', self.w_text,
             size=(LEFT_PANEL_WIDTH - self.w_text.relative_rect.right - 15, TILESIZE)
         )
         self.w_slider.update_text()
@@ -163,7 +163,7 @@ class LeftPanel:
         )
         self.h_slider = CustomSlider(
             (self.h_text.relative_rect.right + 5, y),
-            GSM.cols, DIM_BOUNDARIES, self.manager, self.panel, 'h_slider', self.h_text,
+            GSM.rows, DIM_BOUNDARIES, self.manager, self.panel, 'h_slider', self.h_text,
             size=(LEFT_PANEL_WIDTH - self.h_text.relative_rect.right - 15, TILESIZE)
         )
         self.h_slider.update_text()
@@ -272,20 +272,20 @@ class MiddlePanel:
 
     def recenter_scroll(self):
         """Center smaller boards; start at top-left for boards larger than the viewport."""
-        board_w = self.board.rows * TILESIZE
-        board_h = self.board.cols * TILESIZE
+        board_w = self.board.cols * TILESIZE
+        board_h = self.board.rows * TILESIZE
         self.scroll_x = (board_w - BOARD_VIEWPORT_WIDTH) // 2 if board_w < BOARD_VIEWPORT_WIDTH else 0
         self.scroll_y = (board_h - BOARD_VIEWPORT_HEIGHT) // 2 if board_h < BOARD_VIEWPORT_HEIGHT else 0
 
     def can_scroll(self):
-        return (self.board.rows * TILESIZE > BOARD_VIEWPORT_WIDTH or
-                self.board.cols * TILESIZE > BOARD_VIEWPORT_HEIGHT)
+        return (self.board.cols * TILESIZE > BOARD_VIEWPORT_WIDTH or
+                self.board.rows * TILESIZE > BOARD_VIEWPORT_HEIGHT)
 
     def scroll(self, dx, dy):
         if not self.can_scroll():
             return
-        board_w = self.board.rows * TILESIZE
-        board_h = self.board.cols * TILESIZE
+        board_w = self.board.cols * TILESIZE
+        board_h = self.board.rows * TILESIZE
         max_x = max(0, board_w - BOARD_VIEWPORT_WIDTH)
         max_y = max(0, board_h - BOARD_VIEWPORT_HEIGHT)
         self.scroll_x = max(0, min(max_x, self.scroll_x + dx))

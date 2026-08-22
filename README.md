@@ -1,12 +1,12 @@
 # Minesweeper — Exact-Probability Solver & Game
 
-A Minesweeper solver that computes exact per-tile mine probabilities and plays expert difficulty (30×16, 99 mines) at a ~40% win rate.
+A Minesweeper solver that computes exact per-tile mine probabilities and plays expert difficulty (16×30, 99 mines) at a ~40% win rate.
 Includes the full game (pygame), live probability overlays, a replay system, and a
 seeded benchmark harness.
 
 ## Benchmarks
 
-Standard expert board (30×16, 99 mines), first-click-safe, solver knows the total
+Standard expert board (16×30, 99 mines), first-click-safe, solver knows the total
 mine count. Every game is seeded and fully replayable. These results were achieved with a 10-core 2021 Macbook Pro M1 Max.
 
 | Strategy  | Games | Win rate | Errors | Timeouts | Avg time/game |
