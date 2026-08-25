@@ -35,8 +35,8 @@ def format_time(seconds):
 class Game:
     def __init__(self, board):
         self.board = board
-        self._init_display()
         self.first_click = True
+        self.first_click_opening = False
         self.start_time = 0
         self.elapsed_time = 0
         self.time_text = DEFAULT_TIME
@@ -52,6 +52,8 @@ class Game:
         self.replay_paused = True
         self.replay_paused_time = 0
         self.replay_time = 0
+        self._init_display()
+
 
     def _init_display(self):
         # Fixed window sized for the largest supported board.
@@ -67,7 +69,6 @@ class Game:
         self.right_panel = UI.RightPanel(self.ui_manager, self.screen, self)
 
     def refresh_panels(self):
-        """Update panel contents after the board changes without resizing the window."""
         self.middle_panel.set_board(self.board)
 
     def reset_replay_info(self):
@@ -215,8 +216,7 @@ class Game:
                     continue
 
                 if event.button == 1:
-                    # C.handle_board_click()
-                    C.handle_board_click(seed=0)
+                    C.handle_board_click()
                 elif event.button == 3:
                     C.handle_board_right_click()
 
@@ -277,7 +277,6 @@ class Game:
                 elif event.key == pygame.K_SPACE:
                     C.handle_keypress_space()
 
-    # --- Panel callbacks -------------------------------------------------
 
     def set_difficulty(self, settings):
         GSM.set_board(settings)

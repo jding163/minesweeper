@@ -87,7 +87,6 @@ class ReplaySlider(pygame_gui.elements.UIHorizontalSlider):
 
 
 class LeftPanel:
-    """Left column: game settings and difficulty selection."""
 
     def __init__(self, manager, screen, game):
         self.manager = manager
@@ -188,6 +187,17 @@ class LeftPanel:
         )
         self.m_slider.update_text()
         self.m_text.set_slider(self.m_slider)
+        y = self.m_slider.relative_rect.bottom + 5
+
+        # First-click opening toggle
+        self.opening_checkbox = pygame_gui.elements.UICheckBox(
+            relative_rect=pygame.Rect((PANEL_PADDING, y), (24, 24)),
+            text='Opening on first click',
+            manager=self.manager,
+            container=self.panel,
+            object_id='opening_checkbox',
+            initial_state=self.game.first_click_opening
+        )
 
     def update_mine_slider_range(self):
         new_max = int(self.w_slider.get_current_value() * self.h_slider.get_current_value())
@@ -212,6 +222,11 @@ class LeftPanel:
                 self.game.apply_custom()
                 return True
 
+        elif event.type in (pygame_gui.UI_CHECK_BOX_CHECKED, pygame_gui.UI_CHECK_BOX_UNCHECKED):
+            if event.ui_element == self.opening_checkbox:
+                self.game.first_click_opening = self.opening_checkbox.get_state()
+                return True
+
         elif event.type == pygame_gui.UI_HORIZONTAL_SLIDER_MOVED:
             if event.ui_element in (self.w_slider, self.h_slider, self.m_slider):
                 event.ui_element.update_text()
@@ -233,8 +248,6 @@ class LeftPanel:
 
 
 class MiddlePanel:
-    """Center column: board, timer, mine count, and replay controls."""
-
     def __init__(self, board, manager, screen, game):
         self.board = board
         self.manager = manager
@@ -271,7 +284,6 @@ class MiddlePanel:
         self.recenter_scroll()
 
     def recenter_scroll(self):
-        """Center smaller boards; start at top-left for boards larger than the viewport."""
         board_w = self.board.cols * TILESIZE
         board_h = self.board.rows * TILESIZE
         self.scroll_x = (board_w - BOARD_VIEWPORT_WIDTH) // 2 if board_w < BOARD_VIEWPORT_WIDTH else 0
@@ -329,7 +341,6 @@ class MiddlePanel:
 
 
 class RightPanel:
-    """Right column: analysis and helper actions."""
 
     def __init__(self, manager, screen, game):
         self.manager = manager

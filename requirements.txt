@@ -1,7 +1,7 @@
 line_profiler==4.2.0
 numpy==2.2.5
 pygame-ce==2.5.3
-pygame_gui==0.6.13
+pygame_gui==0.6.14
 pytest
 python-i18n==0.3.9
 scipy==1.16.0
